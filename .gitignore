@@ -74,6 +74,8 @@ web_modules/
 .yarn-integrity
 
 # dotenv environment variable files
+backend/env
+backend/__pycache__
 .env
 .env.development.local
 .env.test.local
@@ -129,3 +131,5 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+
