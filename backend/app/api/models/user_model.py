@@ -5,7 +5,6 @@ from sqlalchemy import DateTime, MetaData, String
 from app.config.database import Base
 from sqlalchemy.orm import Mapped, mapped_column
 
-
 metadata = MetaData()
 
 class User(Base):

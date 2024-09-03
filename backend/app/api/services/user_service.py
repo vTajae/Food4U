@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from app.api.repo.user_repo import UserRepository
 from app.api.models.user_model import User
+from app.api.repo.auth_repo import AuthRepository
 
 
 
@@ -18,8 +19,9 @@ JWT_ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv(
 
 
 class UserService:
-    def __init__(self, user_repo: UserRepository):
+    def __init__(self, user_repo: UserRepository, auth_repo: AuthRepository):
         self.user_repo = user_repo
+        self.auth_repo = auth_repo
 
     async def invalidate_refresh_token(self, token: str):
         return await self.auth_repo.invalidate_token(token)
@@ -32,7 +34,7 @@ class UserService:
     async def get_user_by_id(self, id: str):
         return await self.user_repo.get_user_by_id(id)
       
-    async def register_user(self, username: str, password: str):
+    async def register_user(self,username: str, password: str):
         if await self.user_repo.user_exists(username):
             return False
         hashed_password = bcrypt.hashpw(

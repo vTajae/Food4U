@@ -1,24 +1,23 @@
-
-
+# database.py
 import os
-import ssl
 from dotenv import load_dotenv
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
-
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
+import ssl
 
 load_dotenv()
 
+
 CAT_FILE = os.getenv("CAT_FILE")
 DATABASE_URL = os.getenv("DATABASE_URL")
-
-
+# Create an SSL context
 ssl_context = ssl.create_default_context(cafile=CAT_FILE)
 ssl_context.check_hostname = False
 ssl_context.verify_mode = ssl.CERT_REQUIRED
 
+# Define the Base class using SQLModel
 Base = declarative_base()
+
 
 class AsyncDatabaseSession:
     def __init__(self, db_url):

@@ -22,6 +22,7 @@ JWT_ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv(
 
 @router.post("/register")
 async def register_user(user_data: UserRegisterSchema, service: UserService = Depends(get_user_service)):
+    print(user_data, "user_data")
     if await service.register_user(user_data.username, user_data.password):
         return {"message": "User registered successfully"}
     else:
