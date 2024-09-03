@@ -20,6 +20,7 @@ interface ActionData {
 }
 
 export const loader: LoaderFunction = async ({ context }) => {
+
   if (context.session.has("auth")) {
     return redirect("/a/employees");
   }

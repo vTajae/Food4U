@@ -1,16 +1,12 @@
 // Assuming EnvWithKV is an interface that includes your KV bindings and any other environment variables.
 import { createWorkersKVSessionStorage, createCookie } from "@remix-run/cloudflare";
 import { LoginCookieData } from "../../../api/models/user";
+import {Env} from "../index"
 
-export interface pages {
-  home: string;
-  welcome: string;
-}
 
 type SessionData = {
   // Define the structure of your session data
-  pages?: string[];
-  auth?: LoginCookieData;
+    auth?: LoginCookieData;
 };
 
 type SessionFlashData = {
