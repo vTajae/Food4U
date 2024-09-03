@@ -5,37 +5,58 @@
   "type": "module",
   "scripts": {
     "build": "remix vite:build",
+    "deploy": "npm run build && wrangler pages deploy",
     "dev": "remix vite:dev",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
-    "start": "netlify serve",
-    "typecheck": "tsc"
+    "start": "wrangler pages dev ./build/client",
+    "typecheck": "tsc",
+    "typegen": "wrangler types",
+    "preview": "npm run build && wrangler pages dev",
+    "cf-typegen": "wrangler types",
+    "killPort:vite": "lsof -t -i:5173 | xargs kill -9",
+    "killPort:wrangler": "lsof -t -i:8788 | xargs kill -9",
+    "wrangler:update": "npm install wrangler@latest",
+    "d1:local-initialize": "wrangler d1 execute staff-augmentation --local --file=./database_/newSchema.sql",
+    "d1:remote-initialize": "wrangler d1 execute staff-augmentation --remote --file=./database_/newSchema.sql",
+    "d1:remote-insertEmployee": "wrangler d1 execute staff-augmentation --remote --file=./database_/employees/InsertJasonW.sql",
+    "d1:local-insertEmployee": "wrangler d1 execute staff-augmentation --local --file=./database_/employees/InsertCooperL.sql",
+    "d1:remote-update": "wrangler d1 execute staff-augmentation --remote --file=./database_/maintain.sql",
+    "d1:local-update": "wrangler d1 execute staff-augmentation --local --file=./database_/maintain.sql"
   },
   "dependencies": {
-    "@netlify/edge-functions": "^2.3.1",
-    "@netlify/remix-edge-adapter": "^3.2.1",
-    "@netlify/remix-runtime": "^2.2.0",
-    "@remix-run/node": "^2.11.2",
-    "@remix-run/react": "^2.11.2",
-    "@remix-run/serve": "^2.11.2",
-    "isbot": "^4.1.0"
+    "@remix-run/cloudflare": "^2.11.1",
+    "@remix-run/cloudflare-pages": "^2.11.1",
+    "@remix-run/react": "^2.11.1",
+    "@tsndr/cloudflare-worker-jwt": "^2.5.3",
+    "bcrypt": "^5.1.1",
+    "bcrypt-ts": "^5.0.2",
+    "isbot": "^4.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@remix-run/dev": "^2.11.2",
+    "@cloudflare/workers-types": "^4.20240821.1",
+    "@remix-run/dev": "^2.11.1",
+    "@types/bcrypt": "^5.0.2",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
     "@typescript-eslint/eslint-plugin": "^6.7.4",
+    "@typescript-eslint/parser": "^6.7.4",
+    "autoprefixer": "^10.4.19",
     "eslint": "^8.38.0",
-    "eslint-config-prettier": "^9.0.0",
     "eslint-import-resolver-typescript": "^3.6.1",
     "eslint-plugin-import": "^2.28.1",
     "eslint-plugin-jsx-a11y": "^6.7.1",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.4",
     "typescript": "^5.1.6",
-    "vite": "^5.0.0",
-    "vite-tsconfig-paths": "^4.2.1"
+    "vite": "^5.1.0",
+    "vite-tsconfig-paths": "^4.2.1",
+    "wrangler": "^3.74.0"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   }
 }
