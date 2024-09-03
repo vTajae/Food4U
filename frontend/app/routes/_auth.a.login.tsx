@@ -19,13 +19,13 @@ interface ActionData {
   error?: string;
 }
 
-// export const loader: LoaderFunction = async ({ context }) => {
-//   if (context.session.has("auth")) {
-//     return redirect("/a/employees");
-//   }
+export const loader: LoaderFunction = async ({ context }) => {
+  if (context.session.has("auth")) {
+    return redirect("/a/employees");
+  }
 
-//   return json({ isLoading: false });
-// };
+  return json({ isLoading: false });
+};
 
 export const action: ActionFunction = async ({ request, context }) => {
   const myEnv = context.cloudflare.env as Env;
