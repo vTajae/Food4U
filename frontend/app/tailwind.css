@@ -1,3 +1,48 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+/* login / register */
+.input-field {
+    @apply w-full py-3 px-4 bg-gray-800 text-white rounded-lg border border-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 shadow-sm transition duration-150 ease-in-out placeholder-gray-400;
+  }
+  
+  .btn-primary {
+    @apply bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-opacity-50 transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-105;
+  }
+
+/* dashboard */
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Welcome screen fades out */
+.welcome-screen {
+  animation: fade-out 1s ease-in-out forwards;
+  animation-delay: .4s; /* Starts after welcome fades out */
+
+}
+
+/* Dashboard content fades in */
+.dashboard-content {
+  opacity: 0;
+  animation: fade-in 1s ease-in-out;
+  animation-delay: .2s; /* Starts after welcome fades out */
+  animation-fill-mode: forwards;
+}

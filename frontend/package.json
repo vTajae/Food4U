@@ -16,15 +16,13 @@
     "killPort:vite": "lsof -t -i:5173 | xargs kill -9",
     "killPort:wrangler": "lsof -t -i:8788 | xargs kill -9",
     "wrangler:update": "npm install wrangler@latest",
-    "d1:local-initialize": "wrangler d1 execute staff-augmentation --local --file=./database_/newSchema.sql",
-    "d1:remote-initialize": "wrangler d1 execute staff-augmentation --remote --file=./database_/newSchema.sql",
-    "d1:remote-insertEmployee": "wrangler d1 execute staff-augmentation --remote --file=./database_/employees/InsertJasonW.sql",
-    "d1:local-insertEmployee": "wrangler d1 execute staff-augmentation --local --file=./database_/employees/InsertCooperL.sql",
-    "d1:remote-update": "wrangler d1 execute staff-augmentation --remote --file=./database_/maintain.sql",
-    "d1:local-update": "wrangler d1 execute staff-augmentation --local --file=./database_/maintain.sql"
+    "d1:local-initialize": "wrangler d1 execute cloudflare_db --local --file=./database/basic.sql",
+    "d1:remote-initialize": "wrangler d1 execute cloudflare_db --remote --file=./database/basic.sql"
   },
   "dependencies": {
+    "@hookform/resolvers": "^3.9.0",
     "@mapbox/node-pre-gyp": "^1.0.11",
+    "@react-spring/web": "^9.7.4",
     "@remix-run/cloudflare": "^2.11.1",
     "@remix-run/cloudflare-pages": "^2.11.1",
     "@remix-run/react": "^2.11.1",
@@ -33,8 +31,11 @@
     "bcrypt": "^5.1.1",
     "bcrypt-ts": "^5.0.2",
     "isbot": "^4.1.0",
+    "prop-types": "^15.8.1",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.53.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240821.1",

@@ -1,11 +1,11 @@
-export class User {
+export class UserResponse {
   id!: number;
   username!: string;
 }
 
 
 export class LoginResponse {
-  user!: User;
+  user!: UserResponse;
 }
 
 
@@ -43,10 +43,9 @@ export interface LoginCookieData {
   type userRegister = {
     username: string;
     password: string;
-    role: string;
   };
   
-  type User1 ={
+  type User = {
     user_id: number; // SQLite uses INTEGER for auto-increment primary keys
     username: string; // Assuming email should be unique
     user_password: string;
@@ -66,7 +65,7 @@ export interface LoginCookieData {
   
   
   
-  export type { userLogin,ReadUserType, userRegister, User1 };
+  export type { userLogin,ReadUserType, userRegister, User };
   
   
 

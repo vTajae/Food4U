@@ -1,0 +1,17 @@
+{
+  "dependencies": {
+    "concurrent": "^0.3.2"
+  },
+  "scripts": {
+    "build": "npm run build:frontend",
+    "dev": "npx concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && . env/bin/activate && pip3 install -r requirements.txt && fastapi dev server.py",
+    "lint": "cd frontend && npm run lint",
+    "start": "concurrently \"npm run start:frontend\" \"npm run start:backend\"",
+    "start:frontend": "cd frontend && npm run start",
+    "hi": "source env/bin/activate ",
+    "start:backend": "cd backend && fastapi dev server.py",
+    "typecheck": "cd frontend && npm run typecheck"
+  }
+}

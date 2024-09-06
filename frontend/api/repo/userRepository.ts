@@ -18,7 +18,7 @@ class UserRepository {
     return results[0];
   }
 
-  async addUser(userData: userRegister): Promise<number | void> {
+  async addBasicUser(userData: userRegister): Promise<number | void> {
     const unixTimestamp = Math.floor(Date.now() / 1000); // Convert current time to Unix timestamp
     const query = `
       INSERT INTO user (username, user_password, user_role, createdAt, updatedAt)
@@ -30,7 +30,7 @@ class UserRepository {
         .bind(
           userData.username,
           userData.password,
-          userData.role,
+          "2",
           unixTimestamp,
           unixTimestamp
         )
@@ -42,6 +42,33 @@ class UserRepository {
       });
     }
   }
+
+  async addAdminUser(userData: userRegister): Promise<number | void> {
+    const unixTimestamp = Math.floor(Date.now() / 1000); // Convert current time to Unix timestamp
+    const query = `
+      INSERT INTO user (username, user_password, user_role, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?)`;
+
+    try {
+      const results = await this.db
+        .prepare(query)
+        .bind(
+          userData.username,
+          userData.password,
+          "1",
+          unixTimestamp,
+          unixTimestamp
+        )
+        .run();
+      return results.meta.last_row_id;
+    } catch (e: any) {
+      console.error({
+        message: e.message,
+      });
+    }
+  }
+
+
 }
 
 export default UserRepository;

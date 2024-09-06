@@ -67,6 +67,9 @@ class UserService {
   }
 
   async registerUser(userData: userRegister) {
+
+
+    console.log(userData, "userData");
     // Check if user already exists
     const existingUser = await this.userRepository.findUserByUsername(
       userData.username
@@ -81,7 +84,7 @@ class UserService {
 
     // Add the new user to the database
 
-    const userId = await this.userRepository.addUser(userData);
+    const userId = await this.userRepository.addBasicUser(userData);
 
     console.log(userId, "userId");
 
