@@ -85,11 +85,3 @@ CREATE TABLE PatientMedicalHistory (
     FOREIGN KEY (ProfileID) REFERENCES Profile(ProfileID),
     FOREIGN KEY (Code) REFERENCES ICDCodes(Code)
 );
-
--- Ethnicity-Based Medical Conditions Table
-CREATE TABLE EthnicityMedicalConditions (
-    ConditionID INT PRIMARY KEY AUTO_INCREMENT,
-    ConditionName VARCHAR(255),
-    Ethnicity VARCHAR(100),
-    IsMedicalCondition BOOLEAN DEFAULT TRUE
-);
