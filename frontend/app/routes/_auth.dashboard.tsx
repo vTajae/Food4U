@@ -2,8 +2,8 @@ import { json, ActionFunction } from "@remix-run/cloudflare";
 import { z } from "zod";
 import { useFetcher } from "@remix-run/react";
 import { useState, useEffect } from "react";
-import { Button, SearchBar } from "~/components/search/bar";
-import { SearchResult } from "~/components/search/results";
+import { Button, SearchBar } from "../components/search/bar";
+import { SearchResult } from "../components/search/results";
 
 const searchSchema = z.object({
   query: z

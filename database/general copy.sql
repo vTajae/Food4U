@@ -1,10 +1,9 @@
-CREATE TABLE Users (
-    profileID PRIMARY KEY,
-    age INT,
-    weight DECIMAL(5,2), -- Current weight
-    height DECIMAL(5,2),
-    gender VARCHAR(10)
+CREATE TABLE Profile (
+    profileID PRIMARY KEY
 );
+
+
+
 
 
 CREATE TABLE UserPreferences (
@@ -67,7 +66,6 @@ CREATE TABLE Meals (
     hasProbiotics BOOLEAN DEFAULT FALSE,
     containsSteroids BOOLEAN DEFAULT FALSE -- True if meal contains steroids
 );
-
 
 
 CREATE TABLE Ingredients (

@@ -1,0 +1,136 @@
+Preference table:
+like / dislikes OR TABLE
+isLike if 
+isDislike if 1 or 0
+
+
+
+
+
+Profile:
+ProfileID
+
+
+Patient Attribute:
+AttributeID
+Age
+Ethnicity
+
+
+
+
+
+IDC Codes
+
+Patient medical history:
+medicalHistroyID
+ProfileID
+code 
+
+
+
+Ground Beef Quality:
+
+97% Lean
+80/20 Lean
+
+halal beef 99% lean 
+
+
+
+
+Menu:
+
+
+Entres:
+
+Fried Chicken, Pork
+
+Sides:
+
+Fries, Colaw slaw , mashed Potatos
+
+
+
+EXAMPLE:
+
+Colw slaw:
+Cabbage, carrots, dressing (sweet dressing, vinagre based dressing)
+
+ranch CONTAINS MILK
+
+mashed Postatos:
+Butter, potatos, milk
+
+**BASE FOODS ARE INGREDIENTS**
+
+
+Dessert: 
+
+Cheese Cake
+
+
+patnet meal
+paitent id
+meal id
+
+
+
+
+
+table: Mealid menuItemID    (menuItem)
+
+
+Diabetes
+Calestrios
+
+
+
+
+
+
+table:
+menuitemID
+item desc
+calories
+allergen
+
+
+
+
+
+
+
+
+
+
+
+
+Patient Vitals:
+
+Height, Weight, Blood Pressure, BMI, Blood Oxygen
+
+
+
+
+
+
+
+
+
+Attribtuion
+lymphadeim
+
+season allergies
+
+
+
+isAnAllergy
+isMedicalCOndition
+
+
+
+
+
+
+

@@ -27,6 +27,7 @@
     "@remix-run/cloudflare-pages": "^2.11.1",
     "@remix-run/react": "^2.11.1",
     "@tsndr/cloudflare-worker-jwt": "^2.5.3",
+    "autocomplete-lhc": "^19.2.4",
     "aws-sdk": "^2.1687.0",
     "bcrypt": "^5.1.1",
     "bcrypt-ts": "^5.0.2",
