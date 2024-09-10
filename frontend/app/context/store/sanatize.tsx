@@ -1,6 +1,6 @@
 // app/components/UtilityProvider.tsx
 import { createContext, useContext, ReactNode } from "react";
-import { ZodUtility } from "~/utils";
+import { ZodUtility } from "../../utils/index";
 
 // Create the context to provide ZodUtility methods
 const ZodUtilityContext = createContext<typeof ZodUtility | null>(null);
