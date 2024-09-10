@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.concurrency import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routers import user_routes
+from app.api.routers import ai_routes
 from app.config.database import async_database_session
 
 origins = ["http://localhost:3000", "https://localhost:3001"]
@@ -36,6 +37,7 @@ app.add_middleware(
 
 # app.include_router(auth_routes.router)
 app.include_router(user_routes.router)
+app.include_router(ai_routes.router)
 
 
 
