@@ -66,3 +66,4 @@ These calls use `DEMO_KEY` for the API key. The `DEMO_KEY` can be used to explor
    ```
 
    > **Note:** The `dataType` parameter must be specified as an array.
+    https://fdc.nal.usda.gov/data-documentation.html
