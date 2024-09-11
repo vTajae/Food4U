@@ -1,26 +1,13 @@
-import os
-from dotenv import load_dotenv
 from fastapi import APIRouter
-
-import jwt
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
-
-from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
-
-documents = SimpleDirectoryReader("data").load_data()
-index = VectorStoreIndex.from_documents(documents)
-query_engine = index.as_query_engine()
-response = query_engine.query("Summarize the content of the document in the directory")
-print(response)
+from services.ai_service import AIService
 
 router = APIRouter()
 
-load_dotenv()
+# Initialize the AI service
+ai_service = AIService()
 
 @router.get("/ai")
 async def dashboard():
-    # Your dashboard logic here
-    return {"message": response.response}
-
-
-
+    # Call the service method to get the summary
+    summary = ai_service.get_summary()
+    return {"message": summary}
