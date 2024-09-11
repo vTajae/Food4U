@@ -1,7 +1,6 @@
 import os
 from dotenv import load_dotenv
 from fastapi import APIRouter
-
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from app.api.dependencies.auth_dep import get_current_user

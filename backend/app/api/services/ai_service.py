@@ -1,16 +1,16 @@
-from llama_cloud import HuggingFaceInferenceApiEmbedding
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
+from app.config.llama_config import AIConfig
 from llama_index.llms.ollama import Ollama
-from config import Config
 
 class AIService:
     def __init__(self):
         # Load documents from the directory specified in the config
-        documents = SimpleDirectoryReader(Config.DATA_DIRECTORY).load_data()
+        documents = SimpleDirectoryReader(AIConfig.DATA_DIRECTORY).load_data()
 
         # Set the embedding model and LLM model using settings from the config
-        Settings.embed_model = HuggingFaceInferenceApiEmbedding(model_name=Config.EMBEDDING_MODEL_NAME)
-        Settings.llm = Ollama(model=Config.LLM_MODEL, request_timeout=Config.REQUEST_TIMEOUT)
+        Settings.embed_model = HuggingFaceEmbedding(model_name=AIConfig.EMBEDDING_MODEL_NAME)
+        Settings.llm = Ollama(model=AIConfig.LLM_MODEL, request_timeout=AIConfig.REQUEST_TIMEOUT)
 
         # Create the index from the documents
         self.index = VectorStoreIndex.from_documents(documents)
@@ -20,3 +20,7 @@ class AIService:
         # Query the index to summarize the content of the document directory
         response = self.query_engine.query("Summarize the content of the document in the directory")
         return response.response
+
+    async def invalidate_refresh_token(self, token: str):
+        # Token invalidation logic (this is a placeholder for your actual token logic)
+        return {"message": "Token invalidated"}
