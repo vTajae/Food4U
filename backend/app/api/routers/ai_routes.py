@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from services.ai_service import AIService
+from backend.app.api.services.ai_service import AIService
 
 router = APIRouter()
 
