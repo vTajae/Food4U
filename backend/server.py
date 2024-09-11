@@ -58,4 +58,4 @@ if __name__ == "__main__":
     app = create_app()
 
     # Run the Uvicorn server with the app, specifying the host and port
-    uvicorn.run(app, host="0.0.0.0", port=port, workers=1)
+    uvicorn.run(app, host="0.0.0.0", port=port)
