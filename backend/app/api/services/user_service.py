@@ -92,3 +92,9 @@ class UserService:
         return {"access_token": access_token, "refresh_token": refresh_token}
     
     
+
+
+    def updatePreferences(self, data: dict):
+        # Add to profile (Ethnicity,Medical Condition, Age, Favoraite Meal: Breafkast,Lunch, Dinner, Snack )
+    
+        return "Preferences Updated"

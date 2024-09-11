@@ -1,152 +1,132 @@
-# coding: utf-8
+import json
+import pytest
+from fastapi.testclient import TestClient
+from server import app
 
-from __future__ import absolute_import
+# Create a TestClient for the FastAPI app
+client = TestClient(app)
 
-from flask import json
-from six import BytesIO
-
-from FoodCentralAPI.models.abridged_food_item import AbridgedFoodItem  # noqa: E501
-from FoodCentralAPI.models.food_list_criteria import FoodListCriteria  # noqa: E501
-from FoodCentralAPI.models.food_search_criteria import FoodSearchCriteria  # noqa: E501
-from FoodCentralAPI.models.foods_criteria import FoodsCriteria  # noqa: E501
-from FoodCentralAPI.models.inline_response200 import InlineResponse200  # noqa: E501
-from FoodCentralAPI.models.search_result import SearchResult  # noqa: E501
-from FoodCentralAPI.test import BaseTestCase
-
-
-class TestFDCController(BaseTestCase):
-    """FDCController integration test stubs"""
-
-    def test_get_food(self):
-        """Test case for get_food
-
-        Fetches details for one food item by FDC ID
-        """
-        query_string = [('format', 'format_example'),
-                        ('nutrients', 56)]
-        response = self.client.open(
-            '/fdc/v1/food/{fdcId}'.format(fdc_id='fdc_id_example'),
-            method='GET',
-            query_string=query_string)
-        self.assert200(response,
-                       'Response body is : ' + response.data.decode('utf-8'))
-
-    def test_get_foods(self):
-        """Test case for get_foods
-
-        Fetches details for multiple food items using input FDC IDs
-        """
-        query_string = [('fdc_ids', 'fdc_ids_example'),
-                        ('format', 'format_example'),
-                        ('nutrients', 56)]
-        response = self.client.open(
-            '/fdc/v1/foods',
-            method='GET',
-            query_string=query_string)
-        self.assert200(response,
-                       'Response body is : ' + response.data.decode('utf-8'))
-
-    def test_get_foods_list(self):
-        """Test case for get_foods_list
-
-        Returns a paged list of foods, in the 'abridged' format
-        """
-        query_string = [('data_type', 'data_type_example'),
-                        ('page_size', 200),
-                        ('page_number', 56),
-                        ('sort_by', 'sort_by_example'),
-                        ('sort_order', 'sort_order_example')]
-        response = self.client.open(
-            '/fdc/v1/foods/list',
-            method='GET',
-            query_string=query_string)
-        self.assert200(response,
-                       'Response body is : ' + response.data.decode('utf-8'))
-
-    def test_get_foods_search(self):
-        """Test case for get_foods_search
-
-        Returns a list of foods that matched search (query) keywords
-        """
-        query_string = [('query', 'query_example'),
-                        ('data_type', 'data_type_example'),
-                        ('page_size', 200),
-                        ('page_number', 56),
-                        ('sort_by', 'sort_by_example'),
-                        ('sort_order', 'sort_order_example'),
-                        ('brand_owner', 'brand_owner_example')]
-        response = self.client.open(
-            '/fdc/v1/foods/search',
-            method='GET',
-            query_string=query_string)
-        self.assert200(response,
-                       'Response body is : ' + response.data.decode('utf-8'))
-
-    def test_get_json_spec(self):
-        """Test case for get_json_spec
-
-        Returns this documentation in JSON format
-        """
-        response = self.client.open(
-            '/fdc/v1/json-spec',
-            method='GET')
-        self.assert200(response,
-                       'Response body is : ' + response.data.decode('utf-8'))
-
-    def test_get_yaml_spec(self):
-        """Test case for get_yaml_spec
-
-        Returns this documentation in JSON format
-        """
-        response = self.client.open(
-            '/fdc/v1/yaml-spec',
-            method='GET')
-        self.assert200(response,
-                       'Response body is : ' + response.data.decode('utf-8'))
-
-    def test_post_foods(self):
-        """Test case for post_foods
-
-        Fetches details for multiple food items using input FDC IDs
-        """
-        body = FoodsCriteria()
-        response = self.client.open(
-            '/fdc/v1/foods',
-            method='POST',
-            data=json.dumps(body),
-            content_type='application/json')
-        self.assert200(response,
-                       'Response body is : ' + response.data.decode('utf-8'))
-
-    def test_post_foods_list(self):
-        """Test case for post_foods_list
-
-        Returns a paged list of foods, in the 'abridged' format
-        """
-        body = FoodListCriteria()
-        response = self.client.open(
-            '/fdc/v1/foods/list',
-            method='POST',
-            data=json.dumps(body),
-            content_type='application/json')
-        self.assert200(response,
-                       'Response body is : ' + response.data.decode('utf-8'))
-
-    def test_post_foods_search(self):
-        """Test case for post_foods_search
-
-        Returns a list of foods that matched search (query) keywords
-        """
-        body = FoodSearchCriteria()
-        response = self.client.open(
-            '/fdc/v1/foods/search',
-            method='POST',
-            data=json.dumps(body),
-            content_type='application/json')
-        self.assert200(response,
-                       'Response body is : ' + response.data.decode('utf-8'))
+def test_get_food():
+    """Test case for getting a single food item by FDC ID"""
+    query_params = {
+        'format': 'format_example',
+        'nutrients': 56
+    }
+    response = client.get('/fdc/v1/food/fdc_id_example', params=query_params)
+    
+    assert response.status_code == 200
+    assert 'expected_field' in response.json()  # Adjust this assertion for expected response structure
 
 
-if __name__ == '__main__':
-    import unittest
-    unittest.main()
+def test_get_foods():
+    """Test case for getting multiple food items using FDC IDs"""
+    query_params = {
+        'fdc_ids': 'fdc_ids_example',
+        'format': 'format_example',
+        'nutrients': 56
+    }
+    response = client.get('/fdc/v1/foods', params=query_params)
+
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)  # Expecting a list of food items
+
+
+def test_get_foods_list():
+    """Test case for getting a paged list of foods in abridged format"""
+    query_params = {
+        'data_type': 'data_type_example',
+        'page_size': 200,
+        'page_number': 56,
+        'sort_by': 'sort_by_example',
+        'sort_order': 'sort_order_example'
+    }
+    response = client.get('/fdc/v1/foods/list', params=query_params)
+
+    assert response.status_code == 200
+    assert 'foods' in response.json()  # Adjust to match your actual JSON structure
+
+
+def test_get_foods_search():
+    """Test case for searching foods by query"""
+    query_params = {
+        'query': 'query_example',
+        'data_type': 'data_type_example',
+        'page_size': 200,
+        'page_number': 56,
+        'sort_by': 'sort_by_example',
+        'sort_order': 'sort_order_example',
+        'brand_owner': 'brand_owner_example'
+    }
+    response = client.get('/fdc/v1/foods/search', params=query_params)
+
+    assert response.status_code == 200
+    assert 'search_results' in response.json()  # Adjust to match actual response
+
+
+def test_get_json_spec():
+    """Test case for retrieving API spec in JSON format"""
+    response = client.get('/fdc/v1/json-spec')
+
+    assert response.status_code == 200
+    assert response.headers['Content-Type'] == 'application/json'
+
+
+def test_get_yaml_spec():
+    """Test case for retrieving API spec in YAML format"""
+    response = client.get('/fdc/v1/yaml-spec')
+
+    assert response.status_code == 200
+    assert response.headers['Content-Type'] == 'application/x-yaml'
+
+
+def test_post_foods():
+    """Test case for posting multiple FDC IDs and getting food details"""
+    body = {
+        # Example payload based on your FoodCriteria model
+        'fdc_ids': [12345, 67890],
+        'format': 'abridged'
+    }
+    response = client.post(
+        '/fdc/v1/foods',
+        data=json.dumps(body),
+        headers={'Content-Type': 'application/json'}
+    )
+
+    assert response.status_code == 200
+    assert 'food_details' in response.json()  # Adjust to match actual response structure
+
+
+def test_post_foods_list():
+    """Test case for posting criteria to get paged list of foods"""
+    body = {
+        # Example payload based on your FoodListCriteria model
+        'data_type': 'Branded',
+        'page_size': 50,
+        'page_number': 1
+    }
+    response = client.post(
+        '/fdc/v1/foods/list',
+        data=json.dumps(body),
+        headers={'Content-Type': 'application/json'}
+    )
+
+    assert response.status_code == 200
+    assert 'foods' in response.json()  # Adjust to match actual response structure
+
+
+def test_post_foods_search():
+    """Test case for posting search criteria and getting matching food results"""
+    body = {
+        # Example payload based on your FoodSearchCriteria model
+        'query': 'apple',
+        'page_size': 10,
+        'page_number': 1
+    }
+    response = client.post(
+        '/fdc/v1/foods/search',
+        data=json.dumps(body),
+        headers={'Content-Type': 'application/json'}
+    )
+
+    assert response.status_code == 200
+    assert 'results' in response.json()  # Adjust to match actual response structure

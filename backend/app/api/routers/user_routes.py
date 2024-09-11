@@ -43,19 +43,6 @@ async def login_user(response: Response, user_data: UserLoginSchema, service: Us
     return({"user": user, "tokens": tokens})
     
 
-
-@router.get("/user/profile", response_model=UserModel)
-async def user_profile(
-    user: User = Depends(get_current_user),
-    user_service: UserService = Depends(get_user_service),
-):
-    if not user.username:
-        raise HTTPException(
-            status_code=401, detail="Session invalid or expired, please login.")
-
-    return await user_service.get_user_by_id(user.id)
-
-
 @router.get("/refresh")
 async def refresh_token(request: Request, response: Response, user_service: UserService = Depends(get_user_service),
 ):
@@ -95,5 +82,32 @@ async def dashboard():
     # Your dashboard logic here
     return {"message": "Welcome to the dashboard"}
 
+
+
+
+@router.get("/user/profile", response_model=UserModel)
+async def user_profile(
+    user: User = Depends(get_current_user),
+    user_service: UserService = Depends(get_user_service),
+):
+    if not user.username:
+        raise HTTPException(
+            status_code=401, detail="Session invalid or expired, please login.")
+
+    return await user_service.get_user_by_id(user.id)
+
+
+@router.post("/user/preferences")
+async def user_profile(
+    user: User = Depends(get_current_user),
+    user_service: UserService = Depends(get_user_service),
+):
+    if not user.id:
+        raise HTTPException(
+            status_code=401, detail="Session invalid or expired, please login.")
+        
+    
+
+    return await user_service.updatePreferences(user.id)
 
 
