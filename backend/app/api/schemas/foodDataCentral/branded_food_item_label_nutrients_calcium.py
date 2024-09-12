@@ -5,4 +5,4 @@ class BrandedFoodItemLabelNutrientsCalcium(BaseModel):
     value: Optional[float] = None  # Optional allows the field to be None if not provided
 
     class Config:
-        orm_mode = True  # For compatibility with ORMs if needed
+        from_attributes = True  # For compatibility with ORMs if needed

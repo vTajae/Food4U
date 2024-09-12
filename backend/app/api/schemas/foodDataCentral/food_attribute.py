@@ -7,4 +7,4 @@ class FoodAttributeFoodAttributeType(BaseModel):
     description: Optional[str] = None
 
     class Config:
-        orm_mode = True  # Enable ORM mode for compatibility with ORMs like SQLAlchemy
+        from_attributes = True  # Enable ORM mode for compatibility with ORMs like SQLAlchemy

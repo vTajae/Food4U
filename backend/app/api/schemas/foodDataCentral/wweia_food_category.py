@@ -7,4 +7,4 @@ class WweiaFoodCategory(BaseModel):
     wweia_food_category_description: Optional[str] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True

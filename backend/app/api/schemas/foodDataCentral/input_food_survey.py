@@ -20,4 +20,4 @@ class InputFoodSurvey(BaseModel):
     retention_factor: Optional[RetentionFactor] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True

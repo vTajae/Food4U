@@ -5,4 +5,4 @@ class BrandedFoodItemLabelNutrientsProtein(BaseModel):
     value: Optional[float] = None  # Optional field for Protein value
 
     class Config:
-        orm_mode = True  # Enables compatibility with ORM
+        from_attributes = True  # Enables compatibility with ORM

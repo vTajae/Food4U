@@ -1,36 +1,102 @@
-# app/routes/food_routes.py
+from typing import List, Optional
+from fastapi import APIRouter, Depends, Query
 
-from fastapi import APIRouter, Query
-from typing import List
-
-from backend.app.api.services.fdc_service import FDC_Service
+from app.api.services.fdc_service import FDC_Service
+from app.api.dependencies.fdc_dep import get_fdc_service
 
 router = APIRouter()
 
 @router.get("/fdc/v1/food/{fdc_id}")
-def get_food(fdc_id: str, format: str, nutrients: int):
-    return FDC_Service.get_food(fdc_id, format, nutrients)
+async def get_food(
+    fdc_id: str, 
+    format: Optional[str] = Query(default="abridged"), 
+    nutrients: Optional[int] = Query(default=0), 
+    fdc_service: FDC_Service = Depends(get_fdc_service)
+):
+    """
+    Fetch a single food item by FDC ID.
+    """
+    return await fdc_service.get_food(fdc_id, format, nutrients)
+
 
 @router.get("/fdc/v1/foods")
-def get_foods(fdc_ids: List[str] = Query(...), format: str = "abridged", nutrients: int = 0):
-    return FDC_Service.get_foods(fdc_ids, format, nutrients)
+async def get_foods(
+    fdc_ids: List[str] = Query(default=[]), 
+    format: Optional[str] = Query(default="abridged"), 
+    nutrients: Optional[int] = Query(default=0), 
+    fdc_service: FDC_Service = Depends(get_fdc_service)
+):
+    """
+    Fetch multiple food items by FDC IDs.
+    """
+    return await fdc_service.get_foods(fdc_ids, format, nutrients)
+
 
 @router.get("/fdc/v1/foods/list")
-def get_foods_list(data_type: str, page_size: int, page_number: int, sort_by: str = "name", sort_order: str = "asc"):
-    return FDC_Service.get_foods_list(data_type, page_size, page_number, sort_by, sort_order)
+async def get_foods_list(
+    data_type: Optional[List[str]] = Query(default=[]), 
+    page_size: Optional[int] = Query(default=50, gt=0), 
+    page_number: Optional[int] = Query(default=1, gt=0), 
+    sort_by: Optional[str] = Query(default=None), 
+    sort_order: Optional[str] = Query(default="asc"), 
+    fdc_service: FDC_Service = Depends(get_fdc_service)
+):
+    """
+    Fetch a paginated list of foods in the abridged format.
+    """
+    return await fdc_service.get_foods_list(data_type, page_size, page_number, sort_by, sort_order)
+
 
 @router.get("/fdc/v1/foods/search")
-def search_foods(query: str, data_type: str, page_size: int, page_number: int, sort_by: str = "name", sort_order: str = "asc", brand_owner: str = None):
-    return FDC_Service.search_foods(query, data_type, page_size, page_number, sort_by, sort_order, brand_owner)
+async def search_foods(
+    query: str, 
+    data_type: Optional[List[str]] = Query(default=[]), 
+    page_size: Optional[int] = Query(default=50, gt=0), 
+    page_number: Optional[int] = Query(default=1, gt=0), 
+    sort_by: Optional[str] = Query(default="name"), 
+    sort_order: Optional[str] = Query(default="asc"), 
+    brand_owner: Optional[str] = Query(default=None), 
+    fdc_service: FDC_Service = Depends(get_fdc_service)
+):
+    """
+    Search foods by query.
+    """
+    return await fdc_service.search_foods(query, data_type, page_size, page_number, sort_by, sort_order, brand_owner)
+
 
 @router.post("/fdc/v1/foods")
-def post_foods(fdc_ids: List[int], format: str = "abridged"):
-    return FDC_Service.post_foods(fdc_ids, format)
+async def post_foods(
+    fdc_ids: List[int] = Query(default=[]), 
+    format: Optional[str] = Query(default="abridged"), 
+    fdc_service: FDC_Service = Depends(get_fdc_service)
+):
+    """
+    Post FDC IDs to retrieve food details.
+    """
+    return await fdc_service.post_foods(fdc_ids, format)
+
 
 @router.post("/fdc/v1/foods/list")
-def post_foods_list(data_type: str, page_size: int, page_number: int):
-    return FDC_Service.post_foods_list(data_type, page_size, page_number)
+async def post_foods_list(
+    data_type: Optional[str] = Query(default=""), 
+    page_size: Optional[int] = Query(default=50, gt=0), 
+    page_number: Optional[int] = Query(default=1, gt=0), 
+    fdc_service: FDC_Service = Depends(get_fdc_service)
+):
+    """
+    Post criteria to retrieve a paginated list of foods.
+    """
+    return await fdc_service.post_foods_list(data_type, page_size, page_number)
+
 
 @router.post("/fdc/v1/foods/search")
-def post_foods_search(query: str, page_size: int, page_number: int):
-    return FDC_Service.post_foods_search(query, page_size, page_number)
+async def post_foods_search(
+    query: str, 
+    page_size: Optional[int] = Query(default=50, gt=0), 
+    page_number: Optional[int] = Query(default=1, gt=0), 
+    fdc_service: FDC_Service = Depends(get_fdc_service)
+):
+    """
+    Post search criteria to retrieve matching food results.
+    """
+    return await fdc_service.post_foods_search(query, page_size, page_number)

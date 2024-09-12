@@ -10,4 +10,4 @@ class FoodNutrientDerivation(BaseModel):
     food_nutrient_source: Optional[FoodNutrientSource] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True

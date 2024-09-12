@@ -10,4 +10,4 @@ class AbridgedFoodNutrient(BaseModel):
     derivation_description: Optional[str] = None
 
     class Config:
-        orm_mode = True  # If you're interacting with an ORM like SQLAlchemy
+        from_attributes = True  # If you're interacting with an ORM like SQLAlchemy

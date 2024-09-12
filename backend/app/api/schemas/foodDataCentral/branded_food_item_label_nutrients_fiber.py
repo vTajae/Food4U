@@ -5,4 +5,4 @@ class BrandedFoodItemLabelNutrientsFiber(BaseModel):
     value: Optional[float] = None  # Optional field for Fiber value
 
     class Config:
-        orm_mode = True  # Enables compatibility with ORM (e.g., SQLAlchemy)
+        from_attributes = True  # Enables compatibility with ORM (e.g., SQLAlchemy)

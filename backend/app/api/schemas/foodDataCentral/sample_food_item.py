@@ -12,4 +12,4 @@ class SampleFoodItem(BaseModel):
     food_attributes: Optional[List[FoodCategory]] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True

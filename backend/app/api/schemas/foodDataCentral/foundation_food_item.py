@@ -26,4 +26,4 @@ class FoundationFoodItem(BaseModel):
     nutrient_conversion_factors: Optional[List[NutrientConversionFactors]] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True

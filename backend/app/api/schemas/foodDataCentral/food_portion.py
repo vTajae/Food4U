@@ -15,4 +15,4 @@ class FoodPortion(BaseModel):
     measure_unit: Optional[MeasureUnit] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True

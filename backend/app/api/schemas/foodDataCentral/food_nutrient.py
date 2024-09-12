@@ -18,4 +18,4 @@ class FoodNutrient(BaseModel):
     nutrient_analysis_details: Optional[NutrientAnalysisDetails] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True

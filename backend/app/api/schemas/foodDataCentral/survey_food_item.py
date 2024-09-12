@@ -21,4 +21,4 @@ class SurveyFoodItem(BaseModel):
     wweia_food_category: Optional[WweiaFoodCategory] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True

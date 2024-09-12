@@ -14,4 +14,4 @@ class NutrientAnalysisDetails(BaseModel):
     nutrient_acquisition_details: Optional[List[NutrientAcquisitionDetails]] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True

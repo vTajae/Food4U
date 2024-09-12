@@ -1,7 +1,8 @@
 from pydantic import BaseModel
 from typing import Optional, List
-from FoodCentralAPI.models.food_search_criteria import FoodSearchCriteria
-from FoodCentralAPI.models.search_result_food import SearchResultFood
+
+from app.api.schemas.foodDataCentral.food_search_criteria import FoodSearchCriteria
+from app.api.schemas.foodDataCentral.search_result_food import SearchResultFood
 
 
 class SearchResult(BaseModel):
@@ -12,4 +13,4 @@ class SearchResult(BaseModel):
     foods: Optional[List[SearchResultFood]] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True

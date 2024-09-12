@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional, List
-from FoodCentralAPI.models.abridged_food_nutrient import AbridgedFoodNutrient
+
+from app.api.schemas.foodDataCentral.abridged_food_item import AbridgedFoodNutrient
 
 
 class SearchResultFood(BaseModel):
@@ -20,4 +21,4 @@ class SearchResultFood(BaseModel):
     score: Optional[float] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True

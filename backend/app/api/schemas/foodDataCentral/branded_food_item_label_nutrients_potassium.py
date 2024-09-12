@@ -5,4 +5,4 @@ class BrandedFoodItemLabelNutrientsPotassium(BaseModel):
     value: Optional[float] = None  # Optional field for Potassium value
 
     class Config:
-        orm_mode = True  # Enables compatibility with ORM
+        from_attributes = True  # Enables compatibility with ORM
