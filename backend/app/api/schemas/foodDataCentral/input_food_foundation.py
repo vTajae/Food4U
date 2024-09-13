@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
-from FoodCentralAPI.models.sample_food_item import SampleFoodItem
+
+from backend.app.api.schemas.foodDataCentral.sample_food_item import SampleFoodItem
 
 
 class InputFoodFoundation(BaseModel):

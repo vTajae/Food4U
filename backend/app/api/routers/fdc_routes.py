@@ -21,16 +21,15 @@ async def get_food(
 
 @router.get("/fdc/v1/foods")
 async def get_foods(
-    fdc_ids: List[str] = Query(default=[]), 
-    format: Optional[str] = Query(default="abridged"), 
-    nutrients: Optional[int] = Query(default=0), 
-    fdc_service: FDC_Service = Depends(get_fdc_service)
+    fdcIds: List[str] = Query(default=[]),  # List of FDC IDs, passed as repeating params
+    format: Optional[str] = Query(default="full"),  # Default is 'full'
+    nutrients: Optional[List[int]] = Query(default=None),  # List of nutrient IDs (fix)
+    fdc_service: FDC_Service = Depends(get_fdc_service)  # Inject the service
 ):
     """
-    Fetch multiple food items by FDC IDs.
+    Fetch multiple food items by FDC IDs, format, and optional nutrients.
     """
-    return await fdc_service.get_foods(fdc_ids, format, nutrients)
-
+    return await fdc_service.get_foods(fdcIds, format, nutrients)
 
 @router.get("/fdc/v1/foods/list")
 async def get_foods_list(
@@ -53,7 +52,7 @@ async def search_foods(
     data_type: Optional[List[str]] = Query(default=[]), 
     page_size: Optional[int] = Query(default=50, gt=0), 
     page_number: Optional[int] = Query(default=1, gt=0), 
-    sort_by: Optional[str] = Query(default="name"), 
+    sort_by: Optional[str] = Query(default=None), 
     sort_order: Optional[str] = Query(default="asc"), 
     brand_owner: Optional[str] = Query(default=None), 
     fdc_service: FDC_Service = Depends(get_fdc_service)

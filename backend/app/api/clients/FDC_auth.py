@@ -1,7 +1,7 @@
 import logging
 import os
 import httpx
-from fastapi import HTTPException, Security
+from fastapi import HTTPException, Response, Security
 from app.api.auth.FDC_auth import check_ApiKeyAuth
 
 # Global AsyncClient instance to be reused across the application
@@ -48,12 +48,12 @@ class FDC_AuthClient:
             "Content-Type": "application/json",
             "User-Agent": "curl/7.64.1",  # Mimic curl headers
             "Accept": "*/*",
-            "Connection": "keep-alive"
+            "Connection": "keep-alive",
         }
 
 
 
-    async def make_get_request(self, endpoint: str, params: dict) -> dict:
+    async def make_get_request(self, endpoint: str, params: dict) -> Response:
         """
         Helper method to make GET requests, ensuring the API key is the first query parameter.
         """
@@ -71,7 +71,7 @@ class FDC_AuthClient:
         try:
             response = await client.get(url, headers=self.get_headers())
             response.raise_for_status()
-            return response.json()
+            return response
         except httpx.HTTPStatusError as e:
             raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
 
