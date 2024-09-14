@@ -1,5 +1,5 @@
 from fastapi import Depends
-from app.api.clients.FDC_auth import FDC_AuthClient
+from app.client.fdc_cli import FDC_AuthClient
 from app.api.services.fdc_service import FDC_Service
 
 # Dependency Injection for FDC_AuthClient

@@ -1,6 +1,6 @@
 import datetime
 from app.api.enums.token import TokenType
-from app.api.models.auth_model import Token
+from app.api.schemas.auth_model import Token
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError

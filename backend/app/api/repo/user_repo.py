@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
-from app.api.models.user_model import User
+from app.api.schemas.user_model import User
 
 
 class UserRepository:

@@ -5,9 +5,9 @@ import jwt
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from app.api.dependencies.auth_dep import get_current_user
 from app.api.dependencies.user_dep import get_user_service
-from app.api.schemas.user_schema import UserLoginSchema, UserModel, UserRegisterSchema, UserResponse
+from app.api.models.user_schema import UserLoginSchema, UserModel, UserRegisterSchema, UserResponse
 from app.api.services.user_service import UserService
-from app.api.models.user_model import User
+from app.api.schemas.user_model import User
 
 router = APIRouter()
 

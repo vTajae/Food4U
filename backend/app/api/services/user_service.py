@@ -5,7 +5,7 @@ from typing import Optional
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from app.api.repo.user_repo import UserRepository
-from app.api.models.user_model import User
+from app.api.schemas.user_model import User
 from app.api.repo.auth_repo import AuthRepository
 
 
