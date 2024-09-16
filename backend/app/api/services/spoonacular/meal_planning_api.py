@@ -22,7 +22,7 @@ from typing import Any, Dict, Optional, Union
 from typing_extensions import Annotated
 
 from backend.app.api.models.spoonacular.add_meal_plan_template200_response import AddMealPlanTemplate200Response
-from backend.resources.SpoonacularAPI.spoonacular.api_response import ApiResponse
+from backend.app.api.models.api_response import ApiResponse
 
 
 

@@ -8,6 +8,10 @@ export class LoginResponse {
   user!: UserResponse;
 }
 
+export class PythonLogin {
+  message!:  "Logged In. All Good!" | "Not Logged";
+}
+
 
 
 export interface UserModel {

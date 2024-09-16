@@ -25,7 +25,7 @@ from spoonacular.models.menu_item import MenuItem
 from spoonacular.models.search_menu_items200_response import SearchMenuItems200Response
 
 from spoonacular.api_client import ApiClient, RequestSerialized
-from spoonacular.api_response import ApiResponse
+from backend.app.api.models.api_response import ApiResponse
 from spoonacular.rest import RESTResponseType
 
 

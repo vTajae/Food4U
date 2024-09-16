@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from typing import List, Optional
 
-from app.client.fdc_cli import FDC_AuthClient
+from app.api.client.fdc_cli import FDC_AuthClient
 from app.api.models.foodDataCentral import abridged_food_item, inline_response200
 from app.api.models.foodDataCentral.food_list_criteria import FoodListCriteria
 from app.api.models.foodDataCentral.food_search_criteria import FoodSearchCriteria

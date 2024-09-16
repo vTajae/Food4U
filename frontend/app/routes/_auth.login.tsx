@@ -6,11 +6,11 @@ import {
   Session,
 } from "@remix-run/cloudflare";
 import { useState } from "react";
-import UserService from "api/services/userService";
-import { createSessionStorage } from "~/context/session/session";
-import { Env } from "~/context";
-import RegisterForm from "~/components/login/registerForm";
-import LoginForm from "~/components/login/loginForm";
+import LoginForm from "../components/login/loginForm";
+import RegisterForm from "../components/login/registerForm";
+import { createSessionStorage } from "../context/session/session";
+import UserService from "../../api/services/userService";
+
 
 export const loader: LoaderFunction = async ({ context }) => {
   if (context.session.has("auth")) {
@@ -42,7 +42,7 @@ export const action: ActionFunction = async ({ request, context }) => {
     console.log("Submitted data:", { username, password, actionType });
 
     if (actionType === "login") {
-      const loginResult = await userService.loginUser({ username, password });
+      const loginResult = await userService.loginUser({ username, password }, myEnv);
 
       if (loginResult.success && loginResult.user) {
         mySession.set("auth", { ...loginResult.user });

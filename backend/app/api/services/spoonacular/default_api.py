@@ -24,7 +24,7 @@ from typing_extensions import Annotated
 from backend.app.api.models.spoonacular.analyze_recipe_request import AnalyzeRecipeRequest
 from backend.app.api.models.spoonacular.search_restaurants200_response import SearchRestaurants200Response
 from backend.resources.SpoonacularAPI.spoonacular.api_client import ApiClient, RequestSerialized
-from backend.resources.SpoonacularAPI.spoonacular.api_response import ApiResponse
+from backend.app.api.models.api_response import ApiResponse
 from backend.resources.SpoonacularAPI.spoonacular.rest import RESTResponseType
 
 

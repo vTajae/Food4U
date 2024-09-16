@@ -1,7 +1,5 @@
 import { LoaderFunctionArgs, json } from "@remix-run/cloudflare";
 import { useLoaderData } from "@remix-run/react";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import React from "react";
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const filePath = params["*"];

@@ -28,7 +28,7 @@ from spoonacular.api.recipes_api import RecipesApi
 from spoonacular.api.wine_api import WineApi
 
 # import ApiClient
-from spoonacular.api_response import ApiResponse
+from backend.app.api.models.api_response import ApiResponse
 from spoonacular.api_client import ApiClient
 from spoonacular.configuration import Configuration
 from spoonacular.exceptions import OpenApiException

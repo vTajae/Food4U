@@ -1,5 +1,5 @@
 from fastapi import Depends
-from app.client.spoon_cli import Spoon_AuthClient
+from app.api.client.spoon_cli import Spoon_AuthClient
 from app.api.services.spoon_service import Spoon_Service
 
 # Dependency Injection for Spoon_AuthClient

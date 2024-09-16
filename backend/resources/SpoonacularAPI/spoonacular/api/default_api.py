@@ -24,7 +24,7 @@ from spoonacular.models.analyze_recipe_request import AnalyzeRecipeRequest
 from spoonacular.models.search_restaurants200_response import SearchRestaurants200Response
 
 from spoonacular.api_client import ApiClient, RequestSerialized
-from spoonacular.api_response import ApiResponse
+from backend.app.api.models.api_response import ApiResponse
 from spoonacular.rest import RESTResponseType
 
 

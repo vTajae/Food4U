@@ -1,8 +1,17 @@
-
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FetcherWithComponents } from "@remix-run/react";
+
+interface ButtonProps {
+  fetcher: FetcherWithComponents<{
+    message?: string;
+    errors?: Record<string, string[]>;
+  }>; // Pass fetcher as a prop
+  text: string; // The text displayed on the button
+  route: string; // The route to which the button will post data
+  action: string; // The action to be performed
+}
 
 // Define Zod schema for input validation
 const searchSchema = z.object({
@@ -14,11 +23,17 @@ const searchSchema = z.object({
 });
 
 interface SearchBarProps {
-  fetcher: FetcherWithComponents<{ message?: string; errors?: Record<string, string[]> }>; // Pass fetcher as a prop
+  fetcher: FetcherWithComponents<{
+    message?: string;
+    errors?: Record<string, string[]>;
+  }>; // Pass fetcher as a prop
   placeholderText?: string;
 }
 
-export function SearchBar({ fetcher, placeholderText = "Enter food preference" }: SearchBarProps) {
+export function SearchBar({
+  fetcher,
+  placeholderText = "Enter food preference",
+}: SearchBarProps) {
   const {
     register,
     handleSubmit,
@@ -33,41 +48,50 @@ export function SearchBar({ fetcher, placeholderText = "Enter food preference" }
     formData.append("action", "search");
 
     // Submit the form using the passed fetcher
-    fetcher.submit(formData, { method: "post", action: "/dashboard" });
+    fetcher.submit(formData, { method: "post", action: "/api/clinicals" });
   };
 
   return (
-<form onSubmit={handleSubmit(onSubmit)} className="search-form w-full max-w-md mx-auto">
-  <div className="flex items-center space-x-2">
-    <input
-      type="text"
-      {...register("query")}
-      placeholder={placeholderText}
-      name="query"
-      className="search-input w-full px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black" // Ensures text is black
-    />
-    <button
-      type="submit"
-      className="search-button bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-600 transition duration-200 ease-in-out"
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="search-form w-full max-w-md mx-auto"
     >
-      Search
-    </button>
-  </div>
-  {/* Display validation errors */}
-  {errors.query && (
-    <p className="error-message text-red-500 mt-2">{errors.query.message}</p>
-  )}
-</form>
-
+      <div className="flex items-center space-x-2">
+        <input
+          type="text"
+          {...register("query")}
+          placeholder={placeholderText}
+          name="query"
+          className="search-input w-full px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black" // Ensures text is black
+        />
+        <button
+          type="submit"
+          className="search-button bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-600 transition duration-200 ease-in-out"
+        >
+          Search
+        </button>
+      </div>
+      {/* Display validation errors */}
+      {errors.query && (
+        <p className="error-message text-red-500 mt-2">
+          {errors.query.message}
+        </p>
+      )}
+    </form>
   );
 }
 
+export function ActionButton({ fetcher, text, route, action }: ButtonProps) {
 
-
-export function Button({ text }: { text: string }) {
   const handleClick = () => {
-    alert(`You clicked: ${text}`);
+    const formData = new FormData();
+    formData.append("query", text); // Pass the button text as a query parameter
+    formData.append("action", action);
+    // Submit the form to the specified route via POST
+    fetcher.submit(formData, { method: "post", action: route });
   };
+
+
 
   return (
     <button

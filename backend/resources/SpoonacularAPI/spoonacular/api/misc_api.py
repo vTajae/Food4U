@@ -32,7 +32,7 @@ from spoonacular.models.search_site_content200_response import SearchSiteContent
 from spoonacular.models.talk_to_chatbot200_response import TalkToChatbot200Response
 
 from spoonacular.api_client import ApiClient, RequestSerialized
-from spoonacular.api_response import ApiResponse
+from backend.app.api.models.api_response import ApiResponse
 from spoonacular.rest import RESTResponseType
 
 

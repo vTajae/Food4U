@@ -27,7 +27,7 @@ from typing import Tuple, Optional, List, Dict, Union
 from pydantic import SecretStr
 
 from spoonacular.configuration import Configuration
-from spoonacular.api_response import ApiResponse, T as ApiResponseT
+from backend.app.api.models.api_response import ApiResponse, T as ApiResponseT
 import spoonacular.models
 from spoonacular import rest
 from spoonacular.exceptions import (

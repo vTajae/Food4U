@@ -46,7 +46,7 @@ from spoonacular.models.summarize_recipe200_response import SummarizeRecipe200Re
 from spoonacular.models.taste_information import TasteInformation
 
 from spoonacular.api_client import ApiClient, RequestSerialized
-from spoonacular.api_response import ApiResponse
+from backend.app.api.models.api_response import ApiResponse
 from spoonacular.rest import RESTResponseType
 
 

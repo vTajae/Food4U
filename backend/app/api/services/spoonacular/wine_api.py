@@ -26,7 +26,7 @@ from spoonacular.models.get_wine_pairing200_response import GetWinePairing200Res
 from spoonacular.models.get_wine_recommendation200_response import GetWineRecommendation200Response
 
 from spoonacular.api_client import ApiClient, RequestSerialized
-from spoonacular.api_response import ApiResponse
+from backend.app.api.models.api_response import ApiResponse
 from spoonacular.rest import RESTResponseType
 
 

@@ -3,17 +3,17 @@
 import Auth from "../../app/context/auth/auth-service";
 import { userLogin, userRegister } from "../models/user";
 import UserRepository from "../repo/userRepository";
+import { ApiService } from "./myServerService";
 
-
-
-class UserService {
+class UserService extends ApiService {
   private userRepository: UserRepository;
 
   constructor(env: Env) {
+    super();
     this.userRepository = new UserRepository(env);
   }
 
-  async loginUser(userData: userLogin) {
+  async loginUser(userData: userLogin, env: Env) {
     try {
       const user = await this.userRepository.findUserByUsername(
         userData.username
@@ -32,6 +32,7 @@ class UserService {
         return { success: false, message: "Incorrect password." };
       }
 
+      
       // Ensure all required properties are present
       if (
         passwordMatch &&
@@ -48,6 +49,19 @@ class UserService {
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
         };
+
+        const token = await Auth.generateToken(
+          {
+            sub: user.user_id,
+            username: user.username,
+            role: user.user_role,
+          },
+          env.JWT_SECRET_KEY, // Your JWT secret key
+          { expiresIn: '1h' } // Set token expiration
+        );
+
+        ApiService.setToken(token);
+
 
         return {
           success: true,
@@ -67,8 +81,6 @@ class UserService {
   }
 
   async registerUser(userData: userRegister) {
-
-
     console.log(userData, "userData");
     // Check if user already exists
     const existingUser = await this.userRepository.findUserByUsername(

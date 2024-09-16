@@ -6,17 +6,26 @@ from pydantic import BaseModel
 from app.api.services.spoon_service import Spoon_Service
 from app.api.dependencies.spoon_dep import get_spoon_service
 
-
+from app.api.routers.spoonacular.ingredients_api import router as ingredients_router
+from app.api.routers.spoonacular.meal_planning_api import router as meal_planning_router
+from app.api.routers.spoonacular.menu_items_api import router as menu_items_router
+from app.api.routers.spoonacular.misc_api import router as misc_router
+from app.api.routers.spoonacular.products_api import router as products_router
+from app.api.routers.spoonacular.recipes_api import router as recipes_router
+from app.api.models.spoonacular.analyze_recipe_request import AnalyzeRecipeRequest
 
 router = APIRouter()
 
+# Include the individual routers under the same master router
+router.include_router(ingredients_router, prefix="/ingredients")
+router.include_router(meal_planning_router, prefix="/meal-planning")
+router.include_router(menu_items_router, prefix="/menu-items")
+router.include_router(misc_router, prefix="/misc")
+router.include_router(products_router, prefix="/products")
+router.include_router(recipes_router, prefix="/recipes")
 
-class AnalyzeRecipeRequest(BaseModel):
-    title: str
-    ingredients: List[str]
-    servings: Optional[int] = None
-    
-    
+
+
 # Route to generate a recipe card
 @router.get("/recipes/{recipe_id}/card")
 async def create_recipe_card(

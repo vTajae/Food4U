@@ -31,7 +31,7 @@ from spoonacular.models.search_grocery_products200_response import SearchGrocery
 from spoonacular.models.search_grocery_products_by_upc200_response import SearchGroceryProductsByUPC200Response
 
 from spoonacular.api_client import ApiClient, RequestSerialized
-from spoonacular.api_response import ApiResponse
+from backend.app.api.models.api_response import ApiResponse
 from spoonacular.rest import RESTResponseType
 
 

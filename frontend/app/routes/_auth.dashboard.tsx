@@ -1,9 +1,11 @@
-import { json, ActionFunction } from "@remix-run/cloudflare";
+import { json, ActionFunction, LoaderFunction, Session } from "@remix-run/cloudflare";
 import { z } from "zod";
 import { useFetcher } from "@remix-run/react";
 import { useState, useEffect } from "react";
-import { Button, SearchBar } from "../components/search/bar";
+import { ActionButton, SearchBar } from "../components/search/bar";
 import { SearchResult } from "../components/search/results";
+import UserService from "api/services/userService";
+import { PythonLogin } from "api/models/user";
 
 const searchSchema = z.object({
   query: z
@@ -12,6 +14,20 @@ const searchSchema = z.object({
     .max(100, "Search query is too long")
     .trim(),
 });
+
+export const loader: LoaderFunction = async ({ request, context }) => {
+  const myEnv = context.cloudflare.env as Env;
+  const mySession = context.session as Session;
+  const userService = new UserService(myEnv);
+
+
+  const loadProfile = await UserService.getSingle<PythonLogin>("profile");
+  
+
+  return json({ message: `You searched for: ${request.body}` });
+
+};
+
 
 export const action: ActionFunction = async ({ request, context }) => {
   try {
@@ -48,7 +64,6 @@ export const action: ActionFunction = async ({ request, context }) => {
     return json({ error: "Login failed due to an unexpected error." });
   }
 };
-
 
 export default function Dashboard() {
   const fetcher = useFetcher<{
@@ -96,9 +111,9 @@ export default function Dashboard() {
 
           {/* Buttons */}
           <div className="mt-6 space-y-4">
-            <Button text="I'm hungry" />
-            <Button text="What diet is best for me?" />
-            <Button text="Recommended diet for ${Random}" />
+            <ActionButton fetcher={fetcher} text="I'm hungry" route={"/api/clinicals"} action={"login"} />
+            <ActionButton fetcher={fetcher} text="What diet is best for me?" route={"/api/food/suggestions"} action={"diets"} />
+            <ActionButton fetcher={fetcher} text="Recommended diet for ${Random}" route={"/api/food/suggestions"} action={"diets-recommended"} />
           </div>
         </div>
       )}

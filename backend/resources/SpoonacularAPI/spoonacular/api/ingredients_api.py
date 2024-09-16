@@ -29,7 +29,7 @@ from spoonacular.models.map_ingredients_to_grocery_products200_response_inner im
 from spoonacular.models.map_ingredients_to_grocery_products_request import MapIngredientsToGroceryProductsRequest
 
 from spoonacular.api_client import ApiClient, RequestSerialized
-from spoonacular.api_response import ApiResponse
+from backend.app.api.models.api_response import ApiResponse
 from spoonacular.rest import RESTResponseType
 
 
