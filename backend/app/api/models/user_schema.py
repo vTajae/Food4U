@@ -11,10 +11,8 @@ class UserCreate(BaseModel):
 
 class UserModel(BaseModel):
     id: str
-    username: str
     # hashed_password: str
     # expires_at: datetime
-    updated_at: datetime
 
     class Config:
         from_attributes = True
@@ -45,3 +43,5 @@ class UserRegisterSchema(BaseModel):
 class UserLoginSchema(BaseModel):
     username: str
     password: str
+
+

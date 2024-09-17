@@ -1,13 +1,16 @@
 import os
 from dotenv import load_dotenv
 from fastapi import APIRouter
-import jwt
+from fastapi_limiter.depends import RateLimiter
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from  jwt import ExpiredSignatureError, InvalidSignatureError, PyJWTError, decode
 from app.api.dependencies.auth_dep import get_current_user
 from app.api.dependencies.user_dep import get_user_service
+from app.api.dependencies.rate_limit_dep import rate_limit_middleware
 from app.api.models.user_schema import UserLoginSchema, UserModel, UserRegisterSchema, UserResponse
 from app.api.services.user_service import UserService
-from app.api.schemas.user_model import User
+from app.api.schemas.user_schema import Profile
+
 
 router = APIRouter()
 
@@ -15,15 +18,47 @@ load_dotenv()
 
 USER_JWT_SECRET_KEY = os.getenv('USER_JWT_SECRET_KEY')
 USER_JWT_ALGORITHM = os.getenv('USER_JWT_ALGORITHM')
-JWT_ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv(
-    'JWT_ACCESS_TOKEN_EXPIRE_MINUTES')
+
+# Profile creation endpoint
+@router.get("/profile", response_model=UserModel)
+async def create_profile(
+    request: Request,
+    service: UserService = Depends(get_user_service)
+):
+    token = request.headers.get("Authorization")
+    
+    if token is None:
+        raise HTTPException(status_code=403, detail="Token is missing")
+    
+    try:
+        # Extract the token value
+        token = token.split(" ")[1]  # Assumes "Bearer <token>"
+        # Decode the JWT token
+        payload = decode(token, USER_JWT_SECRET_KEY, algorithms=[USER_JWT_ALGORITHM])
+        user_id: str = payload.get("user_id")
+
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+
+        # Call the service to create or retrieve the user profile
+        profile = await service.create_profile(userId=str(user_id))
+        
+        print(profile, "profile")
+        
+        if profile:
+            return profile  # FastAPI will serialize this using the response_model
+        else:
+            raise HTTPException(status_code=400, detail="Profile creation failed")
+
+    except InvalidSignatureError:
+        raise HTTPException(status_code=401, detail="Could not validate token")
 
 
 @router.post("/register")
 async def register_user(user_data: UserRegisterSchema, service: UserService = Depends(get_user_service)):
     print(user_data, "user_data")
     if await service.register_user(user_data.username, user_data.password):
-        return {"message": "User registered successfully"}
+        return {"message": "Profile registered successfully"}
     else:
         raise HTTPException(status_code=400, detail="Username already exists")
 
@@ -52,7 +87,7 @@ async def refresh_token(request: Request, response: Response, user_service: User
         raise HTTPException(status_code=403, detail="Refresh token not found")
     
     try:
-        payload = jwt.decode(old_refresh_token, USER_JWT_SECRET_KEY, algorithms=[USER_JWT_ALGORITHM])
+        payload = decode(old_refresh_token, USER_JWT_SECRET_KEY, algorithms=[USER_JWT_ALGORITHM])
         user_id = payload.get("user_id")
         if user_id is None:
             raise HTTPException(status_code=403, detail="Invalid refresh token")
@@ -71,9 +106,9 @@ async def refresh_token(request: Request, response: Response, user_service: User
         
         # Return the new access token in the response body
         return {"access_token": tokens["access_token"], "message": "Access token refreshed"}
-    except jwt.ExpiredSignatureError:
+    except ExpiredSignatureError:
         raise HTTPException(status_code=403, detail="Refresh token has expired")
-    except jwt.PyJWTError:
+    except PyJWTError:
         raise HTTPException(status_code=403, detail="Could not validate credentials")
 
 
@@ -87,10 +122,10 @@ async def dashboard():
 
 @router.get("/user/profile", response_model=UserModel)
 async def user_profile(
-    user: User = Depends(get_current_user),
+    user: Profile = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service),
 ):
-    if not user.username:
+    if not user.id:
         raise HTTPException(
             status_code=401, detail="Session invalid or expired, please login.")
 
@@ -99,15 +134,13 @@ async def user_profile(
 
 @router.post("/user/preferences")
 async def user_profile(
-    user: User = Depends(get_current_user),
+    user: Profile = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service),
 ):
     if not user.id:
         raise HTTPException(
             status_code=401, detail="Session invalid or expired, please login.")
         
-    
-
     return await user_service.updatePreferences(user.id)
 
 

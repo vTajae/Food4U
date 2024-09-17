@@ -7,7 +7,7 @@ from app.api.services.user_service import UserService
 
 # Dependency for UserService with a repository
 async def get_user_service(db: AsyncSession = Depends(async_database_session.get_session)) -> UserService:
-    user_repo = UserRepository(db)
-    auth_repo = AuthRepository(db)  # Create an instance of AuthRepository
-    return UserService(user_repo, auth_repo)
-
+     async with async_database_session.get_session() as db:
+        user_repo = UserRepository(db)
+        auth_repo = AuthRepository(db)
+        return UserService(user_repo, auth_repo)
