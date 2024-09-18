@@ -1,11 +1,17 @@
-import { json, ActionFunction, LoaderFunction, Session } from "@remix-run/cloudflare";
+import {
+  json,
+  ActionFunction,
+  LoaderFunction,
+  redirect,
+} from "@remix-run/cloudflare";
 import { z } from "zod";
 import { useFetcher } from "@remix-run/react";
 import { useState, useEffect } from "react";
 import { ActionButton, SearchBar } from "../components/search/bar";
 import { SearchResult } from "../components/search/results";
-import UserService from "api/services/userService";
-import { PythonLogin } from "api/models/user";
+import UserService from "../../api/services/userService";
+import { checkAuthentication } from "../context/session/checkAuthentication";
+import { ApiService } from "../../api/services/myServerService";
 
 const searchSchema = z.object({
   query: z
@@ -17,17 +23,62 @@ const searchSchema = z.object({
 
 export const loader: LoaderFunction = async ({ request, context }) => {
   const myEnv = context.cloudflare.env as Env;
-  const mySession = context.session as Session;
+  const { session } = context;
+
+  // Check if the user is authenticated using a session check
+  const isAuthenticated = await checkAuthentication({ session });
   const userService = new UserService(myEnv);
 
+  // Handle unauthenticated user attempting to access the protected resource
+  if (isAuthenticated === false) {
+    session.unset("auth");
+    ApiService.clearToken();
+    return redirect("/login");
+  }
 
-  const loadProfile = await UserService.getSingle<PythonLogin>("profile");
-  
+  try {
+    const data = await userService.getAllData();
 
-  return json({ message: `You searched for: ${request.body}` });
+    // 3. If the token is invalid (403 Forbidden), attempt to refresh it or redirect to login
+    if (!data.id) {
+      console.log("Token is invalid or expired, attempting to refresh.");
 
+      // Attempt to refresh the token
+      const refreshResult = await userService.refreshUser(
+        myEnv,
+        isAuthenticated.id
+      );
+
+      console.log("refreshResult",refreshResult);
+
+      if (refreshResult.success === false || !refreshResult) { 
+        // If token refresh failed, unset the session and redirect to login
+        session.unset("auth");
+        ApiService.clearToken();
+        return json({});
+      }
+    }
+
+    // // If no data, assume the user is not authenticated
+    // if (!data.id) {
+    //   session.unset("auth");
+    //   ApiService.clearToken();
+
+    //   return redirect("/login");
+    // }
+
+    // console.log({ isAuthenticated, data });
+
+    return json({});
+  } catch (error) {
+    // Log error if necessary
+    console.error("Error fetching user data:", error);
+
+    // If there's an error, unset the auth session and redirect to login
+    session.unset("auth");
+    return json({});
+  }
 };
-
 
 export const action: ActionFunction = async ({ request, context }) => {
   try {
@@ -67,6 +118,7 @@ export const action: ActionFunction = async ({ request, context }) => {
 
 export default function Dashboard() {
   const fetcher = useFetcher<{
+    data: any;
     message?: string;
     errors?: Record<string, string[]>;
   }>();
@@ -111,9 +163,24 @@ export default function Dashboard() {
 
           {/* Buttons */}
           <div className="mt-6 space-y-4">
-            <ActionButton fetcher={fetcher} text="I'm hungry" route={"/api/clinicals"} action={"login"} />
-            <ActionButton fetcher={fetcher} text="What diet is best for me?" route={"/api/food/suggestions"} action={"diets"} />
-            <ActionButton fetcher={fetcher} text="Recommended diet for ${Random}" route={"/api/food/suggestions"} action={"diets-recommended"} />
+            <ActionButton
+              fetcher={fetcher}
+              text="I'm hungry"
+              route={"/api/clinicals"}
+              action={"consider"}
+            />
+            <ActionButton
+              fetcher={fetcher}
+              text="What diet is best for me?"
+              route={"/api/food/suggestions"}
+              action={"diets"}
+            />
+            <ActionButton
+              fetcher={fetcher}
+              text="Recommended diet for ${Random}"
+              route={"/api/food/suggestions"}
+              action={"diets-recommended"}
+            />
           </div>
         </div>
       )}

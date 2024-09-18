@@ -295,7 +295,6 @@ ubuntu-pro-client==8001
 ufw==0.36.1
 unattended-upgrades==0.1
 unicorn==2.0.1.post1
-UNKNOWN @ file:///home/runmy/mtkclient
 urllib3==1.26.5
 uvicorn==0.30.6
 uvloop==0.20.0

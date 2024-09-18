@@ -18,6 +18,13 @@ class UserRepository {
     return results[0];
   }
 
+    async findUserById(id: number): Promise<User | void> {
+    const query = `SELECT * FROM user WHERE user_id = ?`;
+    const { results } = await this.db.prepare(query).bind(Number(id)).all<User>();
+
+    return results[0];
+  }
+
   async addBasicUser(userData: userRegister): Promise<number | void> {
     const unixTimestamp = Math.floor(Date.now() / 1000); // Convert current time to Unix timestamp
     const query = `

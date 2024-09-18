@@ -1,5 +1,5 @@
 export interface SearchResultProps {
-  message?: string;
+  message?: string | string[];
   errors?: Record<string, string[]>;
 }
 
@@ -21,8 +21,21 @@ export function SearchResult({ message, errors }: SearchResultProps) {
         </div>
       ) : (
         <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md shadow-md">
-          {message ? <p>{message}</p> : <p>No results found</p>}
-        </div>
+        {Array.isArray(message) ? (
+          message.length > 0 ? (
+            <ul>
+              {message.map((msg, index) => (
+                <li key={index}>{msg}</li>
+              ))}
+            </ul>
+          ) : (
+            <p>No results found</p>
+          )
+        ) : (
+          <p>{message || "No results found"}</p>
+        )}
+      </div>
+      
       )}
     </div>
   );

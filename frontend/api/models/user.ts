@@ -9,9 +9,9 @@ export class LoginResponse {
 }
 
 export class PythonLogin {
-  message!:  "Logged In. All Good!" | "Not Logged";
+  id?: string;
+  
 }
-
 
 
 export interface UserModel {

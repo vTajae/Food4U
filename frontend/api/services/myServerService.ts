@@ -18,6 +18,11 @@ export class ApiService {
     this.token = token;
   }
 
+  // Method to clear the token
+  static clearToken(): void {
+    this.token = null;
+  }
+
   protected static getRequestOptions(
     method: string,
     body?: unknown,
@@ -28,7 +33,7 @@ export class ApiService {
       ...this.addAuthorizationHeader(customHeaders || {}), // Include JWT in headers
     };
 
-    console.log("Request headers:", headers);
+    // console.log("Request headers:", headers);
 
     const options: RequestInit = {
       method,
@@ -131,6 +136,7 @@ export class ApiService {
 
   // Handle response from server
   private static async handleResponse<T>(response: Response): Promise<T> {
+    
     if (!response.ok) {
       console.error(
         `Bad response code ${response.status} from ${response.url}`

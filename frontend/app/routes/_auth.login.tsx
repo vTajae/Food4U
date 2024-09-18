@@ -13,9 +13,11 @@ import UserService from "../../api/services/userService";
 
 
 export const loader: LoaderFunction = async ({ context }) => {
-  if (context.session.has("auth")) {
-    return redirect("/dashboard");
-  }
+
+  // console.log(context.session.get("auth"), "auth");
+  // if (context.session.has("auth")) {
+  //   return redirect("/dashboard");
+  // }
   return json({ isLoading: false });
 };
 
@@ -54,7 +56,7 @@ export const action: ActionFunction = async ({ request, context }) => {
         });
       } else {
         context.session.flash("error", "Invalid username or password.");
-        return redirect("/login");
+        return json({});
       }
     } else if (actionType === "register") {
       const registerResult = await userService.registerUser({

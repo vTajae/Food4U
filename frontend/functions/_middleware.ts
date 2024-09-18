@@ -24,6 +24,8 @@ export async function onRequest(context: RequestContext) {
 
   // Check if the user is authenticated using the session
   const isAuthenticated = await checkAuthentication({ session });
+
+  console.log("isAuthenticated", isAuthenticated);
   // Redirect unauthenticated users trying to access the protected dashboard directly
   if (!isAuthenticated) {
     return redirect("/login");
