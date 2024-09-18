@@ -103,7 +103,6 @@ export function SearchBar({
         },
         "/api/clinicals"
       );
-
           // Clear the suggestions after a selection is made to close the dropdown
     setSuggestions(null);
     },
