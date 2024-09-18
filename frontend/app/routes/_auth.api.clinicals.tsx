@@ -84,8 +84,6 @@ export const action: ActionFunction = async ({ request, context }) => {
 
         console.log(description, code, "Description and Code");
 
-        const body = JSON.stringify({ description: description, icd10cm: code });
-
         const response = await UserService.post("user/medical", {  icd10cm: code, description: description, });
         if (!response) {
           return json(

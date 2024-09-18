@@ -155,8 +155,7 @@ async def user_profile(
             status_code=401, detail="Session invalid or expired, please login.")
         
         
-    print(body, "body_2248349284")
-    data = await user_service.addMedicalCode(user.id, medical_code=body.medical_code, description=body.description)
+    data = await user_service.addMedicalCode(user.id, medical_code=body.icd10cm, description=body.description)
 
     return ({"data": data})
 
