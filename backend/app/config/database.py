@@ -31,7 +31,6 @@ class AsyncDatabaseSession:
             future=True,
             echo=False,
             pool_size=10,  # Configure connection pool
-            
             max_overflow=20,
             connect_args={
                 "ssl": ssl_context,

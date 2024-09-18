@@ -144,7 +144,7 @@ async def user_profile(
     return data
 
 
-@router.post("/user/medical", response_model=SecurePost)
+@router.post("/user/medical")
 async def user_profile(
     user: Profile = Depends(get_current_user),
     body: MedicalPost = Body(...),  # Use Body to grab the JSON payload
@@ -155,10 +155,10 @@ async def user_profile(
             status_code=401, detail="Session invalid or expired, please login.")
         
         
-    print(body, "body")
+    print(body, "body_2248349284")
     data = await user_service.addMedicalCode(user.id, medical_code=body.medical_code, description=body.description)
 
-    return data
+    return ({"data": data})
 
 
 @router.post("/user/preferences")

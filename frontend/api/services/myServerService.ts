@@ -11,6 +11,7 @@ export class ApiService {
   // Default headers for requests; will be updated with authorization tokens when needed
   static defaultHeaders: HeadersInit = {
     "Content-Type": "application/json",
+    "Cache-Control" : "max-age=10800",
   };
 
   // Method to set JWT token after login
@@ -78,10 +79,14 @@ export class ApiService {
   // POST request to submit data
   static async post<T>(url: string, body: unknown): Promise<T | void> {
     try {
+
+
+      console.log("POSTING DATA", body);
       const response = await fetch(
         `${API_BASE_URL}/${url}`,
         this.getRequestOptions("POST", body)
       );
+
       return this.handleResponse<T>(response);
     } catch (error) {
       console.error(`Error posting data to ${url}:`, error);

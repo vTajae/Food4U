@@ -5,16 +5,7 @@ import { FetcherWithComponents } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import debounce from "lodash.debounce";
 
-interface ButtonProps {
-  fetcher: FetcherWithComponents<{
-    message?: string;
-    errors?: Record<string, string[]>;
-  }>; // Pass fetcher as a prop
-  text: string; // The text displayed on the button
-  route: string; // The route to which the button will post data
-  action: string; // The action to be performed
-}
-
+// Define TypeScript interfaces
 interface ButtonProps {
   fetcher: FetcherWithComponents<{
     message?: string;
@@ -34,15 +25,29 @@ interface SearchBarProps {
   placeholderText?: string;
 }
 
-// Validation schema for search query
+// Define Zod schema for search validation
 const searchSchema = z.object({
-  query: z
-    .string()
-    .min(1, "Search query is required")
-    .max(100, "Search query is too long")
-    .trim(),
+  query: z.string().nullable().optional(),  // Make query optional
+  code: z.string().optional(),
+  description: z.string().optional(),
 });
 
+// Utility function to create and submit FormData
+const submitFormData = (
+  fetcher: FetcherWithComponents<any>,
+  formDataEntries: Record<string, string>,
+  action: string,
+  method: "post" | "get" = "post"
+) => {
+  const formData = new FormData();
+  Object.entries(formDataEntries).forEach(([key, value]) => {
+    formData.append(key, value);
+  });
+
+  fetcher.submit(formData, { method, action });
+};
+
+// SearchBar component
 export function SearchBar({
   fetcher,
   placeholderText = "Enter condition",
@@ -54,7 +59,6 @@ export function SearchBar({
   const {
     register,
     handleSubmit,
-    setValue, // Hook to manually set values in the form
     formState: { errors },
   } = useForm<{ query: string }>({
     resolver: zodResolver(searchSchema),
@@ -63,32 +67,20 @@ export function SearchBar({
   // Update suggestions when fetcher receives data
   useEffect(() => {
     if (fetcher.data?.suggestions) {
-      // Flatten the array of suggestions to handle entries with multiple codes
-      const flattenedSuggestions = fetcher.data.suggestions.flatMap((entry) =>
-        entry instanceof Array
-          ? entry.map((codeObj) => ({
-              code: codeObj.code,
-              description: codeObj.name,
-            }))
-          : { code: entry.code, description: entry.name }
-      );
+      const flattenedSuggestions = fetcher.data.suggestions.map((entry) => ({
+        code: entry.code,
+        description: entry.name,
+      }));
       setSuggestions(flattenedSuggestions);
     }
   }, [fetcher.data]);
 
-  // Handle input changes for the search bar
+  // Debounced input change handler
   const handleInputChange = debounce(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const query = e.target.value;
       if (query) {
-        const formData = new FormData();
-        formData.append("query", query);
-        formData.append("action", "autocomplete");
-
-        fetcher.submit(formData, {
-          method: "post",
-          action: `/api/clinicals`,
-        });
+        submitFormData(fetcher, { query, action: "autocomplete" }, "/api/clinicals");
       }
     },
     300
@@ -96,44 +88,27 @@ export function SearchBar({
 
   // Handle search form submit
   const onSubmit = (data: { query: string }) => {
-    const formData = new FormData();
-    formData.append("query", data.query); // Submit the search query
-    formData.append("action", "search");
-
-    fetcher.submit(formData, {
-      method: "post",
-      action: `/api/clinicals`,
-    });
+    submitFormData(fetcher, { query: data.query, action: "search" }, "/api/clinicals");
   };
 
   // Handle suggestion click to submit `code` and `description`
   const handleSuggestionClick = debounce(
     (suggestion: { code: string; description: string }) => {
-      const formData = new FormData();
-      formData.append("query", suggestion.code); // Keep query key for Zod validation
-      formData.append("description", suggestion.description); // Send description
-      formData.append("icd10cm", suggestion.code); // Send ICD-10 code
-      formData.append("action", "consider"); // Set action to "consider"
-
-      console.log("Submitting form data: ", {
-        query: suggestion.code,
-        description: suggestion.description,
-        icd10cm: suggestion.code,
-      });
-
-      fetcher.submit(formData, {
-        method: "post",
-        action: `/api/clinicals`, // Post to the clinicals action
-      });
+      submitFormData(
+        fetcher,
+        {
+          description: suggestion.description,
+          code: suggestion.code,
+          action: "consider",
+        },
+        "/api/clinicals"
+      );
     },
     300
   );
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="search-form w-full max-w-md mx-auto"
-    >
+    <form onSubmit={handleSubmit(onSubmit)} className="search-form w-full max-w-md mx-auto">
       <div className="flex items-center space-x-2">
         <input
           type="text"
@@ -151,11 +126,7 @@ export function SearchBar({
       </div>
 
       {/* Display validation errors */}
-      {errors.query && (
-        <p className="error-message text-red-500 mt-2">
-          {errors.query.message}
-        </p>
-      )}
+      {errors.query && <p className="error-message text-red-500 mt-2">{errors.query.message}</p>}
 
       {/* Display suggestions */}
       {suggestions && (
@@ -165,7 +136,7 @@ export function SearchBar({
               <button
                 type="button"
                 className="w-full text-left hover:bg-gray-100 cursor-pointer"
-                onClick={() => handleSuggestionClick(suggestion)} // Handle suggestion click
+                onClick={() => handleSuggestionClick(suggestion)}
               >
                 {`${suggestion.code} - ${suggestion.description}`}
               </button>
@@ -177,13 +148,10 @@ export function SearchBar({
   );
 }
 
+// ActionButton component
 export function ActionButton({ fetcher, text, route, action }: ButtonProps) {
   const handleClick = () => {
-    const formData = new FormData();
-    formData.append("query", text); // Pass the button text as a query parameter
-    formData.append("action", action);
-    // Submit the form to the specified route via POST
-    fetcher.submit(formData, { method: "post", action: route });
+    submitFormData(fetcher, { query: text, action }, route);
   };
 
   return (

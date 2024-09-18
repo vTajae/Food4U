@@ -14,6 +14,8 @@ class UserService extends ApiService {
     this.userRepository = new UserRepository(env);
   }
 
+
+
   async registerUser(userData: userRegister) {
     console.log(userData, "userData");
     // Check if user already exists
@@ -44,6 +46,8 @@ class UserService extends ApiService {
       return { success: false, message: "Failed to register user." };
     }
   }
+
+
 
   async loginUser(userData: userLogin, env: Env) {
     try {
@@ -110,6 +114,8 @@ class UserService extends ApiService {
     }
   }
 
+
+
   async refreshUser(env: Env, id: number) {
     try {
       // Clear the existing token from the headers
@@ -145,6 +151,8 @@ class UserService extends ApiService {
     }
   }
 
+
+  
   async getAllData() {
     try {
       // Fetch the user profile
@@ -152,7 +160,8 @@ class UserService extends ApiService {
 
       if (profile) {
 
-        const data = await UserService.getSingle<UserProfile>("user/profile");
+        // Route Testing
+        // const data = await UserService.getSingle<UserProfile>("user/profile");
         return {
           id: profile.id,
           message: "Profile data fetched successfully.",
@@ -168,6 +177,8 @@ class UserService extends ApiService {
       return { success: false, message: "Error fetching user data." };
     }
   }
+
+
 
 }
 

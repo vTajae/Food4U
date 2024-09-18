@@ -9,7 +9,7 @@ interface Icd10Response {
 
 interface AutocompleteResult {
   code: string;
-  description: string;
+  name: string;
 }
 
 export class ClinicalService {
@@ -72,6 +72,8 @@ export class ClinicalService {
 
       const data = await response.json();
 
+
+      console.log(data, "data");
       return data;
     } catch (error) {
       console.error(`Error fetching data from ${route}:`, error);
@@ -150,13 +152,21 @@ export class ClinicalService {
     }
 
     // Extract the icd10cm data and map it to the AutocompleteResult format
-    const results: AutocompleteResult[] = data[2].icd10cm.map(
-      (entry: Icd10Result[]) => ({
-        code: entry[0].code,
-        name: entry[0].name,
-      })
-    );
+    const uniqueResults = new Map<string, AutocompleteResult>();
 
+    data[2].icd10cm.forEach((entry: Icd10Result[]) => {
+      const code = entry[0].code;
+      const name = entry[0].name;
+
+      if (!uniqueResults.has(code)) {
+        uniqueResults.set(code, { code, name });
+      }
+    });
+
+    // Convert the Map back to an array
+    const results: AutocompleteResult[] = Array.from(uniqueResults.values());
+
+    console.log(results, "results");
 
     // Return the array of AutocompleteResult objects
     return results;
