@@ -16,6 +16,7 @@ interface ButtonProps {
   action: string;
 }
 
+// Define TypeScript interfaces
 interface SearchBarProps {
   fetcher: FetcherWithComponents<{
     message?: string;
@@ -27,7 +28,7 @@ interface SearchBarProps {
 
 // Define Zod schema for search validation
 const searchSchema = z.object({
-  query: z.string().nullable().optional(),  // Make query optional
+  query: z.string().nullable().optional(), // Make query optional
   code: z.string().optional(),
   description: z.string().optional(),
 });
@@ -56,6 +57,8 @@ export function SearchBar({
     { code: string; description: string }[] | null
   >(null);
 
+  const [loading, setLoading] = useState(false); // Add loading state
+
   const {
     register,
     handleSubmit,
@@ -64,22 +67,28 @@ export function SearchBar({
     resolver: zodResolver(searchSchema),
   });
 
-  // Update suggestions when fetcher receives data
+  // Update suggestions and stop loader when fetcher receives data
   useEffect(() => {
-    if (fetcher.data?.suggestions) {
+    if (fetcher.state === "submitting" || fetcher.state === "loading") {
+      setLoading(true); // Start loading during fetch
+    } else if (fetcher.data?.suggestions) {
       const flattenedSuggestions = fetcher.data.suggestions.map((entry) => ({
         code: entry.code,
         description: entry.name,
       }));
       setSuggestions(flattenedSuggestions);
+      setLoading(false); // Stop loader after data is received
+    } else {
+      setLoading(false); // Stop loader if no suggestions
     }
-  }, [fetcher.data]);
+  }, [fetcher.state, fetcher.data]);
 
   // Debounced input change handler
   const handleInputChange = debounce(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const query = e.target.value;
       if (query) {
+        setLoading(true); // Start loader when making a request
         submitFormData(fetcher, { query, action: "autocomplete" }, "/api/clinicals");
       }
     },
@@ -88,6 +97,7 @@ export function SearchBar({
 
   // Handle search form submit
   const onSubmit = (data: { query: string }) => {
+    setLoading(true); // Start loader when making a request
     submitFormData(fetcher, { query: data.query, action: "search" }, "/api/clinicals");
   };
 
@@ -103,8 +113,7 @@ export function SearchBar({
         },
         "/api/clinicals"
       );
-          // Clear the suggestions after a selection is made to close the dropdown
-    setSuggestions(null);
+      setSuggestions(null); // Clear suggestions after selection
     },
     300
   );
@@ -129,6 +138,9 @@ export function SearchBar({
 
       {/* Display validation errors */}
       {errors.query && <p className="error-message text-red-500 mt-2">{errors.query.message}</p>}
+
+      {/* Display loading spinner */}
+      {loading && <p className="loader mt-2 text-white-500">Loading...</p>}
 
       {/* Display suggestions */}
       {suggestions && (

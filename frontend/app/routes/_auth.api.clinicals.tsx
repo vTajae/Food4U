@@ -93,7 +93,7 @@ export const action: ActionFunction = async ({ request, context }) => {
         }
 
         return json({
-          message: `Medical code ${code} has been successfully submitted.`,
+          message: `Medical code ${code} has been successfully submitted.`, isLoading: false
         });
       }
 
