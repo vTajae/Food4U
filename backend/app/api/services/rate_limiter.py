@@ -4,7 +4,7 @@ from sqlalchemy.future import select
 from sqlalchemy import func
 from datetime import datetime, timezone
 from app.config.database import async_database_session
-from app.api.schemas.rate_schema import RateLimit  # Your DB session manager
+from backend.app.api.schemas.ratelimit_schema import RateLimit  # Your DB session manager
 
 # Rate limiting configuration
 RATE_LIMIT = 5  # Allow 5 requests

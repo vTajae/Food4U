@@ -1,6 +1,7 @@
 import { useFormContext } from './context';
 import Question1 from './q1'
 ;
+import Question2 from './q2';
 
 
 const Form = () => {
@@ -15,8 +16,8 @@ const Form = () => {
     switch (currentStep) {
       case 0:
         return <Question1 />;
-      // case 1:
-      //   return <Question2 />;
+      case 1:
+        return <Question2 />;
       // case 2:
       //   return <Question3 />;
       // case 3:

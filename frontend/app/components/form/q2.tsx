@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useFormContext } from './context';
 
-const Question1 = () => {
+const Question2 = () => {
   const { nextStep, updateAnswer } = useFormContext();
   const [answer, setAnswer] = useState('');
 
@@ -19,7 +19,7 @@ const Question1 = () => {
     //   });
 
     //   if (response.ok) {
-    //     updateAnswer('question1', answer); // Save answer to context
+    //     updateAnswer('question2', answer); // Save answer to context
     //     nextStep(); // Go to next question
     //   }
     // } catch (error) {
@@ -27,15 +27,15 @@ const Question1 = () => {
     // }
 
 
-    updateAnswer('q1', answer); // Save answer to context
-      nextStep(); // Go to next question
+    updateAnswer('q2', answer); // Save answer to context
+    nextStep(); // Go to next question
 
 
   };
 
   return (
     <form onSubmit={handleSubmit}>
-      <h2>What is your dietary preference?</h2>
+      <h2>What is your __________________ ?</h2>
       <input
         type="text"
         value={answer}
@@ -47,4 +47,4 @@ const Question1 = () => {
   );
 };
 
-export default Question1;
+export default Question2;
