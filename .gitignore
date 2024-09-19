@@ -5,6 +5,10 @@ npm-debug.log*
 
 # Runtime data
 __pycache__
+# Ignore compiled Python bytecode
+**/__pycache__/
+*.pyc
+
 
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
