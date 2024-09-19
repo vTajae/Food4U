@@ -11,7 +11,7 @@ from app.api.models.user_schema import UserLoginSchema, UserModel, UserRegisterS
 from app.api.services.user_service import UserService
 from app.api.schemas.user_schema import Profile
 from app.api.models.medical_schema import SecurePost
-from app.api.models.User.medical import MedicalPost
+from app.api.models.user.medical import MedicalPost
 
 
 router = APIRouter()

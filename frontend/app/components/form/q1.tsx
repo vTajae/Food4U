@@ -8,25 +8,6 @@ const Question1 = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Make POST request to /user/preferences or /user/medical
-    // try {
-    //   const response = await fetch('/user/preferences', {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify({ question: 1, answer }),
-    //   });
-
-    //   if (response.ok) {
-    //     updateAnswer('question1', answer); // Save answer to context
-    //     nextStep(); // Go to next question
-    //   }
-    // } catch (error) {
-    //   console.error('Error submitting the answer', error);
-    // }
-
-
     updateAnswer('q1', answer); // Save answer to context
       nextStep(); // Go to next question
 
