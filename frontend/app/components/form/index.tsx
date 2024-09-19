@@ -2,7 +2,9 @@ import { useFormContext } from './context';
 import Question1 from './q1';
 import Question2 from './q2';
 import Question3 from './q3';
-import Question4 from './final';
+import Question4 from './q4';
+import Question5 from './q5';
+import Final from './final';
 
 const Form = () => {
   const { currentStep, completed, enableEdit } = useFormContext();
@@ -26,6 +28,10 @@ const Form = () => {
         return <Question3 />;
       case 3:
         return <Question4 />;
+      case 4:
+        return <Question5 />;
+      case 5:
+        return <Final />;
       default:
         return null;
     }

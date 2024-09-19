@@ -64,7 +64,7 @@ export const action: ActionFunction = async ({ request, context }) => {
 
         // Call appropriate service based on action
         const response = action === "autocomplete"
-          ? await ClinicalService.autocompleter(query, 5)
+          ? await ClinicalService.autocompleter(query, 5, "conditions")
           : await ClinicalService.searchIcd10(query);
 
         if (!response) {

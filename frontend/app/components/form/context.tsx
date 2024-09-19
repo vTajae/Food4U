@@ -6,7 +6,7 @@ interface FormContextType {
   currentStep: number;
   nextStep: () => void;
   prevStep: () => void;
-  updateAnswer: (questionIndex: number, answer: string | MedicalCode | string[]) => void;
+  updateAnswer: (questionIndex: number, answer: MedicalCode[] | string[]) => void;
   answers: WelcomeQuestions;
   completed: boolean;
   openModal: () => void;
@@ -18,11 +18,12 @@ interface FormContextType {
 
 const defaultAnswers: WelcomeQuestions = {
   questions: [
-    { question: 'Regular Question 1', answer: '', options: [] },
-    { question: 'Regular Question 2', answer: '', options: [] },
-    { question: 'Medical Question 3', options: [] },
-    { question: 'Regular Question 3', answer: '', options: [] },
-    { question: 'Regular Question 4', answer: '', options: [] },
+    { question: 'Favorite Cuisine?', answer: [],  options: ['Italian', 'Mexican', 'Chinese', 'Indian', 'Japanese', 'Thai']},
+    { question: 'What type of diet do you follow?', answer: [], options: [] },
+    { question: 'Do you have a medical condition?', options: [] },
+    { question: 'Do you have any allergies or dietary restrictions?', answer: [], options: []
+    },
+    { question: 'Average Cost Per Meal', answer: [], options: [] },
   ],
 };
 
@@ -54,8 +55,10 @@ export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
   const openModal = () => setShowModal(true);
   const closeModal = () => setShowModal(false);
 
+  const totalSteps = 6; // Total number of steps including Final
+
   const nextStep = () => {
-    if (currentStep < answers.questions.length - 1) {
+    if (currentStep < totalSteps - 1) {
       setCurrentStep((prev) => prev + 1);
     }
   };
@@ -66,19 +69,23 @@ export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
     }
   };
 
-
-  const updateAnswer = (questionIndex: number, newAnswer: string | string[] | MedicalCode) => {
+  const updateAnswer = (questionIndex: number, newAnswer: string[] | MedicalCode[]) => {
     setAnswers((prevAnswers) => ({
       ...prevAnswers,
       questions: prevAnswers.questions.map((question, index) => {
         if (index === questionIndex) {
-
-          console.log(index, questionIndex)
-          // Check if the question is a MedicalQuestion
-          if ('answer' in question && typeof question.answer === 'object' && 'code' in question.answer) {
-            return { ...question, answer: newAnswer as MedicalCode }; // Treat it as a MedicalQuestion
+          if ('code' in question) {
+            // MedicalQuestion: replace with new MedicalCode(s)
+            const updatedAnswer = Array.isArray(newAnswer)
+              ? newAnswer as MedicalCode[]
+              : [newAnswer as unknown as MedicalCode];
+            return { ...question, answer: updatedAnswer }; // Replace with MedicalCode array
           } else {
-            return { ...question, answer: newAnswer as string | string[] }; // Treat it as a RegularQuestion
+            // RegularQuestion: replace with new string(s)
+            const updatedAnswer = Array.isArray(newAnswer)
+              ? newAnswer as string[]
+              : [newAnswer as string];
+            return { ...question, answer: updatedAnswer }; // Replace with string array
           }
         }
         return question;
@@ -129,5 +136,6 @@ export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
     </FormContext.Provider>
   );
 };
+
 
 export const useFormContext = () => useContext(FormContext);

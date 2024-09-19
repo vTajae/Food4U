@@ -9,44 +9,40 @@ export interface MedicalCode {
 }
 
 const Question3 = () => {
-  const { nextStep, updateAnswer, prevStep, currentStep } = useFormContext();
+  const { nextStep, updateAnswer, prevStep, currentStep, answers } = useFormContext();
   const [yesNo, setYesNo] = useState<string>("no"); // Default to 'no'
-  const [selectedCondition, setSelectedCondition] = useState<MedicalCode | undefined>(undefined); // Selected condition from SearchBar
+  const [selectedConditions, setSelectedConditions] = useState<MedicalCode[]>([]); // Store multiple conditions
   const fetcher = useFetcher<{
     message?: string;
     errors?: Record<string, string[]>;
   }>();
 
+  const questionData = answers.questions[currentStep]; // Get the current answer from context
+
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // If "Yes" is selected and a condition is provided, store the selected condition; otherwise set to undefined
-    const answer =
-      yesNo === "yes" && selectedCondition
-        ? {
-            code: selectedCondition.code,
-            description: selectedCondition.description,
-          }
-        : undefined; // If "No" is selected or no condition, answer is undefined
-
-        if (answer) {
-
-            updateAnswer(currentStep, answer); // Use currentStep to update answer for question 3, can be undefined
-           return nextStep(); // Move to the next step, even if no answer
-        } else if (yesNo === "no"){
-          return  nextStep()
-        } else {return { message: "Data not submitted"}}
-
-        return { message: "Submitted Question 3" }
+    // If "Yes" is selected and conditions are provided, store them; otherwise set to empty
+    if (yesNo === "yes" && selectedConditions.length > 0) {
+      updateAnswer(currentStep, selectedConditions); // Use currentStep to update answer for multiple conditions
+    }
+    
+    nextStep(); // Move to the next step, even if no condition selected
   };
 
+  // Handle adding selected conditions (append to existing ones)
   const handleSuggestionSelect = (suggestion: MedicalCode) => {
-    setSelectedCondition(suggestion); // Update the selected condition
+    setSelectedConditions((prevConditions) =>
+      prevConditions.some((condition) => condition.code === suggestion.code)
+        ? prevConditions // If the condition already exists, don't add it again
+        : [...prevConditions, suggestion] // Append new condition if it's not already selected
+    );
   };
 
   return (
     <form onSubmit={handleSubmit}>
-      <h2>Do you have a medical condition?</h2>
+      <h2>{questionData.question}</h2>
 
       {/* Yes/No toggle */}
       <div className="toggle-group mb-4">
@@ -66,7 +62,7 @@ const Question3 = () => {
             checked={yesNo === "no"}
             onChange={(e) => {
               setYesNo(e.target.value);
-              setSelectedCondition(undefined); // Clear condition when "No" is selected
+              setSelectedConditions([]); // Clear selected conditions when "No" is selected
             }}
           />
           No
@@ -78,19 +74,22 @@ const Question3 = () => {
         <div>
           <h2>Please provide more details:</h2>
 
-          {/* Search Bar to select condition */}
+          {/* Search Bar to select conditions */}
           <SearchBar fetcher={fetcher} onSuggestionSelect={handleSuggestionSelect} />
 
-          {/* Display selected condition in a cleaner format */}
-          {selectedCondition && (
-            <div className="selected-condition mt-4">
+          {/* Display selected conditions in a cleaner format */}
+          {selectedConditions.length > 0 && (
+            <div className="selected-conditions mt-4">
               <p>
-                <strong>Selected Condition:</strong>
+                <strong>Selected Conditions:</strong>
               </p>
-              <p>{selectedCondition.description}</p>
-              <p>
-                <strong>Code:</strong> {selectedCondition.code}
-              </p>
+              <ul>
+                {selectedConditions.map((condition) => (
+                  <li key={condition.code}>
+                    {condition.description} (Code: {condition.code})
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>

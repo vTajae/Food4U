@@ -3,9 +3,8 @@ import { useFormContext } from './context';
 
 const Question2 = () => {
   const { nextStep, updateAnswer, prevStep, currentStep } = useFormContext();
-  const [selectedDiet, setSelectedDiet] = useState<string>(''); // State for selected diet
+  const [selectedDiet, setSelectedDiet] = useState<string[]>([]); // State for selected diet
 
-  // Predefined question and diet options
   const questionData = {
     question: 'What type of diet do you follow?',
     options: ['Vegetarian', 'Vegan', 'Paleo', 'Ketogenic', 'Mediterranean', 'Gluten-Free'],

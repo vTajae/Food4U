@@ -133,11 +133,12 @@ export class ClinicalService {
    */
   static async autocompleter(
     query: string,
-    maxResults: number = 10
+    maxResults: number = 10,
+    route: "conditions" | "icd10cm"
   ): Promise<AutocompleteResult[] | null> {
     // Pass the 'ef' parameter to fetchClinicalData
     const data = await this.fetchClinicalData(
-      "conditions",
+      route,
       query,
       undefined,
       undefined,

@@ -2,14 +2,12 @@ import { useState } from 'react';
 import { useFormContext } from './context';
 
 const Question1 = () => {
-  const { nextStep, updateAnswer, currentStep } = useFormContext();
+  const { nextStep, updateAnswer, currentStep, answers } = useFormContext();
   const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
 
+
+  const questionData = answers.questions[currentStep];
   // Predefined question and cuisine options
-  const questionData = {
-    question: 'Favorite Cuisine?',
-    options: ['Italian', 'Mexican', 'Chinese', 'Indian', 'Japanese', 'Thai'],
-  };
 
   // Handle checkbox change for multiple selections
   const handleCuisineChange = (cuisine: string) => {

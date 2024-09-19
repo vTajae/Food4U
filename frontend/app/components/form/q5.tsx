@@ -6,7 +6,7 @@ const Question5 = () => {
   const [answer, setAnswer] = useState<string>('');
 
   const questionData = {
-    question: 'What is your name?',
+    question: 'Average Cost Per Meal'
   };
 
   const handleSubmit = (e: React.FormEvent) => {
