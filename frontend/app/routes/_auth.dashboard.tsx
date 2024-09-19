@@ -7,7 +7,7 @@ import {
 import { z } from "zod";
 import { useFetcher } from "@remix-run/react";
 import { useState, useEffect } from "react";
-import { ActionButton, SearchBar } from "../components/search/bar";
+import { ActionButton } from "../components/search/bar";
 import { SearchResult } from "../components/search/results";
 import UserService from "../../api/services/userService";
 import { checkAuthentication } from "../context/session/checkAuthentication";
@@ -151,7 +151,7 @@ export default function Dashboard() {
           <p className="text-lg mb-4">Talk to me about food</p>
 
           {/* SearchBar component */}
-          <SearchBar fetcher={fetcher} />
+          {/* <SearchBar fetcher={fetcher} /> */}
 
           {/* SearchResult component */}
           {fetcher.data && (

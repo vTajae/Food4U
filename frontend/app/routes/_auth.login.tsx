@@ -12,7 +12,7 @@ import { createSessionStorage } from "../context/session/session";
 import UserService from "../../api/services/userService";
 
 
-export const loader: LoaderFunction = async ({ context }) => {
+export const loader: LoaderFunction = async () => {
 
   // console.log(context.session.get("auth"), "auth");
   // if (context.session.has("auth")) {

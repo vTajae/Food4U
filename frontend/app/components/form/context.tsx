@@ -1,87 +1,122 @@
-import React, { createContext, useState, useContext } from 'react';
-import Modal from './Modal'; // Assuming a Modal component exists for the "Are you sure?" prompt
+import React, { createContext, useState, useContext, ReactNode } from 'react';
+import Modal from './modal';
+import { WelcomeQuestions } from '../../../api/interfaces/welcome';
+import { MedicalCode } from '../../../api/interfaces/medical';
 
-// Create FormContext
-const FormContext = createContext({
-    currentStep: 0,
-    nextStep: () => {},
-    updateAnswer: (p0: string, answer: string) => {},
-    answers: {},
-    completed: false,
+interface FormContextType {
+  currentStep: number;
+  nextStep: () => void;
+  prevStep: () => void;
+  updateAnswer: (questionKey: keyof WelcomeQuestions, answer: string | MedicalCode | string[]) => void;
+  answers: WelcomeQuestions;
+  completed: boolean;
+  openModal: () => void;
+  isEditable: boolean;
+  enableEdit: () => void;
+  lockInValues: () => void;
+  handleFinalSubmit: () => void;
+}
+
+const Answers: WelcomeQuestions = {
+  q1: { question: '', answer: '', options: [] },
+  q2: { question: '', answer: '', options: [] },
+  q3: { question: '', answer: { code: '', description: '' }, options: [] },
+  q4: { question: '', answer: '', options: [] },
+  q5: { question: '', answer: '', options: [] },
+};
+
+const FormContext = createContext<FormContextType>({
+  currentStep: 0,
+  nextStep: () => {},
+  prevStep: () => {},
+  updateAnswer: () => {},
+  answers: Answers,
+  openModal: () => {},
+  completed: false,
+  isEditable: false,
+  enableEdit: () => {},
+  lockInValues: () => {},
+  handleFinalSubmit: () => {},
 });
 
-// Context Provider
-export const FormProvider = ({ children }) => {
-  const [currentStep, setCurrentStep] = useState(0); // Track current step (0 to 4)
-  const [answers, setAnswers] = useState({}); // Store answers for all questions
-  const [completed, setCompleted] = useState(false); // Track if the form is completed
-  const [showModal, setShowModal] = useState(false); // Show "Are you sure?" modal
-  const [confirmSubmit, setConfirmSubmit] = useState(false); // Track modal confirmation
+interface FormProviderProps {
+  children: ReactNode;
+}
 
-  // Function to open modal
+export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
+  const [currentStep, setCurrentStep] = useState<number>(0);
+  const [answers, setAnswers] = useState<WelcomeQuestions>(Answers);
+  const [completed, setCompleted] = useState<boolean>(false);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [isEditable, setIsEditable] = useState<boolean>(true);
+
   const openModal = () => setShowModal(true);
-  
-  // Function to close modal
   const closeModal = () => setShowModal(false);
 
-  // Function to handle submission after confirmation
-  const handleSubmit = () => {
-    // Call the post request here
-    console.log('Submitting data:', answers);
-
-    setCompleted(true);
-    closeModal(); // Close the modal after confirmation
-  };
-
-  // Update answers when user submits a question
-  const updateAnswer = (question, answer) => {
-    setAnswers((prev) => ({ ...prev, [question]: answer }));
-  };
-
-  // Proceed to the next step
   const nextStep = () => {
-    // Ensure questions 1-4 are answered before completing the form
     if (currentStep < 4) {
       setCurrentStep((prev) => prev + 1);
-    } else if (currentStep === 4) {
-      openModal(); // Open the modal after step 4 is completed
     }
   };
 
-  // Function to check if questions 1–4 are completed
-  const isMandatoryQuestionsAnswered = () => {
-    return answers['1'] && answers['2'] && answers['3'] && answers['4'];
+  const prevStep = () => {
+    if (currentStep > 0) {
+      setCurrentStep((prev) => prev - 1);
+    }
   };
 
+  // Update Answer function to support string or MedicalCode types
+  const updateAnswer = (questionKey: keyof WelcomeQuestions, answer: string | MedicalCode | string[]) => {
+    setAnswers((prev) => ({
+      ...prev,
+      [questionKey]: {
+        ...prev[questionKey],
+        answer, // Set the answer directly for both string and MedicalCode types
+      },
+    }));
+  };
+
+  const handleFinalSubmit = () => {
+    const formSubmissionData = {
+      ...answers,
+    };
+
+    console.log('Final submission data:', formSubmissionData);
+    setCompleted(true);
+    setShowModal(false);
+  };
+
+  const enableEdit = () => setIsEditable(true);
+  const lockInValues = () => setIsEditable(false);
+
   return (
-    <FormContext.Provider value={{ currentStep, nextStep, updateAnswer, answers, completed }}>
+    <FormContext.Provider
+      value={{
+        currentStep,
+        nextStep,
+        prevStep,
+        updateAnswer,
+        answers,
+        completed,
+        openModal,
+        isEditable,
+        enableEdit,
+        lockInValues,
+        handleFinalSubmit,
+      }}
+    >
       {children}
 
-      {/* Show modal only if form is not yet submitted */}
       {showModal && (
-        <Modal 
-          title="Are you sure?" 
-          description="Are you sure you want to submit the form?"
-          onConfirm={handleSubmit} // Proceed with submission
-          onCancel={closeModal} // Close modal without submission
+        <Modal
+          title="Are you sure?"
+          description="You have completed your application. Do you want to submit?"
+          onConfirm={handleFinalSubmit}
+          onCancel={closeModal}
         />
       )}
     </FormContext.Provider>
   );
 };
 
-// Custom hook to use FormContext
 export const useFormContext = () => useContext(FormContext);
-
-// Modal component
-const Modal = ({ title, description, onConfirm, onCancel }) => (
-  <div className="modal">
-    <div className="modal-content">
-      <h2>{title}</h2>
-      <p>{description}</p>
-      <button onClick={onConfirm}>Yes</button>
-      <button onClick={onCancel}>No</button>
-    </div>
-  </div>
-);
-
