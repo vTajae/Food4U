@@ -1,4 +1,5 @@
-import { useFormContext } from './context';
+import { WelcomeQuestions } from "../../../api/interfaces/welcome";
+import { useFormContext } from "./context";
 
 const FinalQuestion = () => {
   const {
@@ -7,20 +8,15 @@ const FinalQuestion = () => {
     isEditable,
     enableEdit,
     lockInValues,
-    answers,  // Get all answers from the context
+    answers,  // Get all answers from the context (typed as WelcomeQuestions)
   } = useFormContext();
 
-  // Helper function to filter out options
-  const filterAnswers = () => {
-    return Object.keys(answers).reduce((acc, key) => {
-      const questionKey = key as keyof typeof answers;
-      const { options, ...rest } = answers[questionKey];  // Remove `options` from each question
-      acc[questionKey] = rest;  // Only add question and answer to the final object
-      return acc;
-    }, {} as Partial<typeof answers>);
+  // Filter answers to remove 'options' field
+  const filteredAnswers: WelcomeQuestions = {
+    questions: answers.questions.map(({ options, ...rest }) => rest),
   };
+  console.log(filteredAnswers);
 
-  const filteredAnswers = filterAnswers();  // Get filtered answers without `options`
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

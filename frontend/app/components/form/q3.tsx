@@ -9,11 +9,9 @@ export interface MedicalCode {
 }
 
 const Question3 = () => {
-  const { nextStep, updateAnswer, prevStep } = useFormContext();
+  const { nextStep, updateAnswer, prevStep, currentStep } = useFormContext();
   const [yesNo, setYesNo] = useState<string>("no"); // Default to 'no'
-  const [selectedCondition, setSelectedCondition] = useState<
-    MedicalCode | undefined
-  >(undefined); // Selected condition from SearchBar
+  const [selectedCondition, setSelectedCondition] = useState<MedicalCode | undefined>(undefined); // Selected condition from SearchBar
   const fetcher = useFetcher<{
     message?: string;
     errors?: Record<string, string[]>;
@@ -22,21 +20,24 @@ const Question3 = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // If "Yes" is selected, store the selected condition, otherwise set to undefined
+    // If "Yes" is selected and a condition is provided, store the selected condition; otherwise set to undefined
     const answer =
       yesNo === "yes" && selectedCondition
         ? {
             code: selectedCondition.code,
             description: selectedCondition.description,
           }
-        : undefined; // If "No" is selected, answer remains undefined
+        : undefined; // If "No" is selected or no condition, answer is undefined
 
+        if (answer) {
 
-        if(answer){
+            updateAnswer(currentStep, answer); // Use currentStep to update answer for question 3, can be undefined
+           return nextStep(); // Move to the next step, even if no answer
+        } else if (yesNo === "no"){
+          return  nextStep()
+        } else {return { message: "Data not submitted"}}
 
-            updateAnswer("q3", answer); // Store the answer even if it's undefined for "No"
-            nextStep(); // Move to the next step in both cases
-        }
+        return { message: "Submitted Question 3" }
   };
 
   const handleSuggestionSelect = (suggestion: MedicalCode) => {
@@ -78,10 +79,7 @@ const Question3 = () => {
           <h2>Please provide more details:</h2>
 
           {/* Search Bar to select condition */}
-          <SearchBar
-            fetcher={fetcher}
-            onSuggestionSelect={handleSuggestionSelect}
-          />
+          <SearchBar fetcher={fetcher} onSuggestionSelect={handleSuggestionSelect} />
 
           {/* Display selected condition in a cleaner format */}
           {selectedCondition && (

@@ -1,13 +1,12 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import Modal from './modal';
-import { WelcomeQuestions } from '../../../api/interfaces/welcome';
-import { MedicalCode } from '../../../api/interfaces/medical';
+import { WelcomeQuestions, MedicalCode } from '../../../api/interfaces/welcome';
 
 interface FormContextType {
   currentStep: number;
   nextStep: () => void;
   prevStep: () => void;
-  updateAnswer: (questionKey: keyof WelcomeQuestions, answer: string | MedicalCode | string[]) => void;
+  updateAnswer: (questionIndex: number, answer: string | MedicalCode | string[]) => void;
   answers: WelcomeQuestions;
   completed: boolean;
   openModal: () => void;
@@ -17,12 +16,14 @@ interface FormContextType {
   handleFinalSubmit: () => void;
 }
 
-const Answers: WelcomeQuestions = {
-  q1: { question: '', answer: '', options: [] },
-  q2: { question: '', answer: '', options: [] },
-  q3: { question: '', answer: { code: '', description: '' }, options: [] },
-  q4: { question: '', answer: '', options: [] },
-  q5: { question: '', answer: '', options: [] },
+const defaultAnswers: WelcomeQuestions = {
+  questions: [
+    { question: 'Regular Question 1', answer: '', options: [] },
+    { question: 'Regular Question 2', answer: '', options: [] },
+    { question: 'Medical Question 3', options: [] },
+    { question: 'Regular Question 3', answer: '', options: [] },
+    { question: 'Regular Question 4', answer: '', options: [] },
+  ],
 };
 
 const FormContext = createContext<FormContextType>({
@@ -30,7 +31,7 @@ const FormContext = createContext<FormContextType>({
   nextStep: () => {},
   prevStep: () => {},
   updateAnswer: () => {},
-  answers: Answers,
+  answers: defaultAnswers,
   openModal: () => {},
   completed: false,
   isEditable: false,
@@ -45,7 +46,7 @@ interface FormProviderProps {
 
 export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
   const [currentStep, setCurrentStep] = useState<number>(0);
-  const [answers, setAnswers] = useState<WelcomeQuestions>(Answers);
+  const [answers, setAnswers] = useState<WelcomeQuestions>(defaultAnswers);
   const [completed, setCompleted] = useState<boolean>(false);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [isEditable, setIsEditable] = useState<boolean>(true);
@@ -54,7 +55,7 @@ export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
   const closeModal = () => setShowModal(false);
 
   const nextStep = () => {
-    if (currentStep < 4) {
+    if (currentStep < answers.questions.length - 1) {
       setCurrentStep((prev) => prev + 1);
     }
   };
@@ -65,16 +66,26 @@ export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
     }
   };
 
-  // Update Answer function to support string or MedicalCode types
-  const updateAnswer = (questionKey: keyof WelcomeQuestions, answer: string | MedicalCode | string[]) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [questionKey]: {
-        ...prev[questionKey],
-        answer, // Set the answer directly for both string and MedicalCode types
-      },
+
+  const updateAnswer = (questionIndex: number, newAnswer: string | string[] | MedicalCode) => {
+    setAnswers((prevAnswers) => ({
+      ...prevAnswers,
+      questions: prevAnswers.questions.map((question, index) => {
+        if (index === questionIndex) {
+
+          console.log(index, questionIndex)
+          // Check if the question is a MedicalQuestion
+          if ('answer' in question && typeof question.answer === 'object' && 'code' in question.answer) {
+            return { ...question, answer: newAnswer as MedicalCode }; // Treat it as a MedicalQuestion
+          } else {
+            return { ...question, answer: newAnswer as string | string[] }; // Treat it as a RegularQuestion
+          }
+        }
+        return question;
+      }),
     }));
   };
+  
 
   const handleFinalSubmit = () => {
     const formSubmissionData = {

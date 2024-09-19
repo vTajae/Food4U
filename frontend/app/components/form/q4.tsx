@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useFormContext } from './context';
 
 const Question4 = () => {
-  const { nextStep, updateAnswer, prevStep } = useFormContext();
+  const { nextStep, updateAnswer, prevStep, currentStep} = useFormContext();
   const [answer, setAnswer] = useState<string>('');
 
   const questionData = {
@@ -11,7 +11,7 @@ const Question4 = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateAnswer('q2', answer); // Save the answer in context
+    updateAnswer(currentStep, answer); // Save the answer in context
     nextStep(); // Go to the next question
   };
 

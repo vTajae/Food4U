@@ -1,26 +1,28 @@
-import { MedicalCode } from "./medical";
 
-// Interface for each question's structure
-export interface QuestionData {
-    question: string; // The text of the question
-    options?: string[]; // Optional array of options for multiple-choice questions
-    answer?: string | string[]; // The user's submitted answer
-  }
+// Structure for standard questions
+export interface RegularQuestion {
+  question: string;      // The text of the question
+  answer?: string |string[]; // The user's submitted answer
+  options?: string[];     // Optional array of options
+}
 
-  export interface QuestionData3 {
-    question: string; // The text of the question
-    options?: string[]; // Optional array of options for multiple-choice questions
-    answer?: MedicalCode;
-  }
+// Structure for the special MedicalQuestion
+export interface MedicalCode {
+  code: string;
+  description: string;
+}
 
+export interface MedicalQuestion {
+  question: string;               // The text of the medical question
+  answer?: MedicalCode;     // The user's submitted answer or undefined
+  options?: string[];              // Optional array of options
+}
 
-  
-  // Main FormData model that tracks all questions
-  export interface WelcomeQuestions {
-    q1: QuestionData;
-    q2: QuestionData;
-    q3?: QuestionData3;
-    q4: QuestionData;
-    q5: QuestionData; // Optional question 5
-  }
-  
+// Union type to represent all possible questions
+export type WelcomeQuestion = RegularQuestion | MedicalQuestion;
+
+// Main form data model now holds an array of questions
+export interface WelcomeQuestions {
+  questions: WelcomeQuestion[]; // Array of both regular and medical questions
+}
+
