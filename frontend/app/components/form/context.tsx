@@ -4,7 +4,7 @@ import React, { createContext, useState, useContext } from 'react';
 const FormContext = createContext({
     currentStep: 0,
     nextStep: () => {},
-    updateAnswer: () => {},
+    updateAnswer: (p0: string, answer: string) => {},
     answers: {},
     completed: false,
 });
