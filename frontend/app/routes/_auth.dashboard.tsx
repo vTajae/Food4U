@@ -21,7 +21,7 @@ const searchSchema = z.object({
     .trim(),
 });
 
-export const loader: LoaderFunction = async ({ request, context }) => {
+export const loader: LoaderFunction = async ({ context }) => {
   const myEnv = context.cloudflare.env as Env;
   const { session } = context;
 
@@ -164,23 +164,20 @@ export default function Dashboard() {
           {/* Buttons */}
           <div className="mt-6 space-y-4">
             <ActionButton
-              fetcher={fetcher}
-              text="I'm hungry"
-              route={"/api/clinicals"}
-              action={"consider"}
-            />
+                fetcher={fetcher}
+                text="I'm hungry"
+                route={"/api/clinicals"}
+                action={"consider"} queryKey={""}            />
             <ActionButton
-              fetcher={fetcher}
-              text="What diet is best for me?"
-              route={"/api/food/suggestions"}
-              action={"diets"}
-            />
+                fetcher={fetcher}
+                text="What diet is best for me?"
+                route={"/api/food/suggestions"}
+                action={"diets"} queryKey={""}            />
             <ActionButton
-              fetcher={fetcher}
-              text="Recommended diet for ${Random}"
-              route={"/api/food/suggestions"}
-              action={"diets-recommended"}
-            />
+                fetcher={fetcher}
+                text="Recommended diet for ${Random}"
+                route={"/api/food/suggestions"}
+                action={"diets-recommended"} queryKey={""}            />
           </div>
         </div>
       )}

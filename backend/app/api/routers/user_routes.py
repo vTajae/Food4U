@@ -30,6 +30,8 @@ async def create_profile(
     service: UserService = Depends(get_user_service)
 ):
     token = request.headers.get("Authorization")
+    
+    print(token, "token")
 
     if token is None:
         raise HTTPException(status_code=403, detail="Token is missing")

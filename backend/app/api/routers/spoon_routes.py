@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from typing import List, Optional
 
 from pydantic import BaseModel
@@ -13,6 +13,7 @@ from app.api.routers.spoonacular.misc_api import router as misc_router
 from app.api.routers.spoonacular.products_api import router as products_router
 from app.api.routers.spoonacular.recipes_api import router as recipes_router
 from app.api.models.spoonacular.analyze_recipe_request import AnalyzeRecipeRequest
+from app.api.schemas.foodDataCentral.restraunt_schema import SearchRestaurantsRequest
 
 router = APIRouter()
 
@@ -30,10 +31,10 @@ router.include_router(recipes_router, prefix="/recipes")
 @router.get("/recipes/{recipe_id}/card")
 async def create_recipe_card(
     recipe_id: int,
-    mask: Optional[str] = None,
-    background_image: Optional[str] = None,
-    background_color: Optional[str] = None,
-    font_color: Optional[str] = None,
+    mask: Optional[str] = Query(default=None),
+    background_image: Optional[str] = Query(default=None),
+    background_color: Optional[str] = Query(default=None),
+    font_color: Optional[str] = Query(default=None),
     service: Spoon_Service = Depends(get_spoon_service)
 ):
     try:
@@ -70,28 +71,29 @@ async def analyze_recipe(
 
 
 
-
-
 # Route to search restaurants
 @router.get("/food/restaurants/search")
 async def search_restaurants(
-    query: Optional[str] = None,
-    lat: Optional[float] = None,
-    lng: Optional[float] = None,
-    distance: Optional[float] = None,
-    budget: Optional[float] = None,
-    cuisine: Optional[str] = None,
-    min_rating: Optional[float] = None,
-    is_open: Optional[bool] = None,
-    sort: Optional[str] = None,
-    page: Optional[int] = None,
+    lat: float = Query(default=None),
+    lng: float = Query(default=None),
+    query: Optional[str] = Query(default=None),
+    distance: Optional[float] = Query(default=None),
+    budget: Optional[float] = Query(default=None),
+    cuisine: Optional[str] = Query(default=None),
+    min_rating: Optional[float] = Query(default=None),
+    is_open: Optional[bool] = Query(default=None),
+    sort: Optional[str] = Query(default=None),
+    page: Optional[int] = Query(default=None),
     service: Spoon_Service = Depends(get_spoon_service)
 ):
     try:
-        result = await service.search_restaurants(
-            query=query, lat=lat, lng=lng, distance=distance, budget=budget,
-            cuisine=cuisine, min_rating=min_rating, is_open=is_open, sort=sort, page=page
-        )
+        
+        print(service)
+  
+        
+        
+        
+        result = await service.search_restaurants( query, lat, lng, distance, budget, cuisine, min_rating, is_open, sort, page)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -55,11 +55,11 @@ class Spoon_Service:
         # Using `aread()` for reading the async response content
         return await response.aread()
 
-    async def search_restaurants(self, lat: float, lng: float, query: Optional[str] = None,
-                                 distance: Optional[float] = None, budget: Optional[float] = None, cuisine: Optional[str] = None,
-                                 min_rating: Optional[float] = None, is_open: Optional[bool] = None, sort: Optional[str] = None,
-                                 page: Optional[int] = None):
-        # Build the query parameters dictionary, excluding None values
+    async def search_restaurants(self, query: Optional[str], lat: float, lng: float, 
+                                 distance: Optional[float] , budget: Optional[float] , cuisine: Optional[str] ,
+                                 min_rating: Optional[float] , is_open: Optional[bool] , sort: Optional[str] ,
+                                 page: Optional[int] ):
+        # Build the query parameters dictionary, excludin values
         query_params = {
             "query": query,
             "lat": lat,  # Latitude is now required
@@ -774,20 +774,3 @@ class Spoon_Service:
 
         return await response.json()
 
-    async def search_restaurants(self, lat: float, lng: float, query: Optional[str] = None, distance: Optional[float] = None):
-        """
-        Search for restaurants near a specific latitude and longitude.
-        """
-        params = {
-            "lat": lat,
-            "lng": lng,
-            "query": query,
-            "distance": distance
-        }
-
-        # Call the GET request method from auth_client
-        response = await self.auth_client.make_get_request(
-            endpoint="food/restaurants/search", params=params
-        )
-
-        return await response.json()

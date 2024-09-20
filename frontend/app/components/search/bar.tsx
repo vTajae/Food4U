@@ -14,6 +14,7 @@ interface ButtonProps {
   text: string;
   route: string;
   action: string;
+  queryKey: string;
 }
 
 interface SearchBarProps {
@@ -27,7 +28,7 @@ interface SearchBarProps {
     description: string;
   }) => void;
   placeholderText?: string;
-  queryKey: string; // Allow passing a custom query key like "conditions" or "icd10m"
+  queryKey: "conditions" | "icd10cm"; // Allow passing a custom query key like "conditions" or "icd10m"
 }
 
 const searchSchema = z.object({
@@ -58,6 +59,7 @@ export function SearchBar({
   >(null);
   const [inputValue, setInputValue] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null); // State for the server message
 
   const {
     register,
@@ -67,7 +69,7 @@ export function SearchBar({
   });
 
   useEffect(() => {
-    if (fetcher.data?.suggestions) {
+    if (fetcher.data?.suggestions && fetcher.data?.suggestions?.length > 0 ) {
       const flattenedSuggestions = fetcher.data.suggestions.map(
         (entry: { code: string; name: string }) => ({
           code: entry.code,
@@ -75,8 +77,14 @@ export function SearchBar({
         })
       );
       setSuggestions(flattenedSuggestions);
+      setMessage(null); // Clear the message if suggestions are found
       setLoading(false); // Stop loader after fetching suggestions
+    } else if (fetcher.data?.message){
+      setSuggestions(null);
+      setLoading(false); // Stop loader if no suggestions
+      setMessage(fetcher.data?.message || null); // Set the message if present, or null if undefined
     }
+    
   }, [fetcher.data]);
 
   const handleInputChange = debounce(
@@ -84,6 +92,7 @@ export function SearchBar({
       const query = e.target.value;
       if (query) {
         setLoading(true); // Start loader
+        setMessage(null); // Clear any previous message when a new search starts
         submitFormData(
           fetcher,
           { query, action: "autocomplete", key: queryKey },
@@ -124,6 +133,13 @@ export function SearchBar({
 
       {loading && <p className="loader mt-2 text-white-500">Loading...</p>}
 
+      {/* Display the server message if present */}
+      {message && (
+        <p className="message text-yellow-500 mt-2">
+          {message}
+        </p>
+      )}
+
       {suggestions && (
         <ul className="autocomplete-list">
           {suggestions.map((suggestion) => (
@@ -141,6 +157,7 @@ export function SearchBar({
     </div>
   );
 }
+
 
 // ActionButton component
 export function ActionButton({ fetcher, text, route, action }: ButtonProps) {

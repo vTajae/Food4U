@@ -9,6 +9,7 @@ const clinicalSubmissionSchema = z.object({
   code: z.string().optional().nullable(),  // Allow code to be null or optional
   description: z.string().optional().nullable(),  // Allow description to be null or optional
   action: z.enum(["autocomplete", "search", "consider"]),
+  key: z.enum(["conditions", "icd10cm"]),
 });
 
 // Helper function to handle validation
@@ -18,9 +19,9 @@ function validateSubmission(formData: FormData) {
     code: (formData.get("code") as string | null) || null,
     description: (formData.get("description") as string | null) || null,
     action: formData.get("action") as string | null,
+    key: formData.get("key") as string | null,
   };
 
-  console.log(data, "DATAAAUH")
 
   // Parse and validate the data using the schema
   const validation = clinicalSubmissionSchema.safeParse(data);
@@ -30,6 +31,7 @@ function validateSubmission(formData: FormData) {
 
   return { success: true, data: validation.data };
 }
+
 
 // Action handler
 export const action: ActionFunction = async ({ request, context }) => {
@@ -50,10 +52,9 @@ export const action: ActionFunction = async ({ request, context }) => {
     if (!validationResult.data) {
       return json({ message: "Validation failed" }, { status: 400 });
     }
-    const { query, code, description, action } = validationResult.data;
 
+    const { query, code, description, action, key } = validationResult.data;
 
-    console.log(validationResult.data, "Data");
     // Handle actions
     switch (action) {
       case "autocomplete":
@@ -62,16 +63,18 @@ export const action: ActionFunction = async ({ request, context }) => {
           return json({ message: "Query is required for this action" }, { status: 400 });
         }
 
-        // Call appropriate service based on action
-        const response = action === "autocomplete"
-          ? await ClinicalService.autocompleter(query, 5, "conditions")
-          : await ClinicalService.searchIcd10(query);
+        try {
+          const response = await ClinicalService.autocompleter(query, 5, key);
 
-        if (!response) {
-          return json({ message: `You are not logged in!` }, { status: 401 });
+          if (!response || response.length === 0) {
+            return json({ message: `No suggestions found`, suggestions: [] });
+          }
+
+          return json({ suggestions: response });
+        } catch (err) {
+          console.error("Autocomplete error:", err);
+          return json({ message: `An error occurred while fetching suggestions.` }, { status: 500 });
         }
-
-        return json({ suggestions: response });
       }
 
       case "consider": {
@@ -82,33 +85,33 @@ export const action: ActionFunction = async ({ request, context }) => {
           );
         }
 
-        console.log(description, code, "Description and Code");
+        try {
+          const response = await UserService.post("user/medical", { icd10cm: code, description });
 
-        const response = await UserService.post("user/medical", {  icd10cm: code, description: description, });
-        if (!response) {
-          return json(
-            { message: `An error occurred while posting the medical code.` },
-            { status: 500 }
-          );
+          if (!response) {
+            return json(
+              { message: `An error occurred while posting the medical code.` },
+              { status: 500 }
+            );
+          }
+
+          return json({
+            message: `Medical code ${code} has been successfully submitted.`,
+            isLoading: false
+          });
+        } catch (err) {
+          console.error("Consider action error:", err);
+          return json({ message: `An error occurred while submitting the medical code.` }, { status: 500 });
         }
-
-        return json({
-          message: `Medical code ${code} has been successfully submitted.`, isLoading: false
-        });
       }
 
       default:
         return json({ message: `Unknown action` }, { status: 400 });
     }
 
-
-
   } catch (error) {
     console.error("Error:", error);
-    context.session.flash(
-      "error",
-      "An error occurred while processing your request."
-    );
     return json({ error: "An unexpected error occurred." }, { status: 500 });
   }
 };
+
