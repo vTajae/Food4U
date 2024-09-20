@@ -13,7 +13,7 @@ from app.api.routers.spoonacular.misc_api import router as misc_router
 from app.api.routers.spoonacular.products_api import router as products_router
 from app.api.routers.spoonacular.recipes_api import router as recipes_router
 from app.api.models.spoonacular.analyze_recipe_request import AnalyzeRecipeRequest
-from app.api.schemas.foodDataCentral.restraunt_schema import SearchRestaurantsRequest
+from app.api.schemas.foodDataCentral.restaurant_schema import SearchRestaurantsRequest
 
 router = APIRouter()
 
@@ -74,8 +74,8 @@ async def analyze_recipe(
 # Route to search restaurants
 @router.get("/food/restaurants/search")
 async def search_restaurants(
-    lat: float = Query(default=None),
-    lng: float = Query(default=None),
+    lat: float = Query(..., description="Latitude is required"),  # Required parameter
+    lng: float = Query(..., description="Longitude is required"), # Required parameter
     query: Optional[str] = Query(default=None),
     distance: Optional[float] = Query(default=None),
     budget: Optional[float] = Query(default=None),
@@ -90,8 +90,6 @@ async def search_restaurants(
         
         print(service)
   
-        
-        
         
         result = await service.search_restaurants( query, lat, lng, distance, budget, cuisine, min_rating, is_open, sort, page)
         return result
