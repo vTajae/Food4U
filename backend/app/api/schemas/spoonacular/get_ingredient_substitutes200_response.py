@@ -91,3 +91,7 @@ class GetIngredientSubstitutes200Response(BaseModel):
         return _obj
 
 
+
+class IngredientSubstitutesErrorResponse(BaseModel):
+    status: str
+    message: str

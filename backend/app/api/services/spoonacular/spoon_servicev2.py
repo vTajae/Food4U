@@ -187,3 +187,51 @@ class Spoon_Service:
         )
 
         return response
+
+
+
+    # Get Ingredient Substitutes by ID
+    async def get_ingredient_substitutes_by_id(self, id: int):
+        endpoint = f"food/ingredients/{id}/substitutes"
+        response = await self.auth_client.make_get_request(endpoint)
+        return await response.aread()
+
+    # Ingredient Search
+    async def ingredient_search(self, query: str, add_children: Optional[bool] = None,
+                                min_protein_percent: Optional[Union[float, int]] = None,
+                                max_protein_percent: Optional[Union[float, int]] = None,
+                                min_fat_percent: Optional[Union[float, int]] = None,
+                                max_fat_percent: Optional[Union[float, int]] = None,
+                                min_carbs_percent: Optional[Union[float, int]] = None,
+                                max_carbs_percent: Optional[Union[float, int]] = None,
+                                meta_information: Optional[bool] = None,
+                                intolerances: Optional[str] = None, sort: Optional[str] = None,
+                                sort_direction: Optional[str] = None, offset: Optional[int] = None,
+                                number: Optional[int] = None, language: Optional[str] = None):
+        params = {
+            "query": query,
+            "addChildren": add_children,
+            "minProteinPercent": min_protein_percent,
+            "maxProteinPercent": max_protein_percent,
+            "minFatPercent": min_fat_percent,
+            "maxFatPercent": max_fat_percent,
+            "minCarbsPercent": min_carbs_percent,
+            "maxCarbsPercent": max_carbs_percent,
+            "metaInformation": meta_information,
+            "intolerances": intolerances,
+            "sort": sort,
+            "sortDirection": sort_direction,
+            "offset": offset,
+            "number": number,
+            "language": language
+        }
+        params = {k: v for k, v in params.items() if v is not None}
+        endpoint = "food/ingredients/search"
+        response = await self.auth_client.make_get_request(endpoint, params=params)
+        return await response.aread()
+
+    # Map Ingredients to Grocery Products
+    async def map_ingredients_to_grocery_products(self, map_ingredients_to_grocery_products_request: Dict):
+        endpoint = "food/ingredients/map"
+        response = await self.auth_client.make_post_request(endpoint, data=map_ingredients_to_grocery_products_request)
+        return await response.aread()

@@ -13,6 +13,8 @@ __pycache__
 
 
 
+
+
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
 
@@ -52,3 +54,7 @@ backend/env
 .vscode-test
 
 
+
+# Ignore Python compiled files
+*.pyc
+__pycache__/
