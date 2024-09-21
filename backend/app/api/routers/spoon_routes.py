@@ -15,17 +15,19 @@ from app.api.routers.spoonacular.recipes_api import router as recipes_router
 from app.api.schemas.spoonacular.analyze_recipe_request import AnalyzeRecipeRequest
 from app.api.schemas.food4u.restaurant import SearchRestaurantsRequest
 from app.api.schemas.spoonacular.search_restaurants200_response import SearchRestaurants200Response
+from app.api.schemas.spoonacular.get_ingredient_substitutes200_response import GetIngredientSubstitutes200Response
+
+
 
 router = APIRouter()
 
 # Include the individual routers under the same master router
-router.include_router(ingredients_router, prefix="/ingredients")
-router.include_router(meal_planning_router, prefix="/meal-planning")
-router.include_router(menu_items_router, prefix="/menu-items")
-router.include_router(misc_router, prefix="/misc")
-router.include_router(products_router, prefix="/products")
-router.include_router(recipes_router, prefix="/recipes")
-
+router.include_router(ingredients_router, prefix="/spoon/ingredients")
+router.include_router(meal_planning_router, prefix="/spoon/meal-planning")
+router.include_router(menu_items_router, prefix="/spoon/menu-items")
+router.include_router(misc_router, prefix="/spoon/misc")
+router.include_router(products_router, prefix="/spoon/products")
+router.include_router(recipes_router, prefix="/spoon/recipes")
 
 
 # Route to generate a recipe card
@@ -51,7 +53,8 @@ async def create_recipe_card(
 # Route to analyze a recipe
 @router.post("/recipes/analyze")
 async def analyze_recipe(
-    analyze_recipe_request: AnalyzeRecipeRequest = Body(...),  # Use Body to grab the JSON payload
+    # Use Body to grab the JSON payload
+    analyze_recipe_request: AnalyzeRecipeRequest = Body(...),
     language: Optional[str] = "en",
     include_nutrition: Optional[bool] = False,
     include_taste: Optional[bool] = False,
@@ -64,15 +67,13 @@ async def analyze_recipe(
             include_nutrition=include_nutrition,
             include_taste=include_taste
         )
-        
+
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-
-
-@router.get("/food/restaurants/search", response_model=SearchRestaurants200Response)
+@router.get("/spoon/restaurants/search", response_model=SearchRestaurants200Response)
 async def search_restaurants(
     lat: float = Query(..., description="Latitude is required"),
     lng: float = Query(..., description="Longitude is required"),
@@ -90,8 +91,10 @@ async def search_restaurants(
         result = await service.search_restaurants(
             query, lat, lng, distance, budget, cuisine, min_rating, is_open, sort, page
         )
-        
+
         # You can directly return the result, assuming it's correctly structured
         return SearchRestaurants200Response(**result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+

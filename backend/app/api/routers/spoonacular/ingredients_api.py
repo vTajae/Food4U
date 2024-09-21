@@ -7,7 +7,7 @@ from app.api.services.spoonacular.spoon_service import Spoon_Service
 from app.api.dependencies.spoon_dep import get_spoon_service
 from app.api.schemas.spoonacular.autocomplete_ingredient_search200_response_inner import AutocompleteIngredientSearch200ResponseInner
 from app.api.schemas.spoonacular.compute_ingredient_amount200_response import ComputeIngredientAmount200Response
-from app.api.schemas.spoonacular.get_ingredient_substitutes200_response import GetIngredientSubstitutes200Response
+from app.api.schemas.spoonacular.get_ingredient_substitutes200_response import GetIngredientSubstitutes200Response, IngredientSubstitutesErrorResponse
 from app.api.schemas.spoonacular.ingredient_information import IngredientInformation
 from app.api.schemas.spoonacular.ingredient_search200_response import IngredientSearch200Response
 from app.api.schemas.spoonacular.map_ingredients_to_grocery_products200_response_inner import MapIngredientsToGroceryProducts200ResponseInner
@@ -49,17 +49,6 @@ async def get_ingredient_information(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# Get Ingredient Substitutes by Name Route
-@router.get("/ingredient-substitutes", response_model=GetIngredientSubstitutes200Response)
-async def get_ingredient_substitutes(
-    ingredient_name: StrictStr,
-    service: Spoon_Service = Depends(get_spoon_service)
-):
-    try:
-        result = await service.get_ingredient_substitutes(ingredient_name=ingredient_name)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 # Autocomplete Ingredient Search Route
@@ -116,15 +105,30 @@ async def get_ingredient_information(
 # Get Ingredient Substitutes by Name Route
 @router.get("/ingredient-substitutes", response_model=GetIngredientSubstitutes200Response)
 async def get_ingredient_substitutes(
-    ingredient_name: StrictStr,
+    ingredient_name: str = Query(..., alias="ingredientName", description="Ingredient is required"),
     service: Spoon_Service = Depends(get_spoon_service)
 ):
     try:
         result = await service.get_ingredient_substitutes(ingredient_name=ingredient_name)
-        return result
+        
+        # Check if the response is an error
+        if 'status' in result and result['status'] == 'failure':
+            # Optionally, you can use the error response model to validate the error response
+            error_response = IngredientSubstitutesErrorResponse(**result)
+            raise HTTPException(
+                status_code=404,
+                detail=error_response.message
+            )
+        
+        # Validate and return the success response
+        success_response = GetIngredientSubstitutes200Response(**result)
+        return success_response
+    
+    except HTTPException as http_exc:
+        # Re-raise HTTP exceptions to be handled by FastAPI
+        raise http_exc
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error in get_ingredient_substitutes: {str(e)}")
-
 
 # Get Ingredient Substitutes by ID Route
 @router.get("/ingredient-substitutes/{id}", response_model=GetIngredientSubstitutes200Response)

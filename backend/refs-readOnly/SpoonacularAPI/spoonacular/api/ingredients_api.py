@@ -20,16 +20,6 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictBool, StrictBytes, StrictFloat, StrictInt, StrictStr, field_validator
 from typing import List, Optional, Union
 from typing_extensions import Annotated
-from spoonacular.models.autocomplete_ingredient_search200_response_inner import AutocompleteIngredientSearch200ResponseInner
-from spoonacular.models.compute_ingredient_amount200_response import ComputeIngredientAmount200Response
-from spoonacular.models.get_ingredient_substitutes200_response import GetIngredientSubstitutes200Response
-from spoonacular.models.ingredient_information import IngredientInformation
-from spoonacular.models.ingredient_search200_response import IngredientSearch200Response
-from spoonacular.models.map_ingredients_to_grocery_products200_response_inner import MapIngredientsToGroceryProducts200ResponseInner
-from spoonacular.models.map_ingredients_to_grocery_products_request import MapIngredientsToGroceryProductsRequest
-
-from spoonacular.api_client import ApiClient, RequestSerialized
-from backend.app.api.models.api_response import ApiResponse
 from spoonacular.rest import RESTResponseType
 
 

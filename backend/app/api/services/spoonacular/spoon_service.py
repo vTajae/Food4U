@@ -140,7 +140,18 @@ class Spoon_Service:
         endpoint = "food/ingredients/substitutes"
         params = {"ingredientName": ingredient_name}
         response = await self.auth_client.make_get_request(endpoint, params=params)
-        return await response.aread()
+               # Read the response content
+        response_content = await response.aread()
+        
+        print(response_content)
+
+        # Parse the response as JSON
+        try:
+            response_data = json.loads(response_content)
+            return response_data
+        except json.JSONDecodeError:
+            raise ValueError("Unable to parse response from the restaurant API")
+
 
     # Get Ingredient Substitutes by ID
     async def get_ingredient_substitutes_by_id(self, id: int):
