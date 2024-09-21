@@ -1,0 +1,40 @@
+{
+    "questions": [
+      {
+        "question": "Favorite Cuisine?",
+        "answer": [
+          "Chinese"
+        ]
+      },
+      {
+        "question": "What type of diet do you follow?",
+        "answer": [
+          "Ketogenic"
+        ]
+      },
+      {
+        "question": "Do you have a medical condition?",
+        "answer": [
+          {
+            "code": "E13.621",
+            "description": "Other specified diabetes mellitus with foot ulcer"
+          }
+        ]
+      },
+      {
+        "question": "Do you have any allergies or dietary restrictions?",
+        "answer": [
+          {
+            "code": "E08.00",
+            "description": "Diabetes mellitus due to underlying condition with hyperosmolarity without nonketotic hyperglycemic-hyperosmolar coma (NKHHC)"
+          }
+        ]
+      },
+      {
+        "question": "Average Cost Per Meal",
+        "answer": [
+          "rg"
+        ]
+      }
+    ]
+  }

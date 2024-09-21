@@ -1,13 +1,11 @@
 import os
 import jwt
-import bcrypt
 from typing import Optional
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from app.api.repo.user_repo import UserRepository
-from app.api.schemas.user_schema import Profile
+from app.api.models.food4u.user import Profile
 from app.api.repo.auth_repo import AuthRepository
-from app.api.models.medical_schema import SecurePost
 
 
 
@@ -117,3 +115,23 @@ class UserService:
 
             # Return a success message
             return {"status": "success", "message": f"Medical code {medical_code} has been added and linked to the user."}
+
+    # async def addMedicalCode(self, profile_id: str, medical_code: str, description: str):
+    #         # First, ensure the medical code is in the database
+    #         await self.user_repo.addMedicalCode(medical_code, description)
+
+    #         # Then, associate the medical code with the user profile
+    #         await self.user_repo.LinkMedicalCodeToUser(profile_id, medical_code)
+
+    #         # Return a success message
+    #         return {"status": "success", "message": f"Medical code {medical_code} has been added and linked to the user."}
+
+    # async def addMedicalCode(self, profile_id: str, medical_code: str, description: str):
+    #         # First, ensure the medical code is in the database
+    #         await self.user_repo.addMedicalCode(medical_code, description)
+
+    #         # Then, associate the medical code with the user profile
+    #         await self.user_repo.LinkMedicalCodeToUser(profile_id, medical_code)
+
+    #         # Return a success message
+    #         return {"status": "success", "message": f"Medical code {medical_code} has been added and linked to the user."}

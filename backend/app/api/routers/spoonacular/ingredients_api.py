@@ -3,15 +3,15 @@ from pydantic import Field, StrictStr, StrictFloat, StrictInt, StrictBool
 from typing import List, Optional, Union, Tuple, Dict
 
 # Import Spoonacular models and services
-from app.api.services.spoon_service import Spoon_Service
+from app.api.services.spoonacular.spoon_service import Spoon_Service
 from app.api.dependencies.spoon_dep import get_spoon_service
-from app.api.models.spoonacular.autocomplete_ingredient_search200_response_inner import AutocompleteIngredientSearch200ResponseInner
-from app.api.models.spoonacular.compute_ingredient_amount200_response import ComputeIngredientAmount200Response
-from app.api.models.spoonacular.get_ingredient_substitutes200_response import GetIngredientSubstitutes200Response
-from app.api.models.spoonacular.ingredient_information import IngredientInformation
-from app.api.models.spoonacular.ingredient_search200_response import IngredientSearch200Response
-from app.api.models.spoonacular.map_ingredients_to_grocery_products200_response_inner import MapIngredientsToGroceryProducts200ResponseInner
-from app.api.models.spoonacular.map_ingredients_to_grocery_products_request import MapIngredientsToGroceryProductsRequest
+from app.api.schemas.spoonacular.autocomplete_ingredient_search200_response_inner import AutocompleteIngredientSearch200ResponseInner
+from app.api.schemas.spoonacular.compute_ingredient_amount200_response import ComputeIngredientAmount200Response
+from app.api.schemas.spoonacular.get_ingredient_substitutes200_response import GetIngredientSubstitutes200Response
+from app.api.schemas.spoonacular.ingredient_information import IngredientInformation
+from app.api.schemas.spoonacular.ingredient_search200_response import IngredientSearch200Response
+from app.api.schemas.spoonacular.map_ingredients_to_grocery_products200_response_inner import MapIngredientsToGroceryProducts200ResponseInner
+from app.api.schemas.spoonacular.map_ingredients_to_grocery_products_request import MapIngredientsToGroceryProductsRequest
 
 router = APIRouter()
 

@@ -2,14 +2,14 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional, Union, Tuple, Dict
 
 from pydantic import StrictStr, StrictInt, StrictFloat, Field
-from app.api.services.spoon_service import Spoon_Service
+from app.api.services.spoonacular.spoon_service import Spoon_Service
 from app.api.dependencies.spoon_dep import get_spoon_service
-from app.api.models.spoonacular.add_meal_plan_template200_response import AddMealPlanTemplate200Response
-from app.api.models.spoonacular.generate_meal_plan200_response import GenerateMealPlan200Response
-from app.api.models.spoonacular.get_meal_plan_template200_response import GetMealPlanTemplate200Response
-from app.api.models.spoonacular.get_meal_plan_templates200_response import GetMealPlanTemplates200Response
-from app.api.models.spoonacular.get_meal_plan_week200_response import GetMealPlanWeek200Response
-from app.api.models.spoonacular.get_shopping_list200_response import GetShoppingList200Response
+from app.api.schemas.spoonacular.add_meal_plan_template200_response import AddMealPlanTemplate200Response
+from app.api.schemas.spoonacular.generate_meal_plan200_response import GenerateMealPlan200Response
+from app.api.schemas.spoonacular.get_meal_plan_template200_response import GetMealPlanTemplate200Response
+from app.api.schemas.spoonacular.get_meal_plan_templates200_response import GetMealPlanTemplates200Response
+from app.api.schemas.spoonacular.get_meal_plan_week200_response import GetMealPlanWeek200Response
+from app.api.schemas.spoonacular.get_shopping_list200_response import GetShoppingList200Response
 
 router = APIRouter()
 

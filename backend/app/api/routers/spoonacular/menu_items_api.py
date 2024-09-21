@@ -2,11 +2,11 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import Optional, Union, Tuple, Dict
 
 from pydantic import StrictStr, StrictInt, StrictFloat, StrictBool, Field
-from app.api.services.spoon_service import Spoon_Service
+from app.api.services.spoonacular.spoon_service import Spoon_Service
 from app.api.dependencies.spoon_dep import get_spoon_service
-from app.api.models.spoonacular.autocomplete_product_search200_response import AutocompleteProductSearch200Response
-from app.api.models.spoonacular.menu_item import MenuItem
-from app.api.models.spoonacular.search_menu_items200_response import SearchMenuItems200Response
+from app.api.schemas.spoonacular.autocomplete_product_search200_response import AutocompleteProductSearch200Response
+from app.api.schemas.spoonacular.menu_item import MenuItem
+from app.api.schemas.spoonacular.search_menu_items200_response import SearchMenuItems200Response
 
 router = APIRouter()
 
