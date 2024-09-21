@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
-from app.api.services.spoon_service import Spoon_Service
+from app.api.services.spoonacular.spoon_service import Spoon_Service
 from app.api.dependencies.spoon_dep import get_spoon_service
 
 from app.api.routers.spoonacular.ingredients_api import router as ingredients_router

@@ -1,7 +1,7 @@
 from typing import List, Optional
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 
-from app.api.services.fdc_service import FDC_Service
+from app.api.services.fdc.fdc_service import FDC_Service
 from app.api.dependencies.fdc_dep import get_fdc_service
 from app.api.schemas.foodDataCentral.foods_criteria import FoodsCriteria
 from app.api.schemas.foodDataCentral.inline_response200 import InlineResponse200

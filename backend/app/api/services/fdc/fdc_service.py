@@ -176,8 +176,8 @@ class FDC_Service:
         if brand_owner:
             params["brandOwner"] = brand_owner
 
-        # Log the request parameters for debugging
-        logging.info(f"Requesting {endpoint} with params: {params}")
+        # # Log the request parameters for debugging
+        # logging.info(f"Requesting {endpoint} with params: {params}")
         
         # Make the GET request
         response = await self.auth_client.make_get_request(endpoint, params)

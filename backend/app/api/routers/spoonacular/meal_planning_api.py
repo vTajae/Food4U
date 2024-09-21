@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional, Union, Tuple, Dict
 
 from pydantic import StrictStr, StrictInt, StrictFloat, Field
-from app.api.services.spoon_service import Spoon_Service
+from app.api.services.spoonacular.spoon_service import Spoon_Service
 from app.api.dependencies.spoon_dep import get_spoon_service
 from app.api.schemas.spoonacular.add_meal_plan_template200_response import AddMealPlanTemplate200Response
 from app.api.schemas.spoonacular.generate_meal_plan200_response import GenerateMealPlan200Response

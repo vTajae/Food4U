@@ -1,6 +1,6 @@
 from fastapi import Depends
 from app.api.client.spoon_cli import Spoon_AuthClient
-from app.api.services.spoon_service import Spoon_Service
+from app.api.services.spoonacular.spoon_service import Spoon_Service
 
 # Dependency Injection for Spoon_AuthClient
 async def get_spoon_client() -> Spoon_AuthClient:

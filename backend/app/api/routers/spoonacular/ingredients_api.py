@@ -3,7 +3,7 @@ from pydantic import Field, StrictStr, StrictFloat, StrictInt, StrictBool
 from typing import List, Optional, Union, Tuple, Dict
 
 # Import Spoonacular models and services
-from app.api.services.spoon_service import Spoon_Service
+from app.api.services.spoonacular.spoon_service import Spoon_Service
 from app.api.dependencies.spoon_dep import get_spoon_service
 from app.api.schemas.spoonacular.autocomplete_ingredient_search200_response_inner import AutocompleteIngredientSearch200ResponseInner
 from app.api.schemas.spoonacular.compute_ingredient_amount200_response import ComputeIngredientAmount200Response

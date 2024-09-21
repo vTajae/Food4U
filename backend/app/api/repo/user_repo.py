@@ -6,7 +6,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 
 
-from app.api.models.food4u.user import ICDCodes, PatientMedicalHistory, Profile, ProfileDiet, ProfileMealPreferences, ProfilePreference
+from app.api.models.food4u.user import Profile, ProfileDiet, ProfileMealPreferences, ProfilePreference
+from app.api.models.food4u.medical import ICDCodes, PatientMedicalHistory
 
 
 class UserRepository:
@@ -62,7 +63,7 @@ class UserRepository:
         result = await self.db.execute(stmt)
         existing_code = result.scalars().first()
 
-        # If the medical code doesn't exist, insert it
+        # If the medical code doesn't exist, ProfileDietinsert it
         if not existing_code:
             stmt = insert(ICDCodes).values(code=medical_code, description=description)
             await self.db.execute(stmt)

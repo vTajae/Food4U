@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, Query, Response
 from typing import Optional, Union, List, Tuple
 
 from pydantic import StrictStr, StrictInt, StrictFloat, StrictBool, Field
-from app.api.services.spoon_service import Spoon_Service
+from app.api.services.spoonacular.spoon_service import Spoon_Service
 from app.api.dependencies.spoon_dep import get_spoon_service
 from app.api.schemas.spoonacular.autocomplete_product_search200_response import AutocompleteProductSearch200Response
 from app.api.schemas.spoonacular.classify_grocery_product200_response import ClassifyGroceryProduct200Response

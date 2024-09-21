@@ -1,6 +1,6 @@
 from fastapi import Depends
 from app.api.client.fdc_cli import FDC_AuthClient
-from app.api.services.fdc_service import FDC_Service
+from app.api.services.fdc.fdc_service import FDC_Service
 
 # Dependency Injection for FDC_AuthClient
 async def get_fdc_client() -> FDC_AuthClient:
