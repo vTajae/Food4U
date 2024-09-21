@@ -21,11 +21,10 @@ from pydantic import Field, StrictBool, StrictFloat, StrictInt, StrictStr
 from typing import Any, Dict, Optional, Union
 from typing_extensions import Annotated
 
-from backend.app.api.models.spoonacular.analyze_recipe_request import AnalyzeRecipeRequest
-from backend.app.api.models.spoonacular.search_restaurants200_response import SearchRestaurants200Response
-from backend.resources.SpoonacularAPI.spoonacular.api_client import ApiClient, RequestSerialized
-from backend.app.api.models.api_response import ApiResponse
-from backend.resources.SpoonacularAPI.spoonacular.rest import RESTResponseType
+from app.api.schemas.spoonacular.analyze_recipe_request import AnalyzeRecipeRequest
+from app.api.schemas.spoonacular.search_restaurants200_response import SearchRestaurants200Response
+from resources.SpoonacularAPI.spoonacular.api_client import ApiClient, RequestSerialized
+from resources.SpoonacularAPI.spoonacular.rest import RESTResponseType
 
 
 class DefaultApi:

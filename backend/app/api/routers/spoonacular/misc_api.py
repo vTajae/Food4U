@@ -4,16 +4,16 @@ from typing import Optional, Union, Tuple, Dict
 from pydantic import StrictStr, StrictInt, StrictFloat, Field
 from app.api.services.spoon_service import Spoon_Service
 from app.api.dependencies.spoon_dep import get_spoon_service
-from app.api.models.spoonacular.detect_food_in_text200_response import DetectFoodInText200Response
-from app.api.models.spoonacular.get_a_random_food_joke200_response import GetARandomFoodJoke200Response
-from app.api.models.spoonacular.get_conversation_suggests200_response import GetConversationSuggests200Response
-from app.api.models.spoonacular.image_analysis_by_url200_response import ImageAnalysisByURL200Response
-from app.api.models.spoonacular.image_classification_by_url200_response import ImageClassificationByURL200Response
-from app.api.models.spoonacular.search_all_food200_response import SearchAllFood200Response
-from app.api.models.spoonacular.search_custom_foods200_response import SearchCustomFoods200Response
-from app.api.models.spoonacular.search_food_videos200_response import SearchFoodVideos200Response
-from app.api.models.spoonacular.search_site_content200_response import SearchSiteContent200Response
-from app.api.models.spoonacular.talk_to_chatbot200_response import TalkToChatbot200Response
+from app.api.schemas.spoonacular.detect_food_in_text200_response import DetectFoodInText200Response
+from app.api.schemas.spoonacular.get_a_random_food_joke200_response import GetARandomFoodJoke200Response
+from app.api.schemas.spoonacular.get_conversation_suggests200_response import GetConversationSuggests200Response
+from app.api.schemas.spoonacular.image_analysis_by_url200_response import ImageAnalysisByURL200Response
+from app.api.schemas.spoonacular.image_classification_by_url200_response import ImageClassificationByURL200Response
+from app.api.schemas.spoonacular.search_all_food200_response import SearchAllFood200Response
+from app.api.schemas.spoonacular.search_custom_foods200_response import SearchCustomFoods200Response
+from app.api.schemas.spoonacular.search_food_videos200_response import SearchFoodVideos200Response
+from app.api.schemas.spoonacular.search_site_content200_response import SearchSiteContent200Response
+from app.api.schemas.spoonacular.talk_to_chatbot200_response import TalkToChatbot200Response
 
 router = APIRouter()
 

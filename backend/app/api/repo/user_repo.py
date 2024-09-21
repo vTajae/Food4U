@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 
 
-from app.api.schemas.user_schema import ICDCodes, PatientMedicalHistory, Profile, ProfileDiet, ProfileMealPreferences, ProfilePreference
+from app.api.models.food4u.user import ICDCodes, PatientMedicalHistory, Profile, ProfileDiet, ProfileMealPreferences, ProfilePreference
 
 
 class UserRepository:

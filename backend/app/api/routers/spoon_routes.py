@@ -12,8 +12,9 @@ from app.api.routers.spoonacular.menu_items_api import router as menu_items_rout
 from app.api.routers.spoonacular.misc_api import router as misc_router
 from app.api.routers.spoonacular.products_api import router as products_router
 from app.api.routers.spoonacular.recipes_api import router as recipes_router
-from app.api.models.spoonacular.analyze_recipe_request import AnalyzeRecipeRequest
-from app.api.schemas.foodDataCentral.restaurant_schema import SearchRestaurantsRequest
+from app.api.schemas.spoonacular.analyze_recipe_request import AnalyzeRecipeRequest
+from app.api.schemas.food4u.restaurant import SearchRestaurantsRequest
+from app.api.schemas.spoonacular.search_restaurants200_response import SearchRestaurants200Response
 
 router = APIRouter()
 
@@ -71,11 +72,10 @@ async def analyze_recipe(
 
 
 
-# Route to search restaurants
-@router.get("/food/restaurants/search")
+@router.get("/food/restaurants/search", response_model=SearchRestaurants200Response)
 async def search_restaurants(
-    lat: float = Query(..., description="Latitude is required"),  # Required parameter
-    lng: float = Query(..., description="Longitude is required"), # Required parameter
+    lat: float = Query(..., description="Latitude is required"),
+    lng: float = Query(..., description="Longitude is required"),
     query: Optional[str] = Query(default=None),
     distance: Optional[float] = Query(default=None),
     budget: Optional[float] = Query(default=None),
@@ -84,14 +84,14 @@ async def search_restaurants(
     is_open: Optional[bool] = Query(default=None),
     sort: Optional[str] = Query(default=None),
     page: Optional[int] = Query(default=None),
-    service: Spoon_Service = Depends(get_spoon_service)
-):
+    service: Spoon_Service = Depends(get_spoon_service),
+) -> SearchRestaurants200Response:
     try:
+        result = await service.search_restaurants(
+            query, lat, lng, distance, budget, cuisine, min_rating, is_open, sort, page
+        )
         
-        print(service)
-  
-        
-        result = await service.search_restaurants( query, lat, lng, distance, budget, cuisine, min_rating, is_open, sort, page)
-        return result
+        # You can directly return the result, assuming it's correctly structured
+        return SearchRestaurants200Response(**result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

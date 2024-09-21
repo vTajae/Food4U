@@ -1,6 +1,6 @@
 import datetime
 from app.api.enums.token import TokenType
-from app.api.schemas.auth_schema import Token
+from app.api.models.food4u.auth import Token
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError

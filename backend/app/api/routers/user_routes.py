@@ -7,12 +7,10 @@ from jwt import ExpiredSignatureError, InvalidSignatureError, PyJWTError, decode
 from app.api.dependencies.auth_dep import get_current_user
 from app.api.dependencies.user_dep import get_user_service
 from app.api.dependencies.rate_limit_dep import rate_limit_middleware
-from app.api.models.user_schema import UserLoginSchema, UserModel, UserRegisterSchema, UserResponse
+from app.api.schemas.food4u.user import UserLoginSchema, UserModel, UserRegisterSchema, UserResponse
+from app.api.schemas.food4u.medical import MedicalPost
 from app.api.services.user_service import UserService
-from app.api.schemas.user_schema import Profile
-from app.api.models.medical_schema import SecurePost
-from app.api.models.user.medical import MedicalPost
-
+from app.api.models.food4u.user import Profile
 
 router = APIRouter()
 

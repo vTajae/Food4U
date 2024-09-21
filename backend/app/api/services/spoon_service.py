@@ -1,4 +1,4 @@
-import logging
+import json
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from app.api.client.spoon_cli import Spoon_AuthClient
@@ -83,8 +83,15 @@ class Spoon_Service:
         # Make the GET request using the helper method
         response = await self.auth_client.make_get_request(endpoint=endpoint, params=query_params)
 
-        # Read and return the response content
-        return await response.aread()
+        # Read the response content
+        response_content = await response.aread()
+
+        # Parse the response as JSON
+        try:
+            response_data = json.loads(response_content)
+            return response_data
+        except json.JSONDecodeError:
+            raise ValueError("Unable to parse response from the restaurant API")
 
  # Autocomplete Ingredient Search
     async def autocomplete_ingredient_search(self, query: str, number: Optional[int] = None,
