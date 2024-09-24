@@ -1,27 +1,24 @@
-// Structure for standard questions
-export interface RegularQuestion {
-  question: string;      // The text of the question
-  answer?: string[];     // The user's submitted answers (as an array for multiple answers)
-  options?: string[];    // Optional array of options
+import { Suggestion } from "./refs";
+
+export interface Question {
+  questionId: number;
+  questionText?: string;
+  answers: Suggestion[]; // Each question may have multiple answers
 }
 
-
-export interface MedicalQuestion {
-  question: string;               // The text of the medical question
-  answer?: MedicalCode[];         // The user's submitted answer(s) as an array
-  options?: string[];             // Optional array of options
+export interface FormState {
+  currentStep: number;
+  answers: Question[];
 }
 
-// Structure for the special MedicalQuestion
-export interface MedicalCode {
-  code: string;
-  description: string;
+export interface FormContextProps {
+  state: FormState;
+  goToNextStep: () => void;
+  goToPreviousStep: () => void;
+  setAnswer: (questionId: number, answers: Suggestion[]) => void;
 }
 
-// Union type to represent all possible questions
-export type WelcomeQuestion = RegularQuestion | MedicalQuestion;
-
-// Main form data model now holds an array of questions
-export interface WelcomeQuestions {
-  questions: WelcomeQuestion[]; // Array of both regular and medical questions
+export interface welcomeProfile {
+  queryKey: string;
+  answers: Suggestion[];
 }

@@ -1,0 +1,49 @@
+{
+  "autocomplete": {
+    "allergies": [
+      "Apples",
+      "Cherries",
+      "Melons",
+      "Soy sauce",
+      "Chicken",
+      "Turkey",
+      "Pork",
+      "Beef"
+    ],
+    "intolerance": [
+      "Lactose",
+      "Gluten",
+      "Fructose",
+      "FODMAPs",
+      "Caffeine",
+      "Casein",
+      "Whey",
+      "Corn",
+      "Yeast",
+      "Garlic"
+    ],
+    "sensitivity": [
+      "Red 40",
+      "MSG",
+      "Sulfites",
+      "Aspartame",
+      "Histamine",
+      "Tyramine",
+      "Salicylates",
+      "Yellow 5",
+      "Chocolate"
+    ],
+    "cuisines": [
+      "Japanese",
+      "Korean",
+      "Mediterranean",
+      "Mexican",
+      "Middle Eastern",
+      "Southern",
+      "Spanish",
+      "Thai",
+      "Vietnamese"
+    ],
+    "medicalCode": [{ "code": 1234, "name": "Allergytoapples" }]
+  }
+}

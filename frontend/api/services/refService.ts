@@ -1,22 +1,20 @@
 // src/services/UserService.ts
 
-import { UserProfile } from "../models/profile";
 import Auth from "../../app/context/auth/auth-service";
 import { userLogin, userRegister } from "../models/user";
 import UserRepository from "../repo/userRepository";
 import { ApiService } from "./baseService";
 
-class UserService extends ApiService {
+class UserService {
   private userRepository: UserRepository;
 
   constructor(env: Env) {
-    super();
     this.userRepository = new UserRepository(env);
   }
 
 
 
-  async registerUser(userData: userRegister) {
+  async getAllergies(userData: userRegister) {
     console.log(userData, "userData");
     // Check if user already exists
     const existingUser = await this.userRepository.findUserByUsername(
@@ -113,72 +111,6 @@ class UserService extends ApiService {
       };
     }
   }
-
-
-
-  async refreshUser(env: Env, id: number) {
-    try {
-      // Clear the existing token from the headers
-      ApiService.clearToken();
-
-      // Assuming the user is already authenticated and the user data is accessible
-      const user = await this.userRepository.findUserById(id);
-      
-      console.log(user, "user");
-
-      if (!user) {
-        return { success: false, message: "No authenticated user found." };
-      }
-
-      // Generate a new token based on the user details
-      const newToken = await Auth.generateToken(
-        {
-          user_id: user.user_id,
-          username: user.username,
-          role: user.user_role,
-        },
-        env.JWT_SECRET_KEY, // JWT secret key
-        { expiresIn: env.JWT_ACCESS_TOKEN_EXPIRE_MINUTES } // Token expiration
-      );
-
-      // Set the new token in the headers
-      ApiService.setToken(newToken);
-
-      return { success: true, message: "Token refreshed successfully." };
-    } catch (error) {
-      console.error("Error during token refresh:", error);
-      return { success: false, message: "Failed to refresh token." };
-    }
-  }
-
-
-  
-  async getAllData() {
-    try {
-      // Fetch the user profile
-      const profile = await UserService.getSingle<UserProfile>("profile");
-
-      if (profile) {
-
-        // Route Testing
-        // const data = await UserService.getSingle<UserProfile>("user/profile");
-        return {
-          id: profile.id,
-          message: "Profile data fetched successfully.",
-        };
-      }
-
-      return {
-        success: false,
-        message: "Failed to fetch profile.",
-      };
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-      return { success: false, message: "Error fetching user data." };
-    }
-  }
-
-
 
 }
 

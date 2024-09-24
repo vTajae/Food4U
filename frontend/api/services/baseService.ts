@@ -11,7 +11,7 @@ export class ApiService {
   // Default headers for requests; will be updated with authorization tokens when needed
   static defaultHeaders: HeadersInit = {
     "Content-Type": "application/json",
-    "Cache-Control" : "max-age=10800",
+    // "Cache-Control" : "max-age=10800",
   };
 
   // Method to set JWT token after login

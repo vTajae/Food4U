@@ -168,5 +168,11 @@ async def user_profile(
     if not user.id:
         raise HTTPException(
             status_code=401, detail="Session invalid or expired, please login.")
+        
+        
+    print(user.id, "user.id")
 
     return await user_service.updatePreferences(user.id)
+
+
+
