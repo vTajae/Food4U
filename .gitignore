@@ -55,6 +55,7 @@ backend/env
 
 
 
-# Ignore Python compiled files
-*.pyc
-__pycache__/
+
+
+
+

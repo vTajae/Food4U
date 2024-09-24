@@ -1,4 +1,7 @@
-export interface MedicalCode {
+interface MedicalCode {
     code: string;
-    description: string;
-}
+    name: string;
+  }
+
+
+  export type { MedicalCode };

@@ -36,7 +36,7 @@ const searchSchema = z.object({
 });
 
 const submitFormData = (
-  fetcher: FetcherWithComponents<any>,
+  fetcher: FetcherWithComponents<{ message?: string; errors?: Record<string, string[]> }>,
   formDataEntries: Record<string, string>,
   action: string,
   method: "post" | "get" = "post"
