@@ -176,3 +176,17 @@ async def user_profile(
 
 
 
+@router.post("/welcome")
+async def user_profile(
+    user: Profile = Depends(get_current_user),
+    user_service: UserService = Depends(get_user_service),
+):
+    if not user.id:
+        raise HTTPException(
+            status_code=401, detail="Session invalid or expired, please login.")
+        
+        
+    print(user.id, "user.id")
+
+    return await user_service.updatePreferences(user.id)
+

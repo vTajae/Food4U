@@ -1,14 +1,17 @@
 // SearchBar.tsx
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FetcherWithComponents } from "@remix-run/react";
+import { Suggestion, SuggestionItem } from "../../../api/schemas/refs";
 import debounce from "lodash.debounce";
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Suggestion, RefbarFetchType } from "../../../api/interfaces/refs";
+import { MedicalCode } from "../../../api/schemas/medical";
+import { RefBarFetchType } from "./refSearchwButton";
+
 
 interface SearchBarProps {
-  fetcher: FetcherWithComponents<RefbarFetchType>;
+  fetcher: FetcherWithComponents<RefBarFetchType>;
   onSuggestionSelect: (selectedSuggestions: Suggestion[]) => void;
   placeholderText?: string;
   queryKey: string;
@@ -42,17 +45,21 @@ export function SearchBar({
   });
 
   // Handle new data from the fetcher
+
+  // CORRECT TYPE FOR
   useEffect(() => {
     if (fetcher.data?.autocomplete && fetcher.data.autocomplete[queryKey]) {
       const dataArray = fetcher.data.autocomplete[queryKey];
-      const fetchedSuggestions: Suggestion[] = dataArray.map((item: any) => {
-        if (typeof item === "string") {
-          return { name: item };
-        } else {
-          // Assuming item is of type MedicalCode
-          return { name: `${item.code}: ${item.name}`, code: item.code };
+      const fetchedSuggestions: Suggestion[] = dataArray.map(
+        (item: SuggestionItem | MedicalCode) => {
+          if (typeof item === "string") {
+            return { name: item };
+          } else {
+            // Assuming item is of type MedicalCode
+            return { name: `${item.code}: ${item.name}`, code: item.code };
+          }
         }
-      });
+      );
 
       setSuggestions(fetchedSuggestions);
       setMessage(null);
@@ -146,9 +153,7 @@ export function SearchBar({
             {selectedSuggestions.map((suggestion) => (
               <li key={suggestion.name}>
                 {suggestion.name}
-                <button
-                  onClick={() => handleCheckboxChange(suggestion, false)}
-                >
+                <button onClick={() => handleCheckboxChange(suggestion, false)}>
                   Remove
                 </button>
               </li>

@@ -5,10 +5,3 @@ export interface LoginCookieData {
   createdAt: number;
   updatedAt: number;
   }
-
-  
-
-  
-  
-  // Define other cookie data structures as needed
-  

@@ -2,7 +2,7 @@
 import { LoaderFunction, json } from '@remix-run/cloudflare';
 import { ClinicalService } from '../../api/services/clinicalService';
 import AutoCompleteData from '../context/refs/allergies.json';
-import { Suggestion } from '../../api/interfaces/refs';
+import { Suggestion } from '../../api/schemas/refs';
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);

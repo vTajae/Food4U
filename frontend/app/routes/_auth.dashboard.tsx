@@ -9,9 +9,9 @@ import { useFetcher } from "@remix-run/react";
 import { useState, useEffect } from "react";
 import UserService from "../../api/services/userService";
 import { checkAuthentication } from "../context/session/checkAuthentication";
-import { ApiService } from "../../api/services/profileService";
 import { ActionButton } from "../components/search/bar";
 import { SearchResult } from "../components/search/results";
+import { ApiService } from "../../api/services/baseService";
 
 const searchSchema = z.object({
   query: z

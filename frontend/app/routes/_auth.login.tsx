@@ -6,10 +6,10 @@ import {
   Session,
 } from "@remix-run/cloudflare";
 import { useState } from "react";
-import LoginForm from "../components/login/loginForm";
-import RegisterForm from "../components/login/registerForm";
 import { createSessionStorage } from "../context/session/session";
 import UserService from "../../api/services/userService";
+import RegisterForm from "../components/login/registerForm";
+import LoginForm from "../components/login/loginForm";
 
 
 export const loader: LoaderFunction = async () => {

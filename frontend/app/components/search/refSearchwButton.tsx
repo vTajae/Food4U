@@ -1,10 +1,9 @@
 // SearchBarWithButtons.tsx
-import React, { useEffect, useRef, useState } from 'react';
-import debounce from 'lodash.debounce';
-import { useFetcher } from '@remix-run/react';
-import { DebouncedFunc } from 'lodash';
-import { Suggestion } from '../../../api/interfaces/refs';
-
+import React, { useEffect, useRef, useState } from "react";
+import debounce from "lodash.debounce";
+import { useFetcher } from "@remix-run/react";
+import { DebouncedFunc } from "lodash";
+import { Suggestion } from "../../../api/schemas/refs";
 
 interface SearchBarWithButtonsProps {
   onSuggestionSelect: (selectedSuggestions: Suggestion[]) => void;
@@ -22,11 +21,11 @@ export type RefBarFetchType = {
 export const SearchBarWithButtons: React.FC<SearchBarWithButtonsProps> = ({
   onSuggestionSelect,
   queryKey,
-  placeholderText = 'Search...',
+  placeholderText = "Search...",
   selectedSuggestions,
 }) => {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [inputValue, setInputValue] = useState<string>('');
+  const [inputValue, setInputValue] = useState<string>("");
   const [message, setMessage] = useState<string | null>(null);
   const fetcher = useFetcher<RefBarFetchType>();
 
@@ -41,7 +40,9 @@ export const SearchBarWithButtons: React.FC<SearchBarWithButtonsProps> = ({
         return;
       }
       fetcher.load(
-        `/api/refs?query=${encodeURIComponent(query)}&type=${encodeURIComponent(queryKey)}`
+        `/api/refs?query=${encodeURIComponent(query)}&type=${encodeURIComponent(
+          queryKey
+        )}`
       );
     }, 300);
 
@@ -53,7 +54,8 @@ export const SearchBarWithButtons: React.FC<SearchBarWithButtonsProps> = ({
 
   // Effect to call the debounced function whenever inputValue changes
   useEffect(() => {
-    fetchSuggestionsRef.current?.(inputValue);
+    const inputvalue = inputValue.trim();
+    fetchSuggestionsRef.current?.(inputvalue);
   }, [inputValue]);
 
   // Effect to handle fetcher data updates
@@ -94,20 +96,21 @@ export const SearchBarWithButtons: React.FC<SearchBarWithButtonsProps> = ({
         placeholder={placeholderText}
         className="search-input"
       />
-      {fetcher.state === 'loading' && <p>Loading...</p>}
+      {fetcher.state === "loading" && <p>Loading...</p>}
       {message && <p>{message}</p>}
       {suggestions.length > 0 && (
         <div className="checkbox-list">
           {suggestions.map((suggestion) => (
-            <label key={`${suggestion.name}-${suggestion.code || ''}`}>
+            <label key={`${suggestion.name}-${suggestion.code || ""}`}>
               <input
                 type="checkbox"
                 checked={selectedSuggestions.some(
-                  (s) => s.name === suggestion.name && s.code === suggestion.code
+                  (s) =>
+                    s.name === suggestion.name && s.code === suggestion.code
                 )}
                 onChange={() => handleCheckboxChange(suggestion)}
               />
-              {suggestion.name} {suggestion.code ? `: ${suggestion.code}` : ''}
+              {suggestion.name} {suggestion.code ? `: ${suggestion.code}` : ""}
             </label>
           ))}
         </div>
