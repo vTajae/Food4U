@@ -1,12 +1,19 @@
 // Form.tsx
-import React, { useEffect } from 'react';
-import { useFormContext } from './context';
-import QuestionComponent from './questionBase';
-import { useFetcher, useNavigate } from '@remix-run/react';
+import React, { useEffect } from "react";
+import { useFormContext } from "./context";
+import QuestionComponent from "./questionBase";
+import { useFetcher, useNavigate } from "@remix-run/react";
+import { Suggestion } from "../../../api/schemas/refs"; // Adjust the path as necessary
 
 interface ActionData {
   success: boolean;
   message: string;
+}
+
+interface Question {
+  questionId: number;
+  questionText: string;
+  queryKey: string;
 }
 
 const Form: React.FC = () => {
@@ -14,31 +21,31 @@ const Form: React.FC = () => {
   const fetcher = useFetcher<ActionData>();
   const navigate = useNavigate();
 
-  const questions = [
+  const questions: Question[] = [
     {
       questionId: 1,
-      questionText: 'Favorite Cuisine?',
-      queryKey: 'cuisines',
+      questionText: "Favorite Cuisine?",
+      queryKey: "cuisines",
     },
     {
       questionId: 2,
-      questionText: 'What type of diet do you follow?',
-      queryKey: 'diets',
+      questionText: "What type of diet do you follow?",
+      queryKey: "cuisines",
     },
     {
       questionId: 3,
-      questionText: 'Do you have a medical condition?',
-      queryKey: 'icd10cm',
+      questionText: "Do you have a medical condition?",
+      queryKey: "icd10cm",
     },
     {
       questionId: 4,
-      questionText: 'Do you have any allergies or dietary restrictions?',
-      queryKey: 'conditions',
+      questionText: "Do you have any allergies or dietary restrictions?",
+      queryKey: "conditions",
     },
     {
       questionId: 5,
-      questionText: 'Average Cost Per Meal',
-      queryKey: 'costs',
+      questionText: "Average Cost Per Meal",
+      queryKey: "price",
     },
   ];
 
@@ -47,38 +54,40 @@ const Form: React.FC = () => {
   // Prepare the form data to be sent
   const preparedFormData = {
     answers: state.answers.map((question) => ({
-      queryKey: questions.find((q) => q.questionId === question.questionId)?.queryKey,
+      questionId: question.questionId,
+      queryKey: questions.find((q) => q.questionId === question.questionId)
+        ?.queryKey,
       answers: question.answers,
     })),
   };
 
   // Determine if the form is submitting
-  const isSubmitting = fetcher.state === 'submitting';
+  const isSubmitting = fetcher.state === "submitting";
 
   // Handle navigation upon successful submission
   useEffect(() => {
     if (fetcher.data?.success) {
       // Clear the form state
-      localStorage.removeItem('formState');
-      // Navigate to /user/profile
-      navigate('/user/profile');
+      localStorage.removeItem("formState");
+      // Navigate to /dashboard
+      navigate("/dashboard");
     }
   }, [fetcher.data, navigate]);
 
   // Display success or error message
   const renderMessage = () => {
     if (fetcher.data && !fetcher.data.success) {
-      return <p style={{ color: 'red' }}>{fetcher.data.message}</p>;
+      return <p style={{ color: "red" }}>{fetcher.data.message}</p>;
     }
     return null;
   };
 
   const handleSubmit = () => {
     const formData = new FormData();
-    formData.append('preparedFormData', JSON.stringify(preparedFormData));
+    formData.append("submission", JSON.stringify(preparedFormData));
 
     // Submit the form data using fetcher
-    fetcher.submit(formData, { method: 'post', action: '/user/profile' });
+    fetcher.submit(formData, { method: "post", action: "/welcome" });
   };
 
   return (
@@ -86,20 +95,41 @@ const Form: React.FC = () => {
       {isFinalStep ? (
         <div>
           <h2>Review Your Answers</h2>
-          {state.answers.map((question) => (
-            <div key={question.questionId}>
-              <h3>
-                {questions.find((q) => q.questionId === question.questionId)?.questionText}
-              </h3>
-              <p>{question.answers.map((a) => a.name).join(', ')}</p>
-            </div>
-          ))}
+          {state.answers.map((question) => {
+            const questionInfo = questions.find(
+              (q) => q.questionId === question.questionId
+            );
+            return (
+              <div key={question.questionId}>
+                <h3>{questionInfo?.questionText}</h3>
+                {Array.isArray(question.answers) ? (
+                  <p>
+                    {(question.answers as Suggestion[])
+                      .map((a) => {
+                        // Check for both 'name' and 'value' and render them if they exist
+                        const name = a.name ? a.name : "";
+                        const value = a.value ? ` ${a.value}` : ""; // Append value if it exists
+                        return name + value; // Concatenate name and value
+                      })
+                      .join(", ")}
+                  </p>
+                ) : (
+                  <p>{question.answers}</p>
+                )}
+              </div>
+            );
+          })}
+
           {renderMessage()}
-          <button type="button" onClick={goToPreviousStep} disabled={isSubmitting}>
+          <button
+            type="button"
+            onClick={goToPreviousStep}
+            disabled={isSubmitting}
+          >
             Back
           </button>
           <button type="button" onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? 'Submitting...' : 'Submit'}
+            {isSubmitting ? "Submitting..." : "Submit"}
           </button>
         </div>
       ) : (

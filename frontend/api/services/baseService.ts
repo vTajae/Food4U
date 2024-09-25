@@ -80,8 +80,6 @@ export class ApiService {
   static async post<T>(url: string, body: unknown): Promise<T | void> {
     try {
 
-
-      console.log("POSTING DATA", body);
       const response = await fetch(
         `${API_BASE_URL}/${url}`,
         this.getRequestOptions("POST", body)

@@ -1,14 +1,35 @@
+import React, {
+  createContext,
+  ReactNode,
+  useContext,
+  useState,
+  useEffect,
+} from "react";
+import { Suggestion } from "../../../api/schemas/refs";
 
+interface Question {
+  questionId: number;
+  answers: Suggestion[];
+}
 
-import React, { createContext, ReactNode, useContext, useState, useEffect } from 'react';
-import { FormContextProps, FormState, Question, Suggestion } from '../../../api/interfaces/welcome';
+interface FormState {
+  currentStep: number;
+  answers: Question[];
+}
+
+interface FormContextProps {
+  state: FormState;
+  goToNextStep: () => void;
+  goToPreviousStep: () => void;
+  setAnswer: (questionId: number, answers: Suggestion[]) => void;
+}
 
 const FormContext = createContext<FormContextProps | undefined>(undefined);
 
 export const useFormContext = (): FormContextProps => {
   const context = useContext(FormContext);
   if (!context) {
-    throw new Error('useFormContext must be used within a FormProvider');
+    throw new Error("useFormContext must be used within a FormProvider");
   }
   return context;
 };
@@ -18,12 +39,15 @@ interface FormProviderProps {
 }
 
 export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
-  const [state, setState] = useState<FormState>({ currentStep: 0, answers: [] });
+  const [state, setState] = useState<FormState>({
+    currentStep: 0,
+    answers: [],
+  });
   const [isHydrated, setIsHydrated] = useState(false);
 
   // Hydrate the state from localStorage after the component mounts
   useEffect(() => {
-    const savedState = localStorage.getItem('formState');
+    const savedState = localStorage.getItem("formState");
     if (savedState) {
       setState(JSON.parse(savedState));
     }
@@ -32,7 +56,7 @@ export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
 
   useEffect(() => {
     if (isHydrated) {
-      localStorage.setItem('formState', JSON.stringify(state));
+      localStorage.setItem("formState", JSON.stringify(state));
     }
   }, [state, isHydrated]);
 
@@ -59,6 +83,8 @@ export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
       let updatedAnswers;
       if (existingQuestionIndex !== -1) {
         updatedAnswers = [...prevState.answers];
+
+        console.log("answers", answers);  
         updatedAnswers[existingQuestionIndex].answers = answers;
       } else {
         const newQuestion: Question = {
@@ -81,7 +107,9 @@ export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
   }
 
   return (
-    <FormContext.Provider value={{ state, goToNextStep, goToPreviousStep, setAnswer }}>
+    <FormContext.Provider
+      value={{ state, goToNextStep, goToPreviousStep, setAnswer }}
+    >
       {children}
     </FormContext.Provider>
   );
