@@ -1,11 +1,14 @@
 import os
+from fastapi import HTTPException, Request
 import jwt
 from typing import Optional
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
+from sqlalchemy import case, insert
 from app.api.models.food4u.user import Profile
 from app.api.repo.auth_repo import AuthRepository
 from app.api.repo.profile_repo import ProfileRepository
+from app.api.models.food4u.ratelimit import RateLimit
 
 
 load_dotenv()
@@ -14,6 +17,10 @@ USER_JWT_SECRET_KEY = os.getenv('USER_JWT_SECRET_KEY')
 USER_JWT_ALGORITHM = os.getenv('USER_JWT_ALGORITHM')
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv(
     'JWT_ACCESS_TOKEN_EXPIRE_MINUTES')
+
+# Rate limiting configuration
+RATE_LIMIT = 5  # Allow 5 requests
+RATE_LIMIT_WINDOW = 1  # Window of 60 seconds
 
 
 class UserService:
@@ -69,3 +76,22 @@ class UserService:
 
         return {"access_token": access_token, "refresh_token": refresh_token}
 
+
+
+    async def rate_limiter(self, request: Request):
+        identifier = request.client.host  # Use user ID if available
+        current_time = datetime.now(timezone.utc)
+
+        # Calculate window boundary
+        window_start = current_time - timedelta(seconds=RATE_LIMIT_WINDOW)
+
+        # Call the repository method to handle the database operations
+        response = await self.auth_repo.ratelimiter(identifier, current_time, window_start)
+
+        # Extract values from the response
+        request_count = response.request_count
+        last_request = response.last_request
+        
+        # Check if the request is within the allowed window
+        if last_request > window_start and request_count > RATE_LIMIT:
+            raise HTTPException(status_code=429, detail="Too many requests")

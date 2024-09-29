@@ -150,7 +150,7 @@ export default function Dashboard() {
           <h1 className="text-5xl font-bold mb-6">Food4U</h1>
           <p className="text-lg mb-4">Talk to me about food</p>
 
-          <SearchBar fetcher={fetcher} queryKey={"suggest"} />
+          <SearchBar fetcher={fetcher} queryKey={"general"} action={"meal"} />
 
           {fetcher.data && (
             <SearchResult
@@ -165,20 +165,24 @@ export default function Dashboard() {
               fetcher={fetcher}
               text="I'm hungry"
               route={"/api/suggestion"}
-              action={"meal"}
+              action={"suggest"}
+              queryKey={"randomMeal"}
             />
-            <ActionButton
+                   <ActionButton
               fetcher={fetcher}
-              text="What diet is best for me?"
-              route={"/api/suggestion"}
-              action={"diet"}
-            />
-            <ActionButton
-              fetcher={fetcher}
-              text="Let's Cook Something New!"
+              text="Let's Cook Something!"
               route={"/api/suggestion"}
               action={"recipie"}
+              queryKey={"newRecipie"}
             />
+            <ActionButton
+              fetcher={fetcher}
+              text="What diets support my eating habits?"
+              route={"/api/suggestion"}
+              action={"diet"}
+              queryKey={"dietSuggest"}
+            />
+     
           </div>
         </div>
       )}

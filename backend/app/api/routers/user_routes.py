@@ -17,7 +17,7 @@ from app.api.schemas.food4u.medical import DietTypeCreate, DietTypeResponse, ICD
 from app.api.services.food4u.goal_service import GoalService
 from app.api.services.food4u.medical_service import MedicalService
 from app.api.services.food4u.preferences_service import PreferenceService
-from app.api.utils.utils import get_category_by_question_id
+from app.api.utils.utils import get_category_by_question_id, rate_limiter
 from app.api.schemas.food4u.profile import ProfileSchema
 
 
@@ -132,7 +132,7 @@ async def dashboard():
 async def user_profile(
     user: Profile = Depends(get_current_user),
     profile_service: ProfileService = Depends(get_profile_service)
-    ):
+):
     if not user.id:
         raise HTTPException(
             status_code=401, detail="Session invalid or expired, please login.")
@@ -181,7 +181,7 @@ async def welcome(
 
         # Get category based on questionId prefix
         category = get_category_by_question_id(str(question_id))
-        
+
         # Route to the appropriate service based on the category
         if category == "medical":
             await medical_service.post_medical(user.id, query_key, suggestions)
@@ -201,8 +201,8 @@ async def welcome(
 @router.get("/refs")
 async def refs(
     queryKey: Optional[str] = Query(default=None),
-    medical_service: MedicalService = Depends(get_medical_service), 
-    goals_service: GoalService = Depends(get_goals_service), 
+    medical_service: MedicalService = Depends(get_medical_service),
+    goals_service: GoalService = Depends(get_goals_service),
     preferences_service: PreferenceService = Depends(get_preference_service),
 ):
     # Check the queryKey and call the appropriate service
@@ -216,7 +216,6 @@ async def refs(
     return data
 
 
-
 @router.post("/diet-types/", response_model=DietTypeResponse)
 async def create_diet_type(
     diet_type_data: DietTypeCreate,
@@ -226,21 +225,18 @@ async def create_diet_type(
     existing_diet_type = await preferences_service.get_diet_type_by_name(diet_type_data.name)
     if existing_diet_type:
         raise HTTPException(status_code=400, detail="Diet type already exists")
-    
 
     new_diet_type = await preferences_service.create_diet_type(
-      diet_type_data
+        diet_type_data
     )
-    
-    return new_diet_type
 
+    return new_diet_type
 
 
 @router.get("/diet-types/", response_model=List[DietTypeResponse])
 async def get_all_diet_types(
     preferences_service: PreferenceService = Depends(get_preference_service)
 ):
-  
     return await preferences_service.get_all_diet_types()
 
 

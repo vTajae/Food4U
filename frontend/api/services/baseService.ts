@@ -34,7 +34,7 @@ export class ApiService {
       ...this.addAuthorizationHeader(customHeaders || {}), // Include JWT in headers
     };
 
-    console.log("Request headers:", headers);
+    // console.log("Request headers:", headers);
 
     const options: RequestInit = {
       method,

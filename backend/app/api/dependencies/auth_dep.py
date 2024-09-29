@@ -103,3 +103,5 @@ async def get_current_user_id(request: Request, user_service: UserService = Depe
         print("5")
         raise HTTPException(
             status_code=403, detail="Could not validate credentials")
+
+

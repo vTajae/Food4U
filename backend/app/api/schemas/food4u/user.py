@@ -45,3 +45,13 @@ class UserLoginSchema(BaseModel):
     password: str
 
 
+
+# ============
+
+class RateLimitCreate(BaseModel):
+    identifier: str
+    request_count: int
+    last_request: datetime
+
+    class Config:
+        from_attributes = True

@@ -1,7 +1,8 @@
 import datetime
 from app.api.enums.token import TokenType
 from app.api.models.food4u.auth import Token
-from sqlalchemy import select, update
+from sqlalchemy.dialects.postgresql import insert  # Correct import for PostgreSQL insert
+from sqlalchemy import case, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from app.api.models.food4u.ratelimit import RateLimit
@@ -43,7 +44,6 @@ class AuthRepository:
         )
         return result.scalars().first()
 
-
     async def getPing(self, identifier: str):
         stmt = select(RateLimit).where(RateLimit.identifier == identifier)
         result = await self.db.execute(stmt)
@@ -67,3 +67,26 @@ class AuthRepository:
                 raise
             else: 
                 return LookupError("No record exists")
+
+    async def ratelimiter(self, identifier: str, current_time: datetime, window_start: datetime):
+        stmt = insert(RateLimit).values(
+            identifier=identifier,
+            request_count=1,
+            last_request=current_time
+        ).on_conflict_do_update(
+            index_elements=['identifier'],  # Assumes unique constraint/index on `identifier`
+            set_={
+                "request_count": case(
+                    (RateLimit.last_request < window_start, 1),  # Reset count if outside the window
+                    else_=RateLimit.request_count + 1  # Increment if within the window
+                ),
+                "last_request": current_time
+            }
+        ).returning(RateLimit.request_count, RateLimit.last_request)
+
+        result = await self.db.execute(stmt)
+        await self.db.commit()  # Commit the changes within the repository method
+        return result.fetchone()
+
+
+            

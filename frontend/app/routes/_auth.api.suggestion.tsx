@@ -7,6 +7,11 @@ export const action: ActionFunction = async ({ request }) => {
     const formData = await request.formData();
     const action = formData.get("action");
     const queryKey = formData.get("queryKey");
+    const query = formData.get("query");
+
+    console.log(formData)
+
+
 
     if (!formData) {
       return json({ error: "Invalid form submission" }, { status: 400 });
@@ -20,7 +25,6 @@ export const action: ActionFunction = async ({ request }) => {
     }
 
     let response;
-
     // Handle different actions here
     switch (action) {
       case "meal":

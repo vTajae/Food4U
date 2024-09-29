@@ -23,17 +23,23 @@ const submitFormData = (
 interface SearchBarProps {
   fetcher: FetcherWithComponents<FetcherDataType>;
   placeholderText?: string;
-  queryKey: "suggest"; // Allow passing a custom query key
+  queryKey: string; // Allow passing a custom query key
+  action: string; // Allow passing a custom action
 }
 
+// Updated search schema
 const searchSchema = z.object({
-  query: z.string().min(1, "Query cannot be empty"), // Add validation for required query
+  query: z
+    .string()
+    .min(1, "Query cannot be empty") // Ensure the query is not empty
+    .regex(/^[^\\'"]*$/, "Query must not contain escape characters"), // Validate no escape characters
 });
 
 export function SearchBar({
   fetcher,
-  placeholderText = "Enter condition",
+  placeholderText = "Enter query",
   queryKey,
+  action,
 }: SearchBarProps) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -46,13 +52,14 @@ export function SearchBar({
     resolver: zodResolver(searchSchema),
   });
 
+  // On form submission
   const onSubmit = (data: { query: string }) => {
     setLoading(true);
     setMessage(null); // Clear previous messages
     submitFormData(
       fetcher,
-      { query: data.query, action: "suggest", key: queryKey },
-      "/api/suggest"
+      { text: data.query, action, queryKey }, // Sending query, action, and queryKey
+      "/api/suggestion"
     );
   };
 
@@ -91,17 +98,23 @@ export function SearchBar({
   );
 }
 
-
 interface ButtonProps {
   fetcher: FetcherWithComponents<FetcherDataType>;
   text: string;
   route: string;
   action: string;
+  queryKey: string;
 }
 
-export function ActionButton({ fetcher, text, route, action }: ButtonProps) {
+export function ActionButton({
+  fetcher,
+  text,
+  route,
+  action,
+  queryKey,
+}: ButtonProps) {
   const handleClick = () => {
-    submitFormData(fetcher, { query: text, action }, route);
+    submitFormData(fetcher, { text, action, queryKey }, route);
   };
 
   return (

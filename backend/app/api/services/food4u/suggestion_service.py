@@ -1,8 +1,20 @@
-# class SuggestionsService:
-#     def __init__(self, repo: SuggestionsRepository):
-#         self.repo = repo
+from typing import List
+from app.api.repo.profile_repo import ProfileRepository
+from app.api.repo.meal_repo import MealRepository
 
-#     async def post_suggestions(self, profile_id: str, suggestions: List[Suggestion]):
-#         # Process general suggestions
-#         for suggestion in suggestions:
-#             await self.repo.add_user_suggestion(profile_id, suggestion.name)
+
+class SuggestionService:
+    def __init__(self, profile_repo: ProfileRepository, meal_repo: MealRepository):
+        self.profile_repo = profile_repo
+        self.meal_repo = meal_repo
+
+    async def get_general_suggestion(self, profile_id: str):
+        test = await self.profile_repo.get_all_profile_info(profile_id)
+        
+        
+    
+    
+    
+    
+    
+    

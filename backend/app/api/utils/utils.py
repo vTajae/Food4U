@@ -45,14 +45,14 @@ def check_ApiKeyAuth(api_key: str = Security(api_key_header), required_scopes: L
     return {'api_key': api_key, 'scopes': required_scopes}
 
 
-async def rate_limiter(request: Request, session: AsyncSession):
+async def rate_limiter(request: Request, db: AsyncSession):
     identifier = request.client.host  # Use user ID if available
     current_time = datetime.now(timezone.utc)
 
     # Calculate window boundary
     window_start = current_time - timedelta(seconds=RATE_LIMIT_WINDOW)
 
-    # Try to update the existing record or insert a new one atomically (PostgreSQL dialect)
+    # Upsert logic using PostgreSQL's `ON CONFLICT DO UPDATE`
     stmt = insert(RateLimit).values(
         identifier=identifier,
         request_count=1,
@@ -61,14 +61,14 @@ async def rate_limiter(request: Request, session: AsyncSession):
         index_elements=['identifier'],  # Assumes unique constraint/index on `identifier`
         set_={
             "request_count": case(
-                (RateLimit.last_request < window_start, 1),  # Pass each condition as a separate argument
-                else_=RateLimit.request_count + 1  # Increment if within window
+                (RateLimit.last_request < window_start, 1),  # Reset count if outside the window
+                else_=RateLimit.request_count + 1  # Increment if within the window
             ),
-            "last_request": current_time  # Always update the last request time
+            "last_request": current_time
         }
     ).returning(RateLimit.request_count, RateLimit.last_request)
 
-    result = await session.execute(stmt)
+    result = await db.execute(stmt)
     rate_limit = result.fetchone()
 
     # Extract values after upsert
@@ -79,7 +79,8 @@ async def rate_limiter(request: Request, session: AsyncSession):
         raise HTTPException(status_code=429, detail="Too many requests")
 
     # Commit the changes if everything is fine
-    await session.commit()
+    await db.commit()
+
 
 
 # Prefix-based category mapping
