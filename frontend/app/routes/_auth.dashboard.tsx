@@ -9,11 +9,15 @@ import { useFetcher } from "@remix-run/react";
 import { useState, useEffect } from "react";
 import UserService from "../../api/services/userService";
 import { checkAuthentication } from "../context/session/checkAuthentication";
-import { ActionButton } from "../components/search/bar";
+import { ActionButton, SearchBar } from "../components/search/bar";
 import { SearchResult } from "../components/search/results";
 import { ApiService } from "../../api/services/baseService";
+import ProfileService from "../../api/services/profileService";
+import { FetcherDataType } from "../../api/schemas/refs";
 
-const searchSchema = z.object({
+
+
+export const searchSchema = z.object({
   query: z
     .string()
     .min(1, "Search query is required")
@@ -37,10 +41,10 @@ export const loader: LoaderFunction = async ({ context }) => {
   }
 
   try {
-    const data = await userService.getAllData();
+    const data = await ProfileService.getAllData();
 
     // 3. If the token is invalid (403 Forbidden), attempt to refresh it or redirect to login
-    if (!data.id) {
+    if (!data) {
       console.log("Token is invalid or expired, attempting to refresh.");
 
       // Attempt to refresh the token
@@ -49,13 +53,13 @@ export const loader: LoaderFunction = async ({ context }) => {
         isAuthenticated.id
       );
 
-      console.log("refreshResult",refreshResult);
+      // console.log("refreshResult", refreshResult);
 
-      if (refreshResult.success === false || !refreshResult) { 
+      if (refreshResult.success === false || !refreshResult) {
         // If token refresh failed, unset the session and redirect to login
         session.unset("auth");
         ApiService.clearToken();
-        return json({});
+        return redirect("/login");
       }
     }
 
@@ -67,9 +71,9 @@ export const loader: LoaderFunction = async ({ context }) => {
     //   return redirect("/login");
     // }
 
-    // console.log({ isAuthenticated, data });
+    console.log({ isAuthenticated, data });
 
-    return json({});
+    return json({ data });
   } catch (error) {
     // Log error if necessary
     console.error("Error fetching user data:", error);
@@ -112,16 +116,12 @@ export const action: ActionFunction = async ({ request, context }) => {
       "error",
       "An error occurred while processing your request."
     );
-    return json({ error: "Login failed due to an unexpected error." });
   }
 };
 
+
 export default function Dashboard() {
-  const fetcher = useFetcher<{
-    data: any;
-    message?: string;
-    errors?: Record<string, string[]>;
-  }>();
+  const fetcher = useFetcher<FetcherDataType>();
 
   const [showWelcome, setShowWelcome] = useState(true);
 
@@ -150,10 +150,8 @@ export default function Dashboard() {
           <h1 className="text-5xl font-bold mb-6">Food4U</h1>
           <p className="text-lg mb-4">Talk to me about food</p>
 
-          {/* SearchBar component */}
-          {/* <SearchBar fetcher={fetcher} /> */}
+          <SearchBar fetcher={fetcher} queryKey={"suggest"} />
 
-          {/* SearchResult component */}
           {fetcher.data && (
             <SearchResult
               message={fetcher.data.message}
@@ -164,20 +162,23 @@ export default function Dashboard() {
           {/* Buttons */}
           <div className="mt-6 space-y-4">
             <ActionButton
-                fetcher={fetcher}
-                text="I'm hungry"
-                route={"/api/clinicals"}
-                action={"consider"} queryKey={""}            />
+              fetcher={fetcher}
+              text="I'm hungry"
+              route={"/api/suggestion"}
+              action={"meal"}
+            />
             <ActionButton
-                fetcher={fetcher}
-                text="What diet is best for me?"
-                route={"/api/food/suggestions"}
-                action={"diets"} queryKey={""}            />
+              fetcher={fetcher}
+              text="What diet is best for me?"
+              route={"/api/suggestion"}
+              action={"diet"}
+            />
             <ActionButton
-                fetcher={fetcher}
-                text="Recommended diet for ${Random}"
-                route={"/api/food/suggestions"}
-                action={"diets-recommended"} queryKey={""}            />
+              fetcher={fetcher}
+              text="Let's Cook Something New!"
+              route={"/api/suggestion"}
+              action={"recipie"}
+            />
           </div>
         </div>
       )}

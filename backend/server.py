@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routers import user_routes, fdc_routes, spoon_routes
 from app.config.database import async_database_session
-from app.api.dependencies.rate_limit_dep import rate_limit_middleware
+from app.api.dependencies.user_dep import get_db_session, rate_limit_middleware
 
 
 origins = ["http://localhost:3000", "https://localhost:3001"]
@@ -26,10 +26,10 @@ app.add_middleware(
     allow_headers=["*"]  # Allows all headers
 )
 
-# Middleware to apply rate limiter
 @app.middleware("http")
-async def rate_limit_middleware_handler(request: Request, call_next):
-    await rate_limit_middleware(request)  # Apply rate limiter to the request
+async def rate_limit_middleware_dependency(request: Request, call_next):
+    session = await get_db_session().__anext__()  # Get the session for rate limiting
+    await rate_limit_middleware(request, session)
     response = await call_next(request)
     return response
 

@@ -10,7 +10,7 @@ class UserCreate(BaseModel):
 
 
 class UserModel(BaseModel):
-    id: str
+    id: int
     # hashed_password: str
     # expires_at: datetime
 

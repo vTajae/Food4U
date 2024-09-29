@@ -3,7 +3,8 @@ import os
 import httpx
 from fastapi import HTTPException, Response, Security
 
-from app.api.auth.auth import check_ApiKeyAuth
+from app.api.utils.utils import check_ApiKeyAuth
+
 
 # Global AsyncClient instance to be reused across the application
 client = httpx.AsyncClient(timeout=10.0)

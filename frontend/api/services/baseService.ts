@@ -1,4 +1,4 @@
-import { LoginResponse } from "../models/user";
+import { LoginResponse } from "../schemas/user";
 import { Credentials } from "../props/credentials";
 
 // Base URL should be configured from environment or configuration files

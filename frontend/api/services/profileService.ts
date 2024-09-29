@@ -1,51 +1,55 @@
+import { ProfileSchema } from "../../api/schemas/profile";
 import { WelcomeFormData } from "../schemas/welcome";
 import { ApiService } from "./baseService";
 
-interface basicAPI{
-success: boolean;
-message: string;
+interface basicAPI {
+  status: boolean;
+  message: string;
 }
 
 
 // Define a service for handling profile-related HTTP requests
-export class ProfileService extends ApiService {
+class ProfileService extends ApiService {
   // Method to create a new profile
   static async createWelcomeProfile(
     welcomeProfile: WelcomeFormData
   ): Promise<basicAPI | void> {
     try {
+      const result =  await this.post<basicAPI>("welcome", welcomeProfile);
 
-      console.log(welcomeProfile);
-
-      return await this.post<basicAPI>("welcome", welcomeProfile);
+      console.log(result);
+      return result;
     } catch (error) {
       console.error("Error creating profile:", error);
     }
   }
 
-
-  // Method to update an existing profile by ID
-  static async updateProfile(
-    profileId: number,
-    welcomeProfile: welcomeProfile
-  ): Promise<welcomeProfile | void> {
+  static async getAllData(): Promise<ProfileSchema | void> {
     try {
-      return await this.patch<welcomeProfile>(
-        `profile/${profileId}`,
-        welcomeProfile
-      );
+      
+      const response = await this.getSingle<ProfileSchema>("user/profile");
+
+      console.log(response);
+      return response;
     } catch (error) {
-      console.error(`Error updating profile with ID ${profileId}:`, error);
+      console.error("Error creating profile:", error);
     }
   }
 
-
-  // Method to get a profile by ID
-  static async getProfile(profileId: number): Promise<Profile | void> {
-    try {
-      return await this.getSingle<Profile>(`profile/${profileId}`);
-    } catch (error) {
-      console.error(`Error fetching profile with ID ${profileId}:`, error);
-    }
-  }
+  // // Method to update an existing profile by ID
+  // static async updateProfile(
+  //   profileId: number,
+  //   welcomeProfile: welcomeProfile
+  // ): Promise<welcomeProfile | void> {
+  //   try {
+  //     return await this.patch<welcomeProfile>(
+  //       `profile/${profileId}`,
+  //       welcomeProfile
+  //     );
+  //   } catch (error) {
+  //     console.error(`Error updating profile with ID ${profileId}:`, error);
+  //   }
+  // }
 }
+
+export default ProfileService;

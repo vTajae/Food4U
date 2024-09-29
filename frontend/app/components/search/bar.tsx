@@ -2,41 +2,12 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FetcherWithComponents } from "@remix-run/react";
-import { useEffect, useState } from "react";
-import debounce from "lodash.debounce";
+import { useState } from "react";
+import { FetcherDataType } from "../../../api/schemas/refs";
 
-// Define TypeScript interfaces
-interface ButtonProps {
-  fetcher: FetcherWithComponents<{
-    message?: string;
-    errors?: Record<string, string[]>;
-  }>;
-  text: string;
-  route: string;
-  action: string;
-  queryKey: string;
-}
-
-interface SearchBarProps {
-  fetcher: FetcherWithComponents<{
-    message?: string;
-    errors?: Record<string, string[]>;
-    suggestions?: { code: string; name: string }[];
-  }>;
-  onSuggestionSelect: (suggestion: {
-    code: string;
-    description: string;
-  }) => void;
-  placeholderText?: string;
-  queryKey: "conditions" | "icd10cm"; // Allow passing a custom query key like "conditions" or "icd10m"
-}
-
-const searchSchema = z.object({
-  query: z.string().nullable().optional(),
-});
-
+// Simplified submitFormData helper
 const submitFormData = (
-  fetcher: FetcherWithComponents<{ message?: string; errors?: Record<string, string[]> }>,
+  fetcher: FetcherWithComponents<FetcherDataType>,
   formDataEntries: Record<string, string>,
   action: string,
   method: "post" | "get" = "post"
@@ -48,118 +19,86 @@ const submitFormData = (
   fetcher.submit(formData, { method, action });
 };
 
+// Define TypeScript interfaces
+interface SearchBarProps {
+  fetcher: FetcherWithComponents<FetcherDataType>;
+  placeholderText?: string;
+  queryKey: "suggest"; // Allow passing a custom query key
+}
+
+const searchSchema = z.object({
+  query: z.string().min(1, "Query cannot be empty"), // Add validation for required query
+});
+
 export function SearchBar({
   fetcher,
-  onSuggestionSelect,
   placeholderText = "Enter condition",
   queryKey,
 }: SearchBarProps) {
-  const [suggestions, setSuggestions] = useState<
-    { code: string; description: string }[] | null
-  >(null);
-  const [inputValue, setInputValue] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null); // State for the server message
+  const [message, setMessage] = useState<string | null>(null);
 
   const {
     register,
+    handleSubmit,
     formState: { errors },
   } = useForm<{ query: string }>({
     resolver: zodResolver(searchSchema),
   });
 
-  useEffect(() => {
-    if (fetcher.data?.suggestions && fetcher.data?.suggestions?.length > 0 ) {
-      const flattenedSuggestions = fetcher.data.suggestions.map(
-        (entry: { code: string; name: string }) => ({
-          code: entry.code,
-          description: entry.name,
-        })
-      );
-      setSuggestions(flattenedSuggestions);
-      setMessage(null); // Clear the message if suggestions are found
-      setLoading(false); // Stop loader after fetching suggestions
-    } else if (fetcher.data?.message){
-      setSuggestions(null);
-      setLoading(false); // Stop loader if no suggestions
-      setMessage(fetcher.data?.message || null); // Set the message if present, or null if undefined
-    }
-    
-  }, [fetcher.data]);
-
-  const handleInputChange = debounce(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const query = e.target.value;
-      if (query) {
-        setLoading(true); // Start loader
-        setMessage(null); // Clear any previous message when a new search starts
-        submitFormData(
-          fetcher,
-          { query, action: "autocomplete", key: queryKey },
-          "/api/clinicals"
-        );
-      }
-    },
-    300
-  );
-
-  const handleSuggestionClick = (suggestion: {
-    code: string;
-    description: string;
-  }) => {
-    setInputValue(""); // Clear input
-    setSuggestions(null); // Clear suggestions
-    onSuggestionSelect(suggestion); // Pass suggestion to parent
+  const onSubmit = (data: { query: string }) => {
+    setLoading(true);
+    setMessage(null); // Clear previous messages
+    submitFormData(
+      fetcher,
+      { query: data.query, action: "suggest", key: queryKey },
+      "/api/suggest"
+    );
   };
 
   return (
-    <div className="search-bar">
+    <form onSubmit={handleSubmit(onSubmit)} className="search-bar">
       <input
         type="text"
         {...register("query")}
-        value={inputValue}
-        onChange={(e) => {
-          handleInputChange(e);
-          setInputValue(e.target.value);
-        }}
         placeholder={placeholderText}
         className="search-input"
       />
+
       {errors.query && (
         <p className="error-message text-red-500 mt-2">
           {errors.query.message}
         </p>
       )}
 
-      {loading && <p className="loader mt-2 text-white-500">Loading...</p>}
+      <button
+        type="submit"
+        className="
+          bg-red-500 text-white 
+          font-semibold rounded-lg 
+          py-2 px-4 m-2 
+          transition-transform duration-300 
+          hover:bg-red-600 hover:scale-105 
+          shadow-lg shadow-red-300/50 
+          focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-400"
+      >
+        Search
+      </button>
 
-      {/* Display the server message if present */}
-      {message && (
-        <p className="message text-yellow-500 mt-2">
-          {message}
-        </p>
-      )}
-
-      {suggestions && (
-        <ul className="autocomplete-list">
-          {suggestions.map((suggestion) => (
-            <li key={suggestion.code}>
-              <button
-                type="button"
-                onClick={() => handleSuggestionClick(suggestion)}
-              >
-                {`${suggestion.code} - ${suggestion.description}`}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+      {loading && <p className="loader mt-2 text-gray-500">Loading...</p>}
+      {message && <p className="message text-yellow-500 mt-2">{message}</p>}
+    </form>
   );
 }
 
 
-// ActionButton component
+interface ButtonProps {
+  fetcher: FetcherWithComponents<FetcherDataType>;
+  text: string;
+  route: string;
+  action: string;
+}
+
 export function ActionButton({ fetcher, text, route, action }: ButtonProps) {
   const handleClick = () => {
     submitFormData(fetcher, { query: text, action }, route);

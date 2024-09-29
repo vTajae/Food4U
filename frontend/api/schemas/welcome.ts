@@ -31,7 +31,7 @@ export interface Answers {
 // Define the schema for individual answers
 const answerSchema = z.object({
   questionId: z.number(),
-  queryKey: z.enum(["cuisines", "icd10cm", "conditions", "price", "allergies"]),
+  queryKey: z.enum(["cuisines", "icd10cm", "conditions", "price", "allergies", "diets"]),
   answers: z.array(
     z.object({
       name: z.string().optional(),
@@ -43,7 +43,7 @@ const answerSchema = z.object({
 
 // Define the schema for the entire form data
 export const welcomeFormDataSchema = z.object({
-  answers: z.array(answerSchema),
+  submission: z.array(answerSchema),
 });
 
 // Infer the TypeScript type from the schema

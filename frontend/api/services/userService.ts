@@ -1,8 +1,7 @@
 // src/services/UserService.ts
 
-import { UserProfile } from "../models/profile";
 import Auth from "../../app/context/auth/auth-service";
-import { userLogin, userRegister } from "../models/user";
+import {  userLogin, userRegister } from "../schemas/user";
 import UserRepository from "../repo/userRepository";
 import { ApiService } from "./baseService";
 
@@ -152,31 +151,6 @@ class UserService extends ApiService {
   }
 
 
-  
-  async getAllData() {
-    try {
-      // Fetch the user profile
-      const profile = await UserService.getSingle<UserProfile>("profile");
-
-      if (profile) {
-
-        // Route Testing
-        // const data = await UserService.getSingle<UserProfile>("user/profile");
-        return {
-          id: profile.id,
-          message: "Profile data fetched successfully.",
-        };
-      }
-
-      return {
-        success: false,
-        message: "Failed to fetch profile.",
-      };
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-      return { success: false, message: "Error fetching user data." };
-    }
-  }
 
 
 

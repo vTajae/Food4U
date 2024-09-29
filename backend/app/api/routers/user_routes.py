@@ -1,16 +1,25 @@
+import logging
 import os
+from typing import List, Optional
 from dotenv import load_dotenv
-from fastapi import APIRouter, Body
-from fastapi_limiter.depends import RateLimiter
+from fastapi import APIRouter, Body, Query
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from jwt import ExpiredSignatureError, InvalidSignatureError, PyJWTError, decode
 from app.api.dependencies.auth_dep import get_current_user
 from app.api.dependencies.user_dep import get_user_service
-from app.api.dependencies.rate_limit_dep import rate_limit_middleware
-from app.api.schemas.food4u.user import UserLoginSchema, UserModel, UserRegisterSchema, UserResponse
-from app.api.schemas.food4u.medical import MedicalPost
+from app.api.schemas.food4u.user import UserLoginSchema, UserModel, UserResponse
 from app.api.services.user_service import UserService
+from app.api.services.food4u.profile_service import ProfileService
 from app.api.models.food4u.user import Profile
+from app.api.schemas.food4u.welcome import WelcomeFormData
+from app.api.dependencies.food4u_dep import get_goals_service, get_medical_service, get_preference_service, get_profile_service
+from app.api.schemas.food4u.medical import DietTypeCreate, DietTypeResponse, ICDCodesCreate
+from app.api.services.food4u.goal_service import GoalService
+from app.api.services.food4u.medical_service import MedicalService
+from app.api.services.food4u.preferences_service import PreferenceService
+from app.api.utils.utils import get_category_by_question_id
+from app.api.schemas.food4u.profile import ProfileSchema
+
 
 router = APIRouter()
 
@@ -19,8 +28,6 @@ load_dotenv()
 USER_JWT_SECRET_KEY = os.getenv('USER_JWT_SECRET_KEY')
 USER_JWT_ALGORITHM = os.getenv('USER_JWT_ALGORITHM')
 
-# Profile creation endpoint
-
 
 @router.get("/profile", response_model=UserModel)
 async def create_profile(
@@ -28,7 +35,7 @@ async def create_profile(
     service: UserService = Depends(get_user_service)
 ):
     token = request.headers.get("Authorization")
-    
+
     print(token, "token")
 
     if token is None:
@@ -46,7 +53,7 @@ async def create_profile(
             raise HTTPException(status_code=401, detail="Invalid token")
 
         # Call the service to create or retrieve the user profile
-        profile = await service.create_profile(userId=str(user_id))
+        profile = await service.create_profile(userId=user_id)
 
         print(profile, "profile")
 
@@ -58,15 +65,6 @@ async def create_profile(
 
     except InvalidSignatureError:
         raise HTTPException(status_code=401, detail="Could not validate token")
-
-
-@router.post("/register")
-async def register_user(user_data: UserRegisterSchema, service: UserService = Depends(get_user_service)):
-    print(user_data, "user_data")
-    if await service.register_user(user_data.username, user_data.password):
-        return {"message": "Profile registered successfully"}
-    else:
-        raise HTTPException(status_code=400, detail="Username already exists")
 
 
 @router.post("/login", response_model=UserResponse)
@@ -130,16 +128,16 @@ async def dashboard():
     return {"message": "Welcome to the dashboard"}
 
 
-@router.get("/user/profile", response_model=UserModel)
+@router.get("/user/profile", response_model=ProfileSchema)
 async def user_profile(
     user: Profile = Depends(get_current_user),
-    user_service: UserService = Depends(get_user_service),
-):
+    profile_service: ProfileService = Depends(get_profile_service)
+    ):
     if not user.id:
         raise HTTPException(
             status_code=401, detail="Session invalid or expired, please login.")
 
-    data = await user_service.get_user_by_id(user.id)
+    data = await profile_service.get_all_profile_info(user.id)
 
     return data
 
@@ -147,46 +145,102 @@ async def user_profile(
 @router.post("/user/medical")
 async def user_profile(
     user: Profile = Depends(get_current_user),
-    body: MedicalPost = Body(...),  # Use Body to grab the JSON payload
+    body: ICDCodesCreate = Body(...),  # Use Body to grab the JSON payload
     user_service: UserService = Depends(get_user_service),
 ):
     if not user.id:
         raise HTTPException(
             status_code=401, detail="Session invalid or expired, please login.")
-        
-        
+
     data = await user_service.addMedicalCode(user.id, medical_code=body.icd10cm, description=body.description)
 
     return ({"data": data})
 
 
-@router.post("/user/preferences")
-async def user_profile(
-    user: Profile = Depends(get_current_user),
-    user_service: UserService = Depends(get_user_service),
-):
-    if not user.id:
-        raise HTTPException(
-            status_code=401, detail="Session invalid or expired, please login.")
-        
-        
-    print(user.id, "user.id")
-
-    return await user_service.updatePreferences(user.id)
-
-
-
 @router.post("/welcome")
-async def user_profile(
+async def welcome(
+    form: WelcomeFormData,
     user: Profile = Depends(get_current_user),
-    user_service: UserService = Depends(get_user_service),
+    medical_service: MedicalService = Depends(get_medical_service),
+    # goals_service: GoalService = Depends(get_goals_service),
+    preferences_service: PreferenceService = Depends(get_preference_service)
 ):
+
     if not user.id:
         raise HTTPException(
             status_code=401, detail="Session invalid or expired, please login.")
-        
-        
-    print(user.id, "user.id")
 
-    return await user_service.updatePreferences(user.id)
+    if not form.submission:
+        raise HTTPException(status_code=400, detail="No submission data found")
+
+    for answer in form.submission:
+        # Convert questionId to string for prefix matching
+        question_id = answer.questionId
+        suggestions = answer.answers
+        query_key = answer.queryKey
+
+        # Get category based on questionId prefix
+        category = get_category_by_question_id(str(question_id))
+        
+        # Route to the appropriate service based on the category
+        if category == "medical":
+            await medical_service.post_medical(user.id, query_key, suggestions)
+        # elif category == "goals":
+        #     await goals_service.post_goals(user.id, suggestions)
+        elif category == "preferences":
+            await preferences_service.post_preferences(user.id, question_id, query_key, suggestions)
+        else:
+            # Log the unrecognized prefix and continue processing the next entry
+            logging.warning(f"Unrecognized questionId prefix: {question_id}")
+            continue
+
+    return {"status": "success", "message": "Data processed successfully"}
+
+
+# Assuming these services are injected using FastAPI's Depends
+@router.get("/refs")
+async def refs(
+    queryKey: Optional[str] = Query(default=None),
+    medical_service: MedicalService = Depends(get_medical_service), 
+    goals_service: GoalService = Depends(get_goals_service), 
+    preferences_service: PreferenceService = Depends(get_preference_service),
+):
+    # Check the queryKey and call the appropriate service
+    if queryKey == "diets":
+        data = await preferences_service.get_all_diet_types()
+    # elif queryKey == "preferences":
+    #     data = await preferences_service.getAllPreferences()
+    else:
+        return {"error": "Invalid query key"}
+
+    return data
+
+
+
+@router.post("/diet-types/", response_model=DietTypeResponse)
+async def create_diet_type(
+    diet_type_data: DietTypeCreate,
+    preferences_service: PreferenceService = Depends(get_preference_service),
+
+):
+    existing_diet_type = await preferences_service.get_diet_type_by_name(diet_type_data.name)
+    if existing_diet_type:
+        raise HTTPException(status_code=400, detail="Diet type already exists")
+    
+
+    new_diet_type = await preferences_service.create_diet_type(
+      diet_type_data
+    )
+    
+    return new_diet_type
+
+
+
+@router.get("/diet-types/", response_model=List[DietTypeResponse])
+async def get_all_diet_types(
+    preferences_service: PreferenceService = Depends(get_preference_service)
+):
+  
+    return await preferences_service.get_all_diet_types()
+
 

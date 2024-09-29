@@ -13,7 +13,7 @@ from app.api.routers.spoonacular.misc_api import router as misc_router
 from app.api.routers.spoonacular.products_api import router as products_router
 from app.api.routers.spoonacular.recipes_api import router as recipes_router
 from app.api.schemas.spoonacular.analyze_recipe_request import AnalyzeRecipeRequest
-from app.api.schemas.food4u.restaurant import SearchRestaurantsRequest
+from app.api.schemas.foodDataCentral.restaurant import SearchRestaurantsRequest
 from app.api.schemas.spoonacular.search_restaurants200_response import SearchRestaurants200Response
 from app.api.schemas.spoonacular.get_ingredient_substitutes200_response import GetIngredientSubstitutes200Response
 

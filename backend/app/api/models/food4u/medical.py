@@ -1,57 +1,62 @@
-
-import uuid
-from datetime import datetime, timedelta
-from sqlalchemy import DECIMAL, Boolean, DateTime, ForeignKey, Integer, MetaData, String
+from typing import Optional
+from sqlalchemy import DECIMAL, Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, Relationship, mapped_column
 from app.config.database import Base
+from app.api.models.food4u.meals import Meal, MealType
 
-metadata = MetaData()
 
+# Patient Medical History Table
+class PatientMedicalHistory(Base):
+    __tablename__ = 'patient_medical_history'
 
-# Profile Vitals Table
-class ProfileVitals(Base):
-    __tablename__ = 'profile_vitals'
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    profile_id: Mapped[int] = mapped_column(Integer, ForeignKey('profile.id', ondelete='CASCADE'))
+    icd_code: Mapped[str] = mapped_column(String(10), ForeignKey('icd_codes.code', ondelete='RESTRICT'))
+    date_diagnosed: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
-    profile_id: Mapped[str] = mapped_column(String, ForeignKey(
-        'profile.id', ondelete='CASCADE'), primary_key=True)
-    height: Mapped[float] = mapped_column(DECIMAL(5, 2))
-    weight: Mapped[float] = mapped_column(DECIMAL(5, 2))
-    blood_pressure: Mapped[str] = mapped_column(String(20))
-    bmi: Mapped[float] = mapped_column(DECIMAL(4, 2))
-    blood_oxygen: Mapped[float] = mapped_column(DECIMAL(4, 2))
-
-    profile = Relationship("Profile", back_populates="vitals")
+    profile = Relationship("Profile", back_populates="medical_history")
 
     class Config:
         orm_mode = True
 
-# ICD Codes Table (Medical condition codes as per standardized ICD system)
 
-
+# ICD Codes Table
 class ICDCodes(Base):
     __tablename__ = 'icd_codes'
 
     code: Mapped[str] = mapped_column(String(10), primary_key=True)
     description: Mapped[str] = mapped_column(String(255))
-    is_allergy: Mapped[bool] = mapped_column(Boolean, default=False)  # Flag to differentiate allergies
 
     class Config:
         orm_mode = True
 
-# Patient Medical History Table
 
-class PatientMedicalHistory(Base):
-    __tablename__ = 'profile_medical_history'
+# Allergen Table
+class Allergen(Base):
+    __tablename__ = 'allergen'
 
-    id: Mapped[int] = mapped_column(
-        Integer, primary_key=True, autoincrement=True)
-    profile_id: Mapped[str] = mapped_column(
-        String, ForeignKey('profile.id', ondelete='CASCADE'))
-    icd_code: Mapped[str] = mapped_column(
-        String(10), ForeignKey('icd_codes.code', ondelete='RESTRICT'))
-    
-    profile = Relationship("Profile", back_populates="medical_history")
-    icd_codes = Relationship("ICDCodes")
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    allergen_name: Mapped[str] = mapped_column(String(255))
+    common_name: Mapped[str] = mapped_column(String(255))
+    allergenicity: Mapped[str] = mapped_column(String(50))
+    source: Mapped[str] = mapped_column(String(255))
+    protein_sequence: Mapped[str] = mapped_column(Text)
+    accession_number: Mapped[str] = mapped_column(String(50))
+    species: Mapped[str] = mapped_column(String(255))
 
     class Config:
         orm_mode = True
+
+
+# Intolerance Table
+class IntoleranceType(Base):
+    __tablename__ = 'intolerance'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    intolerance_name: Mapped[str] = mapped_column(String(100))
+    description: Mapped[str] = mapped_column(String(255))
+
+    class Config:
+        orm_mode = True
+
