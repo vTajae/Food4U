@@ -9,6 +9,7 @@ from app.api.schemas.foodDataCentral.food_list_criteria import FoodListCriteria
 from app.api.schemas.foodDataCentral.food_search_criteria import FoodSearchCriteria
 from app.api.schemas.foodDataCentral.abridged_food_item import AbridgedFoodItem
 from app.api.schemas.foodDataCentral.search_result import SearchResult
+from app.api.schemas.requestMeal import FoodSearchRequest
 
 
 
@@ -79,13 +80,7 @@ async def get_foods_list(
 
 @router.get("/fdc/v1/foods/search")
 async def search_foods(
-    query: str = Query(..., description="Search keywords. Example: 'cheddar cheese'"),  # Required
-    data_type: Optional[List[str]] = Query(None, description="Optional data type filters", example=["Foundation", "SR Legacy"]),
-    page_size: Optional[int] = Query(50, gt=0, le=200, description="Maximum results per page", example=25),
-    page_number: Optional[int] = Query(1, gt=0, description="Page number to retrieve", example=2),
-    sort_by: Optional[str] = Query(None, description="Field to sort by", example="dataType.keyword"),
-    sort_order: Optional[str] = Query("asc", description="Sort order", enum=["asc", "desc"], example="asc"),
-    brand_owner: Optional[str] = Query(None, description="Filter results by brand owner", example="Kar Nut Products Company"),
+    request: FoodSearchRequest,  # Using the unified input schema
     fdc_service: FDC_Service = Depends(get_fdc_service)
 ) -> SearchResult:
     """
@@ -94,13 +89,13 @@ async def search_foods(
     try:
         # Call the service to search for foods
         result = await fdc_service.search_foods(
-            query=query,
-            data_type=data_type,
-            page_size=page_size,
-            page_number=page_number,
-            sort_by=sort_by,
-            sort_order=sort_order,
-            brand_owner=brand_owner
+            query=request.query,
+            data_type=request.data_type,
+            page_size=request.page_size,
+            page_number=request.page_number,
+            sort_by=request.sort_by,
+            sort_order=request.sort_order,
+            brand_owner=request.brand_owner
         )
         return result  # Should be of type SearchResult
 

@@ -12,6 +12,8 @@ class SuggestionService:
         self.ai_repo = ai_repo
 
     async def get_general_suggestion(self, data: SuggestionRequest):
+        
+        data.query = "hi"
         # Extract relevant information from the user input (data)
         query_text = data.queryKey  # Assuming 'query' is a field in SuggestionRequest
 
