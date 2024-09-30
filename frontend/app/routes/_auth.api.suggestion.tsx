@@ -9,7 +9,6 @@ export const action: ActionFunction = async ({ request }) => {
     const queryKey = formData.get("queryKey");
     const query = formData.get("query");
 
-    console.log(formData)
 
 
 
@@ -28,7 +27,11 @@ export const action: ActionFunction = async ({ request }) => {
     // Handle different actions here
     switch (action) {
       case "meal":
+
+        
         response = await SuggestionService.GeneralSuggestion(queryKey as string);
+
+        console.log(response, "YERRRR");
         return json({ message: `Suggestion fetched`, data: response });
       case "diets":
         response = await SuggestionService.GeneralSuggestion(queryKey as string);

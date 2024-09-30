@@ -1,4 +1,4 @@
-import { DietType } from "./diet";
+import { DietType, MealSuggestionSchema } from "./diet";
 import { MedicalCode } from "./medical";
 
 export type SuggestionItem = string | MedicalCode | DietType;
@@ -30,7 +30,9 @@ export interface FormContextProps {
 
 
 export type FetcherDataType = {
+  results?: MealSuggestionSchema[];
   message?: string;
   errors?: Record<string, string[]>;
   suggestions?: { code: string; name: string }[];
 };
+

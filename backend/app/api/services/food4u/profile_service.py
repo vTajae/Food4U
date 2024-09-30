@@ -3,8 +3,7 @@ from sqlalchemy import insert, select
 from app.api.repo.profile_repo import ProfileRepository
 from app.api.schemas.food4u.welcome import Answer, Suggestion, WelcomeFormData
 from app.api.models.food4u.user import Profile, ProfileAttribute, ProfileDiet
-from app.api.utils.utils import get_category_by_question_id
-from sqlalchemy.orm import joinedload
+from app.api.utils.utils import RateLimitUtil
 
 from app.api.schemas.food4u.profile import ProfileSchema
 
@@ -22,7 +21,7 @@ class ProfileService:
             suggestions = answer.answers
             query_key = answer.queryKey
             
-            category = get_category_by_question_id(question_id)
+            category = RateLimitUtil.get_category_by_question_id(question_id)
 
                 # Route to the appropriate service based on the category
             if category == "medical":

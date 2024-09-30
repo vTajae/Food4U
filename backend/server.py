@@ -1,6 +1,6 @@
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routers import user_routes, fdc_routes, spoon_routes
+from app.api.routers import user_routes, fdc_routes, spoon_routes, suggestion_routes
 from app.config.database import async_database_session
 from app.api.dependencies.user_dep import get_db_session, get_user_service
 
@@ -49,6 +49,9 @@ async def rate_limit_middleware(request: Request, call_next):
 app.include_router(user_routes.router)
 app.include_router(fdc_routes.router)
 app.include_router(spoon_routes.router)
+app.include_router(suggestion_routes.router)
+
+
 
 
 

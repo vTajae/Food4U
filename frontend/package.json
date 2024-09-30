@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "remix vite:build",
-    "deploy": "npm run build && wrangler pages deploy",
+    "deploy": "npm run build && wrangler pages deploy ./build/client",
     "dev": "remix vite:dev",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "start": "wrangler pages dev ./build/client",
@@ -29,7 +29,6 @@
     "@tsndr/cloudflare-worker-jwt": "^2.5.3",
     "autocomplete-lhc": "^19.2.4",
     "aws-sdk": "^2.1687.0",
-    "bcrypt": "^5.1.1",
     "bcrypt-ts": "^5.0.2",
     "isbot": "^4.1.0",
     "prop-types": "^15.8.1",
@@ -61,8 +60,9 @@
     "tailwindcss": "^3.4.4",
     "typescript": "^5.1.6",
     "vite": "^5.1.0",
+    "vite-plugin-html": "^3.2.2",
     "vite-tsconfig-paths": "^4.2.1",
-    "wrangler": "^3.78.10"
+    "wrangler": "^3.78.12"
   },
   "engines": {
     "node": ">=20.0.0"

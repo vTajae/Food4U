@@ -4,6 +4,14 @@ interface DietType {
   }
 
 
+  interface MealSuggestionSchema {
+    diet_name: string;
+    description: string;
+  }
+
+
   
-  export type { DietType };
+
+  
+  export type { DietType, MealSuggestionSchema };
   

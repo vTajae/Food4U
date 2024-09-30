@@ -10,12 +10,13 @@ import { useState, useEffect } from "react";
 import UserService from "../../api/services/userService";
 import { checkAuthentication } from "../context/session/checkAuthentication";
 import { ActionButton, SearchBar } from "../components/search/bar";
-import { SearchResult } from "../components/search/results";
 import { ApiService } from "../../api/services/baseService";
-import ProfileService from "../../api/services/profileService";
 import { FetcherDataType } from "../../api/schemas/refs";
-
-
+// import { SearchResult } from "../components/search/results";
+import ProfileService from "../../api/services/profileService";
+import { ProfileSchema } from "../../api/schemas/profile";
+import Display, { renderResultItem } from "../components/search/display";
+import { SearchResult } from "~/components/search/results";
 
 export const searchSchema = z.object({
   query: z
@@ -34,53 +35,50 @@ export const loader: LoaderFunction = async ({ context }) => {
   const userService = new UserService(myEnv);
 
   // Handle unauthenticated user attempting to access the protected resource
-  if (isAuthenticated === false) {
+  if (!isAuthenticated) {
     session.unset("auth");
     ApiService.clearToken();
     return redirect("/login");
   }
 
   try {
-    const data = await ProfileService.getAllData();
+    let data = (await ProfileService.getAllData()) as ProfileSchema;
 
-    // 3. If the token is invalid (403 Forbidden), attempt to refresh it or redirect to login
-    if (!data) {
+    // If no data, token might be invalid/expired; try refreshing
+    if (!data.id) {
       console.log("Token is invalid or expired, attempting to refresh.");
 
-      // Attempt to refresh the token
       const refreshResult = await userService.refreshUser(
         myEnv,
         isAuthenticated.id
       );
 
-      // console.log("refreshResult", refreshResult);
-
-      if (refreshResult.success === false || !refreshResult) {
-        // If token refresh failed, unset the session and redirect to login
+      if (!refreshResult || refreshResult.success === false) {
+        console.error("Token refresh failed.");
         session.unset("auth");
         ApiService.clearToken();
         return redirect("/login");
       }
+
+      // Retry fetching the profile after a successful token refresh
+      data = await ProfileService.getAllData() as ProfileSchema;
+      if (!data.id) {
+        console.error("Failed to fetch data after token refresh.");
+        session.unset("auth");
+        ApiService.clearToken();
+        return redirect("/welcome");
+      }
     }
-
-    // // If no data, assume the user is not authenticated
-    // if (!data.id) {
-    //   session.unset("auth");
-    //   ApiService.clearToken();
-
-    //   return redirect("/login");
-    // }
 
     console.log({ isAuthenticated, data });
 
-    return json({ data });
+    // Pass the profile data to the component via loader
+    return json({ profile: data });
   } catch (error) {
-    // Log error if necessary
     console.error("Error fetching user data:", error);
-
-    // If there's an error, unset the auth session and redirect to login
     session.unset("auth");
-    return json({});
+    ApiService.clearToken();
+    return redirect("/login");
   }
 };
 
@@ -119,17 +117,19 @@ export const action: ActionFunction = async ({ request, context }) => {
   }
 };
 
-
 export default function Dashboard() {
   const fetcher = useFetcher<FetcherDataType>();
+  const [fetching, setFetching] = useState(false);
+
 
   const [showWelcome, setShowWelcome] = useState(true);
 
   useEffect(() => {
     // Set the welcome screen to fade out after 1 second
-    const timer = setTimeout(() => setShowWelcome(false), 1000);
+    const timer = setTimeout(() => setShowWelcome(false), 300);
     return () => clearTimeout(timer);
   }, []);
+
 
   return (
     <div
@@ -140,24 +140,36 @@ export default function Dashboard() {
       `}
     >
       {showWelcome ? (
-        // Add the fade-out animation to the welcome screen
         <div className="flex items-center justify-center h-full welcome-screen">
           <h1 className="text-6xl font-bold">Welcome</h1>
         </div>
       ) : (
-        // Fade-in animation for the dashboard content
         <div className="p-6 text-center dashboard-content">
           <h1 className="text-5xl font-bold mb-6">Food4U</h1>
           <p className="text-lg mb-4">Talk to me about food</p>
 
-          <SearchBar fetcher={fetcher} queryKey={"general"} action={"meal"} />
+          <SearchBar
+            fetcher={fetcher}
+            queryKey={"general"}
+            action={"meal"}
 
-          {fetcher.data && (
-            <SearchResult
-              message={fetcher.data.message}
-              errors={fetcher.data.errors}
+          />
+
+          {fetcher.data?.results && (
+            <Display
+              data={fetcher.data.results || []} // Pass fetched results
+              renderItem={renderResultItem} // Use renderItem function to display each result
             />
           )}
+
+     {fetcher.data && (
+            <SearchResult
+              message={fetcher.data?.message}
+              errors={fetcher.data?.errors}
+              fetching={fetching} // Pass fetching state to the result component
+            />
+          )}
+
 
           {/* Buttons */}
           <div className="mt-6 space-y-4">
@@ -168,7 +180,7 @@ export default function Dashboard() {
               action={"suggest"}
               queryKey={"randomMeal"}
             />
-                   <ActionButton
+            <ActionButton
               fetcher={fetcher}
               text="Let's Cook Something!"
               route={"/api/suggestion"}
@@ -182,7 +194,6 @@ export default function Dashboard() {
               action={"diet"}
               queryKey={"dietSuggest"}
             />
-     
           </div>
         </div>
       )}

@@ -17,8 +17,8 @@ from app.api.schemas.food4u.medical import DietTypeCreate, DietTypeResponse, ICD
 from app.api.services.food4u.goal_service import GoalService
 from app.api.services.food4u.medical_service import MedicalService
 from app.api.services.food4u.preferences_service import PreferenceService
-from app.api.utils.utils import get_category_by_question_id, rate_limiter
 from app.api.schemas.food4u.profile import ProfileSchema
+from app.api.utils.utils import RateLimitUtil
 
 
 router = APIRouter()
@@ -180,7 +180,7 @@ async def welcome(
         query_key = answer.queryKey
 
         # Get category based on questionId prefix
-        category = get_category_by_question_id(str(question_id))
+        category = RateLimitUtil.get_category_by_question_id(str(question_id))
 
         # Route to the appropriate service based on the category
         if category == "medical":

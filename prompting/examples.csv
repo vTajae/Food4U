@@ -1,0 +1,19 @@
+I am Hungry,Meal object, Profile Analysis
+Make Food4Me,Meal object, Profile Analysis
+I have type 1 diabetes. What's good diet for me?, Diet object, Profile Analysis
+Ingredient alternatives for a `${dietName}`,Ingredient object, Ingredient Analysis
+
+
+
+
+
+
+
+
+
+
+
+
+
+I am allergic to `${ingredientName}` but I like `${ingredientName}` ,      Substitution Meal object, Ingredient Analysis
+Good Food Near Me,       Restraunt object, Review Analysis

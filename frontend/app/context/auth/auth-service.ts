@@ -1,4 +1,4 @@
-import { hash, compare } from "bcrypt";
+import { hash, compare } from "bcrypt-ts";
 import { decode, verify, sign } from "@tsndr/cloudflare-worker-jwt";
 
 const JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 30; // 30 minutes

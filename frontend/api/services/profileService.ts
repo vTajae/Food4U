@@ -29,7 +29,7 @@ class ProfileService extends ApiService {
       
       const response = await this.getSingle<ProfileSchema>("user/profile");
 
-      console.log(response);
+
       return response;
     } catch (error) {
       console.error("Error creating profile:", error);

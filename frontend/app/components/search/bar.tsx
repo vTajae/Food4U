@@ -2,7 +2,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FetcherWithComponents } from "@remix-run/react";
-import { useState } from "react";
 import { FetcherDataType } from "../../../api/schemas/refs";
 
 // Simplified submitFormData helper
@@ -41,9 +40,6 @@ export function SearchBar({
   queryKey,
   action,
 }: SearchBarProps) {
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-
   const {
     register,
     handleSubmit,
@@ -52,10 +48,11 @@ export function SearchBar({
     resolver: zodResolver(searchSchema),
   });
 
+  // Set loading indicator based on fetcher state
+  const isLoading = fetcher.state === "submitting" || fetcher.state === "loading";
+
   // On form submission
   const onSubmit = (data: { query: string }) => {
-    setLoading(true);
-    setMessage(null); // Clear previous messages
     submitFormData(
       fetcher,
       { text: data.query, action, queryKey }, // Sending query, action, and queryKey
@@ -63,40 +60,47 @@ export function SearchBar({
     );
   };
 
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="search-bar">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="flex flex-col items-center gap-4 p-6 bg-blue-50 rounded-lg shadow-md"
+    >
       <input
         type="text"
         {...register("query")}
         placeholder={placeholderText}
-        className="search-input"
+        className="
+      w-full md:w-3/4 px-4 py-3 border border-blue-300 
+      rounded-lg text-gray-700 focus:outline-none 
+      focus:ring-2 focus:ring-blue-400 
+      transition duration-200 ease-in-out 
+      shadow-sm"
       />
 
       {errors.query && (
-        <p className="error-message text-red-500 mt-2">
-          {errors.query.message}
-        </p>
+        <p className="text-red-500 text-sm mt-1">{errors.query.message}</p>
       )}
 
       <button
         type="submit"
         className="
-          bg-red-500 text-white 
-          font-semibold rounded-lg 
-          py-2 px-4 m-2 
-          transition-transform duration-300 
-          hover:bg-red-600 hover:scale-105 
-          shadow-lg shadow-red-300/50 
-          focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-400"
+      bg-red-500 text-white font-semibold 
+      rounded-lg py-2 px-6 mt-2 
+      transition-transform duration-300 
+      hover:bg-red-600 hover:scale-105 
+      shadow-lg shadow-red-300/50 
+      focus:outline-none focus:ring-2 
+      focus:ring-offset-2 focus:ring-red-400"
+        disabled={isLoading} // Disable button when loading
       >
-        Search
+        {isLoading ? "Searching..." : "Search"} {/* Change button text */}
       </button>
-
-      {loading && <p className="loader mt-2 text-gray-500">Loading...</p>}
-      {message && <p className="message text-yellow-500 mt-2">{message}</p>}
     </form>
   );
 }
+
+
 
 interface ButtonProps {
   fetcher: FetcherWithComponents<FetcherDataType>;

@@ -1,7 +1,6 @@
 import { Session, type AppLoadContext } from "@remix-run/cloudflare";
 import { type PlatformProxy } from "wrangler";
 import { createSessionStorage } from "./app/context/session/session";
-import { Env } from "./app/context";
 
 type Cloudflare = Omit<PlatformProxy<Env>, "dispose">;
 
