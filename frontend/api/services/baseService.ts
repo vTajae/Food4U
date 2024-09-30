@@ -1,4 +1,4 @@
-import { LoginResponse } from "../models/user";
+import { LoginResponse } from "../schemas/user";
 import { Credentials } from "../props/credentials";
 
 // Base URL should be configured from environment or configuration files
@@ -34,7 +34,7 @@ export class ApiService {
       ...this.addAuthorizationHeader(customHeaders || {}), // Include JWT in headers
     };
 
-    console.log("Request headers:", headers);
+    // console.log("Request headers:", headers);
 
     const options: RequestInit = {
       method,

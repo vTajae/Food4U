@@ -44,7 +44,7 @@ async def get_current_user(request: Request, user_service: UserService = Depends
             raise HTTPException(
                 status_code=403, detail="User ID not found in token")
 
-        user = await user_service.get_user_by_id(str(user_id))
+        user = await user_service.get_profile_by_id(int(user_id))
         if user:
             return user
         
@@ -85,8 +85,8 @@ async def get_current_user_id(request: Request, user_service: UserService = Depe
             raise HTTPException(
                 status_code=403, detail="User ID not found in token")
 
-        user_id = "7f7c095a-39bd-4c29-8a39-82c0e828a8c4"
-        user = await user_service.get_user_by_id(user_id)
+        user_id = "68493456457656"
+        user = await user_service.get_profile_by_id(int(user_id))
         # print(user, "user12")
         if user:
             return user.id
@@ -103,3 +103,5 @@ async def get_current_user_id(request: Request, user_service: UserService = Depe
         print("5")
         raise HTTPException(
             status_code=403, detail="Could not validate credentials")
+
+

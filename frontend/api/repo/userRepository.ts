@@ -1,7 +1,7 @@
 // Import Cloudflare's D1 Database interface
 
 import { Env } from "../../app/context";
-import { User, userRegister } from "../models/user";
+import { User, userRegister } from "../schemas/user";
 
 
 class UserRepository {

@@ -1,8 +1,7 @@
 // src/services/UserService.ts
 
-import { UserProfile } from "../models/profile";
 import Auth from "../../app/context/auth/auth-service";
-import { userLogin, userRegister } from "../models/user";
+import {  userLogin, userRegister } from "../schemas/user";
 import UserRepository from "../repo/userRepository";
 import { ApiService } from "./baseService";
 
@@ -17,36 +16,39 @@ class UserService extends ApiService {
 
 
   async registerUser(userData: userRegister) {
-    console.log(userData, "userData");
-    // Check if user already exists
-    const existingUser = await this.userRepository.findUserByUsername(
-      userData.username
-    );
-
-    if (existingUser) {
-      return { success: false, message: "User already exists." };
-    }
-
-    // Use Auth class to hash the user's password before saving to the database
-    userData.password = await Auth.hashPassword(userData.password);
-
-    // Add the new user to the database
-
-    const userId = await this.userRepository.addBasicUser(userData);
-
-    console.log(userId, "userId");
-
-    if (userId) {
-      return {
-        success: true,
-        userId,
-        message: "User registered successfully.",
-      };
-    } else {
-      return { success: false, message: "Failed to register user." };
+    try {
+      console.log(userData, "userData");
+  
+      // Check if user already exists
+      const existingUser = await this.userRepository.findUserByUsername(userData.username);
+  
+      if (existingUser) {
+        return { success: false, message: "User already exists." };
+      }
+  
+      // Use Auth class to hash the user's password before saving to the database
+      userData.password = await Auth.hashPassword(userData.password);
+  
+      // Add the new user to the database
+      const userId = await this.userRepository.addBasicUser(userData);
+  
+      console.log(userId, "userId");
+  
+      if (userId) {
+        return {
+          success: true,
+          userId,
+          message: "User registered successfully.",
+        };
+      } else {
+        return { success: false, message: "Failed to register user." };
+      }
+    } catch (error) {
+      console.error("Error during user registration:", error);
+      return { success: false, message: "An error occurred during registration. Please try again." };
     }
   }
-
+  
 
 
   async loginUser(userData: userLogin, env: Env) {
@@ -96,6 +98,11 @@ class UserService extends ApiService {
         );
 
         ApiService.setToken(token);
+
+        await UserService.getSingle("profile");
+
+
+
 
         return {
           success: true,
@@ -152,31 +159,6 @@ class UserService extends ApiService {
   }
 
 
-  
-  async getAllData() {
-    try {
-      // Fetch the user profile
-      const profile = await UserService.getSingle<UserProfile>("profile");
-
-      if (profile) {
-
-        // Route Testing
-        // const data = await UserService.getSingle<UserProfile>("user/profile");
-        return {
-          id: profile.id,
-          message: "Profile data fetched successfully.",
-        };
-      }
-
-      return {
-        success: false,
-        message: "Failed to fetch profile.",
-      };
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-      return { success: false, message: "Error fetching user data." };
-    }
-  }
 
 
 

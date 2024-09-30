@@ -1,12 +1,12 @@
+import { DietType, MealSuggestionSchema } from "./diet";
 import { MedicalCode } from "./medical";
 
-export type SuggestionItem = string | MedicalCode;
-
+export type SuggestionItem = string | MedicalCode | DietType;
 
 export interface Suggestion {
-  name?: string;  
-  value?: string; 
-  code?: string;  
+  name?: string;
+  value?: string;
+  code?: string;
 }
 
 export interface Question {
@@ -26,3 +26,13 @@ export interface FormContextProps {
   goToPreviousStep: () => void;
   setAnswer: (questionId: number, answers: Suggestion[] | string) => void;
 }
+
+
+
+export type FetcherDataType = {
+  results?: MealSuggestionSchema[];
+  message?: string;
+  errors?: Record<string, string[]>;
+  suggestions?: { code: string; name: string }[];
+};
+

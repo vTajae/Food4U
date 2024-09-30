@@ -10,7 +10,7 @@ class UserCreate(BaseModel):
 
 
 class UserModel(BaseModel):
-    id: str
+    id: int
     # hashed_password: str
     # expires_at: datetime
 
@@ -45,3 +45,13 @@ class UserLoginSchema(BaseModel):
     password: str
 
 
+
+# ============
+
+class RateLimitCreate(BaseModel):
+    identifier: str
+    request_count: int
+    last_request: datetime
+
+    class Config:
+        from_attributes = True

@@ -48,15 +48,18 @@ const QuestionComponent: React.FC<QuestionProps> = ({
   };
 
   return (
-    <div>
-      <h3>{questionText}</h3>
+    <div className="p-6 bg-blue-50 rounded-lg shadow-md">
+      <h3 className="text-lg font-semibold text-blue-800 mb-4">
+        {questionText}
+      </h3>
+
       {queryKey === "price" ? (
-        // Handle input for the price, convert it to a Suggestion array
         <input
           type="text"
           placeholder="Enter price"
-          value={selectedAnswers[0]?.value || ""} // Display the price value if available
+          value={selectedAnswers[0]?.value || ""}
           onChange={handleInputChange}
+          className="w-full px-4 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-200 ease-in-out"
         />
       ) : (
         <SearchBarWithButtons
@@ -67,10 +70,14 @@ const QuestionComponent: React.FC<QuestionProps> = ({
           selectedSuggestions={selectedAnswers as Suggestion[]}
         />
       )}
+
       {Array.isArray(selectedAnswers) && selectedAnswers.length > 0 && (
-        <ul>
+        <ul className="mt-4 space-y-2">
           {selectedAnswers.map((item) => (
-            <li key={`${item.name}-${item.code || ""}`}>
+            <li
+              key={`${item.name}-${item.code || ""}`}
+              className="bg-white px-4 py-2 rounded-lg shadow-sm text-blue-800"
+            >
               {item.name} {item.code ? `(${item.code})` : ""}
             </li>
           ))}

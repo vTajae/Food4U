@@ -1,20 +1,11 @@
 import { redirect, Session } from "@remix-run/cloudflare";
 import { checkAuthentication } from "../context/session/checkAuthentication";
 
-// Define the structure of the environment variables
-interface EnvWithKV {
-  USER_SESSION_SECRET: string;
-  USER_COOKIE_SECRET: string;
-  ASSETS: object;
-  theform: KVNamespace;
-  __STATIC_CONTENT: KVNamespace;
-  DB: D1Database;
-}
 
 // Extend the overall context model including the request, session, and environment variables
 interface RequestContext {
   request: Request;
-  env: EnvWithKV;
+  env: Env;
   session: Session;
   next: (request: Request) => Promise<Response>;
 }
@@ -24,6 +15,7 @@ export async function onRequest(context: RequestContext) {
 
   // Check if the user is authenticated using the session
   const isAuthenticated = await checkAuthentication({ session });
+
   // Redirect unauthenticated users trying to access the protected dashboard directly
   if (!isAuthenticated) {
     return redirect("/login");

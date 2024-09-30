@@ -6,7 +6,7 @@ import {
 } from "@remix-run/cloudflare";
 import { FormProvider } from "../components/form/context";
 import Form from "../components/form/index";
-import { ProfileService } from "../../api/services/profileService";
+import ProfileService from "../../api/services/profileService";
 import {
   WelcomeFormData,
   welcomeFormDataSchema,
@@ -31,10 +31,10 @@ export const loader: LoaderFunction = async ({ context }) => {
   }
 
   try {
-    const data = await userService.getAllData();
+    const data = await ProfileService.getAllData();
 
     // 3. If the token is invalid (403 Forbidden), attempt to refresh it or redirect to login
-    if (!data.id) {
+    if (!data) {
       console.log("Token is invalid or expired, attempting to refresh.");
 
       // Attempt to refresh the token
@@ -53,17 +53,7 @@ export const loader: LoaderFunction = async ({ context }) => {
       }
     }
 
-    // // If no data, assume the user is not authenticated
-    // if (!data.id) {
-    //   session.unset("auth");
-    //   ApiService.clearToken();
-
-    //   return redirect("/login");
-    // }
-
-    // console.log({ isAuthenticated, data });
-
-    return json({});
+    return redirect("/dashboard");
   } catch (error) {
     // Log error if necessary
     console.error("Error fetching user data:", error);
@@ -91,6 +81,8 @@ export const action: ActionFunction = async ({ request }) => {
     // Validate the form data using Zod
     const result = welcomeFormDataSchema.safeParse(parsedData);
 
+    console.log("Parsed data:", parsedData);
+
     if (!result.success) {
       console.log(result.error.errors);
       return json(
@@ -105,6 +97,7 @@ export const action: ActionFunction = async ({ request }) => {
 
     const validFormData: WelcomeFormData = result.data;
 
+    console.log("Valid form data:", validFormData);
     // Send the data to the ProfileService
     const response = await ProfileService.createWelcomeProfile(validFormData);
 
@@ -119,7 +112,7 @@ export const action: ActionFunction = async ({ request }) => {
     }
 
     // Return success response
-    return json({ success: true });
+    return json({ status: response.status, message: response.message });
   } catch (error) {
     console.error("Error:", error);
     return json(

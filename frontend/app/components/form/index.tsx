@@ -6,7 +6,7 @@ import { useFetcher, useNavigate } from "@remix-run/react";
 import { Suggestion } from "../../../api/schemas/refs"; // Adjust the path as necessary
 
 interface ActionData {
-  success: boolean;
+  status: boolean;
   message: string;
 }
 
@@ -23,27 +23,27 @@ const Form: React.FC = () => {
 
   const questions: Question[] = [
     {
-      questionId: 1,
+      questionId: 5,
       questionText: "Favorite Cuisine?",
       queryKey: "cuisines",
     },
     {
-      questionId: 2,
+      questionId: 5555,
       questionText: "What type of diet do you follow?",
-      queryKey: "cuisines",
+      queryKey: "diets",
     },
     {
-      questionId: 3,
+      questionId: 1,
       questionText: "Do you have a medical condition?",
       queryKey: "icd10cm",
     },
     {
-      questionId: 4,
+      questionId: 11,
       questionText: "Do you have any allergies or dietary restrictions?",
       queryKey: "conditions",
     },
     {
-      questionId: 5,
+      questionId: 555,
       questionText: "Average Cost Per Meal",
       queryKey: "price",
     },
@@ -53,7 +53,7 @@ const Form: React.FC = () => {
 
   // Prepare the form data to be sent
   const preparedFormData = {
-    answers: state.answers.map((question) => ({
+    submission: state.answers.map((question) => ({
       questionId: question.questionId,
       queryKey: questions.find((q) => q.questionId === question.questionId)
         ?.queryKey,
@@ -66,17 +66,23 @@ const Form: React.FC = () => {
 
   // Handle navigation upon successful submission
   useEffect(() => {
-    if (fetcher.data?.success) {
+    console.log("Fetcher state:", fetcher.state);
+    console.log("Fetcher data:", fetcher.data);
+
+    if (fetcher.data?.status) {
+      console.log("Submission successful");
       // Clear the form state
       localStorage.removeItem("formState");
       // Navigate to /dashboard
       navigate("/dashboard");
     }
-  }, [fetcher.data, navigate]);
+  }, [fetcher.data, fetcher.state, navigate]);
+
+  console.log(fetcher.data);
 
   // Display success or error message
   const renderMessage = () => {
-    if (fetcher.data && !fetcher.data.success) {
+    if (fetcher.data && !fetcher.data.status) {
       return <p style={{ color: "red" }}>{fetcher.data.message}</p>;
     }
     return null;
@@ -85,6 +91,7 @@ const Form: React.FC = () => {
   const handleSubmit = () => {
     const formData = new FormData();
     formData.append("submission", JSON.stringify(preparedFormData));
+    console.log("FormData:", formData);
 
     // Submit the form data using fetcher
     fetcher.submit(formData, { method: "post", action: "/welcome" });
@@ -106,7 +113,6 @@ const Form: React.FC = () => {
                   <p>
                     {(question.answers as Suggestion[])
                       .map((a) => {
-                        // Check for both 'name' and 'value' and render them if they exist
                         const name = a.name ? a.name : "";
                         const value = a.value ? ` ${a.value}` : ""; // Append value if it exists
                         return name + value; // Concatenate name and value

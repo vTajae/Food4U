@@ -9,8 +9,8 @@ class AIConfig:
     DATA_DIRECTORY = os.getenv("DATA_DIRECTORY", "./data")
 
     # HuggingFace embedding model name
-    EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL_NAME", "BAAI/bge-base-en-v1.5")
+    EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL_NAME")
 
     # Ollama model and request timeout settings
-    LLM_MODEL = os.getenv("LLM_MODEL", "llama3")
-    REQUEST_TIMEOUT = float(os.getenv("REQUEST_TIMEOUT", 360.0))
+    LLM_MODEL = os.getenv("LLM_MODEL")
+    REQUEST_TIMEOUT = float(os.getenv("REQUEST_TIMEOUT"))

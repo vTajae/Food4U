@@ -3,13 +3,14 @@ import os
 import httpx
 from fastapi import HTTPException, Response, Security
 
-from app.api.auth.auth import check_ApiKeyAuth
+from app.api.utils.utils import RateLimitUtil
+
 
 # Global AsyncClient instance to be reused across the application
 client = httpx.AsyncClient(timeout=10.0)
 
 class Spoon_AuthClient:
-    def __init__(self, request: Security = Security(check_ApiKeyAuth)):
+    def __init__(self, request: Security = Security(RateLimitUtil.check_api_key_auth)):
         """
         Initialize the client with the base URL and API key.
         Includes API key authentication check using the `check_ApiKeyAuth` method.

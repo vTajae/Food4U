@@ -40,7 +40,7 @@ class AsyncDatabaseSession:
 
     async def create_all(self):
         async with self.engine.begin() as conn:
-            # await conn.run_sync(Base.metadata.drop_all)
+            # await conn.run_sync(Base.metadata.drop_all)  # Add cascade=True
             await conn.run_sync(Base.metadata.create_all)  # Create tables
 
     @asynccontextmanager

@@ -1,11 +1,14 @@
 import os
+from fastapi import HTTPException, Request
 import jwt
 from typing import Optional
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
-from app.api.repo.user_repo import UserRepository
+from sqlalchemy import case, insert
 from app.api.models.food4u.user import Profile
 from app.api.repo.auth_repo import AuthRepository
+from app.api.repo.profile_repo import ProfileRepository
+from app.api.models.food4u.ratelimit import RateLimit
 
 
 load_dotenv()
@@ -15,20 +18,21 @@ USER_JWT_ALGORITHM = os.getenv('USER_JWT_ALGORITHM')
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv(
     'JWT_ACCESS_TOKEN_EXPIRE_MINUTES')
 
+# Rate limiting configuration
+RATE_LIMIT = 5  # Allow 5 requests
+RATE_LIMIT_WINDOW = 1  # Window of 60 seconds
+
 
 class UserService:
-    def __init__(self, user_repo: UserRepository, auth_repo: AuthRepository):
+    def __init__(self, user_repo: ProfileRepository, auth_repo: AuthRepository):
         self.user_repo = user_repo
         self.auth_repo = auth_repo
 
     async def invalidate_refresh_token(self, token: str):
         return await self.auth_repo.invalidate_token(token)
 
-    async def get_user_by_id(self, id: str):
-        return await self.user_repo.get_user_by_id(id)
-
-    async def create_profile(self, userId: str) -> Optional[Profile]:
-        existing_user = await self.user_repo.get_user_by_id(userId)
+    async def create_profile(self, userId: int) -> Optional[Profile]:
+        existing_user = await self.user_repo.get_profile_by_id(userId)
         if existing_user:
             return existing_user
 
@@ -37,31 +41,11 @@ class UserService:
 
         return new_user  # Will be None if creation failed
 
-    # async def register_user(self,username: str, password: str):
-    #     if await self.user_repo.user_exists(username):
-    #         return False
-    #     hashed_password = bcrypt.hashpw(
-    #         password.encode('utf-8'), bcrypt.gensalt())
-    #     # Decode the hashed password to a UTF-8 string
-    #     decoded_hashed_password = hashed_password.decode('utf-8')
-    #     user = Profile(username=username, hashed_password=decoded_hashed_password)
-    #     return await self.user_repo.add_user(user)
-
-    def generate_jwt_token(self, user_id: str):
+    def generate_jwt_token(self, user_id: int):
         return jwt.encode({"user_id": user_id}, USER_JWT_SECRET_KEY, algorithm=USER_JWT_ALGORITHM)
 
-    # async def login_user(self, id: str, password: str) -> Optional[Profile]:
-    #     user = await self.user_repo.get_user_by_id(id)
-    #     # print(f"Profile: {user}")
-    #     if user is None:
-    #         return None
-    #     # Verify the password using bcrypt
-    #     if not bcrypt.checkpw(password.encode('utf-8'), user.hashed_password.encode('utf-8')):
-    #         return None
-    #     return user
-
-    async def get_user_by_id(self, user_id: str) -> Profile:
-        return await self.user_repo.get_user_by_id(user_id)
+    async def get_profile_by_id(self, user_id: int) -> Profile:
+        return await self.user_repo.get_profile_by_id(user_id)
 
     def create_a_token(self, data: dict, expires_delta: timedelta = None):
         to_encode = data.copy()
@@ -92,37 +76,22 @@ class UserService:
 
         return {"access_token": access_token, "refresh_token": refresh_token}
 
-    async def updatePreferences(self, data: dict):
-        # Add to profile (Ethnicity,Medical Condition, Age, Favoraite Meal: Breafkast,Lunch, Dinner, Snack )
 
-        return "Preferences Updated"
 
-    async def addMedicalCode(self, profile_id: str, medical_code: str, description: str):
-        # First, ensure the medical code is in the database
-        await self.user_repo.addMedicalCode(medical_code, description)
+    async def rate_limiter(self, request: Request):
+        identifier = request.client.host  # Use user ID if available
+        current_time = datetime.now(timezone.utc)
 
-        # Then, associate the medical code with the user profile
-        await self.user_repo.LinkMedicalCodeToUser(profile_id, medical_code)
+        # Calculate window boundary
+        window_start = current_time - timedelta(seconds=RATE_LIMIT_WINDOW)
 
-        # Return a success message
-        return {"status": "success", "message": f"Medical code {medical_code} has been added and linked to the user."}
+        # Call the repository method to handle the database operations
+        response = await self.auth_repo.ratelimiter(identifier, current_time, window_start)
 
-    # async def addMedicalCode(self, profile_id: str, medical_code: str, description: str):
-    #         # First, ensure the medical code is in the database
-    #         await self.user_repo.addMedicalCode(medical_code, description)
-
-    #         # Then, associate the medical code with the user profile
-    #         await self.user_repo.LinkMedicalCodeToUser(profile_id, medical_code)
-
-    #         # Return a success message
-    #         return {"status": "success", "message": f"Medical code {medical_code} has been added and linked to the user."}
-
-    # async def addMedicalCode(self, profile_id: str, medical_code: str, description: str):
-    #         # First, ensure the medical code is in the database
-    #         await self.user_repo.addMedicalCode(medical_code, description)
-
-    #         # Then, associate the medical code with the user profile
-    #         await self.user_repo.LinkMedicalCodeToUser(profile_id, medical_code)
-
-    #         # Return a success message
-    #         return {"status": "success", "message": f"Medical code {medical_code} has been added and linked to the user."}
+        # Extract values from the response
+        request_count = response.request_count
+        last_request = response.last_request
+        
+        # Check if the request is within the allowed window
+        if last_request > window_start and request_count > RATE_LIMIT:
+            raise HTTPException(status_code=429, detail="Too many requests")

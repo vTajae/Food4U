@@ -1,5 +1,5 @@
 import { Session } from "@remix-run/cloudflare";
-import { LoginCookieData } from "../../../api/models/user";
+import { LoginCookieData } from "../../../api/schemas/user";
 
 interface RequestContext {
   session: Session;
