@@ -25,6 +25,8 @@ export const loader: LoaderFunction = async ({ context }) => {
   // Check if the user is authenticated using a session check
   const isAuthenticated = await checkAuthentication({ session });
   const userService = new UserService(myEnv);
+  const mySession = context.session as Session;
+
 
   // Handle unauthenticated user attempting to access the protected resource
   if (isAuthenticated === false) {
@@ -34,9 +36,9 @@ export const loader: LoaderFunction = async ({ context }) => {
   }
 
 
-  // if (mySession.get("welcome").isComplete === true) {
-  //   return redirect("/dashboard");
-  // }
+  if (mySession.get("welcome").isComplete === true) {
+    return redirect("/dashboard");
+  }
 
   try {
     const data = await ProfileService.getAllData();
@@ -128,7 +130,7 @@ export const action: ActionFunction = async ({ context, request }) => {
     );
 
     // Return success response
-    return json({ status: response.status, message: response.message });
+    return redirect("/dashboard");
   } catch (error) {
     console.error("Error:", error);
     return json(

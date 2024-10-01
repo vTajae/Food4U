@@ -3,7 +3,6 @@ import {
   ActionFunction,
   LoaderFunction,
   redirect,
-  Session,
 } from "@remix-run/cloudflare";
 import { z } from "zod";
 import { useFetcher } from "@remix-run/react";
@@ -15,7 +14,6 @@ import { ApiService } from "../../api/services/baseService";
 import { FetcherDataType } from "../../api/schemas/refs";
 // import { SearchResult } from "../components/search/results";
 import ProfileService from "../../api/services/profileService";
-import { ProfileSchema } from "../../api/schemas/profile";
 import Display, { renderResultItem } from "../components/search/display";
 import { SearchResult } from "../components/search/results";
 
@@ -30,14 +28,10 @@ export const searchSchema = z.object({
 export const loader: LoaderFunction = async ({ context }) => {
   const myEnv = context.cloudflare.env as Env;
   const { session } = context;
-
-  // Check if the user is authenticated using a session check
-  const isAuthenticated = await checkAuthentication({ session });
   const userService = new UserService(myEnv);
 
-  const mySession = context.session as Session;
+  const isAuthenticated = await checkAuthentication({ session });
 
-  // Handle unauthenticated user attempting to access the protected resource
   if (!isAuthenticated) {
     session.unset("auth");
     ApiService.clearToken();
@@ -45,50 +39,31 @@ export const loader: LoaderFunction = async ({ context }) => {
   }
 
   try {
+    let data = await ProfileService.getAllData();
 
-    // if (
-    //   mySession.has("welcome") &&
-    //   mySession.get("welcome").isComplete === false
-    // ) {
-    //   return redirect("/welcome");
-    // }
-
-    let data = (await ProfileService.getAllData()) as ProfileSchema;
-
-    // If no data, token might be invalid/expired; try refreshing
-    if (!data.id) {
+    if (!data?.id) {
       console.log("Token is invalid or expired, attempting to refresh.");
-
       const refreshResult = await userService.refreshUser(
         myEnv,
         isAuthenticated.id
       );
 
       if (!refreshResult || refreshResult.success === false) {
-        console.error("Token refresh failed.");
         session.unset("auth");
         ApiService.clearToken();
         return redirect("/login");
       }
 
       // Retry fetching the profile after a successful token refresh
-      data = (await ProfileService.getAllData()) as ProfileSchema;
+      data = await ProfileService.getAllData();
 
-      console.log(data, "DATUUUH")
-      
-      if (!data.id) {
-        console.error("Failed to fetch data after token refresh.");
+      if (!data?.id) {
         session.unset("auth");
         ApiService.clearToken();
-        mySession.set("welcome", { isComplete: false });
         return redirect("/welcome");
       }
     }
 
-    // console.log({ isAuthenticated, data });
-    mySession.unset("welcome");
-
-    // Pass the profile data to the component via loader
     return json({ profile: data });
   } catch (error) {
     console.error("Error fetching user data:", error);
@@ -97,6 +72,7 @@ export const loader: LoaderFunction = async ({ context }) => {
     return redirect("/login");
   }
 };
+
 
 export const action: ActionFunction = async ({ request, context }) => {
   try {
@@ -138,7 +114,6 @@ export default function Dashboard() {
   const fetcher = useFetcher<FetcherDataType>();
 
   const [showWelcome, setShowWelcome] = useState(true);
-
 
   useEffect(() => {
     // Set the welcome screen to fade out after 1 second

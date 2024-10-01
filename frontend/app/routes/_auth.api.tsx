@@ -1,7 +1,6 @@
 // import { LoaderFunction, json, redirect } from "@remix-run/cloudflare";
 // import { Outlet } from "@remix-run/react";
-// // eslint-disable-next-line @typescript-eslint/no-unused-vars
-// import React from "react";
+
 
 // export const loader: LoaderFunction = async ({ request, context }) => {
 //   const url = new URL(request.url);
@@ -18,7 +17,6 @@
 //   if (url.pathname === "/a/" || url.pathname === "/a/index") {
 //     return redirect("/");
 //   }
-//   // No redirection for other paths like '/a/employee'
 //   return null;
 // };
 

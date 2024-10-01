@@ -1,15 +1,14 @@
-from fastapi import Depends, FastAPI, Request
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routers import user_routes, fdc_routes, spoon_routes, suggestion_routes
 from app.config.database import async_database_session
-from app.api.dependencies.user_dep import get_db_session, get_user_service
-
-
-from app.api.services.user_service import UserService
+from app.api.dependencies.user_dep import get_user_service
 
 
 
-origins = ["http://localhost:3000", "https://localhost:3001"]
+
+
+origins = ["https://food4u.pages.dev/"]
 
 # Define your async context manager for lifespan events
 async def lifespan(app: FastAPI):

@@ -1,5 +1,4 @@
 import {
-  LoaderFunction,
   ActionFunction,
   redirect,
   json,
@@ -11,15 +10,16 @@ import UserService from "../../api/services/userService";
 import RegisterForm from "../components/login/registerForm";
 import LoginForm from "../components/login/loginForm";
 
-export const loader: LoaderFunction = async () => {
-  // console.log(context.session.get("auth"), "auth");
-  // if (context.session.has("auth")) {
-  //   return redirect("/dashboard");
-  // }
-  return json({ isLoading: false });
-};
+// export const loader: LoaderFunction = async ({ request, context }) => {
+//   const myEnv = context.cloudflare.env as Env;
+//   const mySession = context.session as Session;
+//   // console.log(context.session.get("auth"), "auth");
+//   // if (context.session.has("auth")) {
+//   //   return redirect("/dashboard");
+//   // }
+//   return json({ isLoading: false });
+// };
 
-// Server-side action handler
 // Server-side action handler
 export const action: ActionFunction = async ({ request, context }) => {
   const myEnv = context.cloudflare.env as Env;
@@ -54,6 +54,8 @@ export const action: ActionFunction = async ({ request, context }) => {
         { username, password },
         myEnv
       );
+      
+
 
       if (loginResult.success && loginResult.user) {
         mySession.set("auth", { ...loginResult.user });
