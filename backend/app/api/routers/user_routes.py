@@ -4,7 +4,8 @@ from typing import List, Optional
 from dotenv import load_dotenv
 from fastapi import APIRouter, Body, Query
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from jwt import ExpiredSignatureError, InvalidSignatureError, PyJWTError, decode
+from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError, PyJWTError
+from jwt import decode
 from app.api.dependencies.auth_dep import get_current_user
 from app.api.dependencies.user_dep import get_user_service
 from app.api.schemas.food4u.user import UserLoginSchema, UserModel, UserResponse
