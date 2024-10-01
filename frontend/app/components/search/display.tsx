@@ -1,3 +1,4 @@
+import { SearchResultFood } from "../../../api/schemas/suggestion";
 import React from "react";
 
 // Define a generic Display component that accepts an array of items (generic type T)
@@ -28,16 +29,30 @@ export default Display;
 
 
 
-  // Sample data mapping (this should match the structure of fetcher.data)
-  const renderResultItem = (item: any, index: number) => {
-    return (
-      <div>
-        <h3 className="font-bold text-lg">
-          {item.title || `Item ${index + 1}`}
-        </h3>
-        <p>{item.description || "No description available."}</p>
-      </div>
-    );
-  };
+const renderResultItem = (item: SearchResultFood, index: number) => {
+  return (
+    <div key={item.fdcId || index}>
+      <h3 className="font-bold text-lg">
+        {item.description || `Item ${index + 1}`}
+      </h3>
+      {item.brandOwner && <p><strong>Brand Owner:</strong> {item.brandOwner}</p>}
+      {item.scientificName && <p><strong>Scientific Name:</strong> {item.scientificName}</p>}
+      {item.ingredients && <p><strong>Ingredients:</strong> {item.ingredients}</p>}
+      {item.foodNutrients && item.foodNutrients.length > 0 && (
+        <div>
+          <strong>Nutrients:</strong>
+          <ul>
+            {item.foodNutrients.map((nutrient, nutrientIndex) => (
+              <li key={nutrientIndex}>
+                {nutrient.nutrientName}: {nutrient.value} {nutrient.unitName}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <p>{item.additionalDescriptions || "No additional descriptions available."}</p>
+    </div>
+  );
+};
 
-  export { renderResultItem };
+export { renderResultItem };

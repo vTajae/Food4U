@@ -41,6 +41,7 @@ export class ApiService {
       headers,
     };
 
+
     if (body) {
       options.body = JSON.stringify(body);
     }
@@ -82,7 +83,7 @@ export class ApiService {
 
       const response = await fetch(
         `${API_BASE_URL}/${url}`,
-        this.getRequestOptions("POST", body)
+        this.getRequestOptions("POST", body),
       );
 
       return this.handleResponse<T>(response);
@@ -149,6 +150,7 @@ export class ApiService {
 
     try {
       const data = await response.json();
+
       return data as T;
     } catch (error) {
       console.error("Failed to parse response JSON:", error);

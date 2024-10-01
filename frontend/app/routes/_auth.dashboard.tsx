@@ -16,7 +16,7 @@ import { FetcherDataType } from "../../api/schemas/refs";
 import ProfileService from "../../api/services/profileService";
 import { ProfileSchema } from "../../api/schemas/profile";
 import Display, { renderResultItem } from "../components/search/display";
-import { SearchResult } from "~/components/search/results";
+import { SearchResult } from "../components/search/results";
 
 export const searchSchema = z.object({
   query: z
@@ -61,7 +61,7 @@ export const loader: LoaderFunction = async ({ context }) => {
       }
 
       // Retry fetching the profile after a successful token refresh
-      data = await ProfileService.getAllData() as ProfileSchema;
+      data = (await ProfileService.getAllData()) as ProfileSchema;
       if (!data.id) {
         console.error("Failed to fetch data after token refresh.");
         session.unset("auth");
@@ -121,6 +121,7 @@ export default function Dashboard() {
   const fetcher = useFetcher<FetcherDataType>();
   const [fetching, setFetching] = useState(false);
 
+  console.log(fetcher.data, "THIS RIGHT HEREE");
 
   const [showWelcome, setShowWelcome] = useState(true);
 
@@ -129,7 +130,6 @@ export default function Dashboard() {
     const timer = setTimeout(() => setShowWelcome(false), 300);
     return () => clearTimeout(timer);
   }, []);
-
 
   return (
     <div
@@ -148,12 +148,7 @@ export default function Dashboard() {
           <h1 className="text-5xl font-bold mb-6">Food4U</h1>
           <p className="text-lg mb-4">Talk to me about food</p>
 
-          <SearchBar
-            fetcher={fetcher}
-            queryKey={"general"}
-            action={"meal"}
-
-          />
+          <SearchBar fetcher={fetcher} queryKey={"general"} action={"meal"} />
 
           {fetcher.data?.results && (
             <Display
@@ -162,14 +157,13 @@ export default function Dashboard() {
             />
           )}
 
-     {fetcher.data && (
+          {fetcher.data && (
             <SearchResult
               message={fetcher.data?.message}
               errors={fetcher.data?.errors}
               fetching={fetching} // Pass fetching state to the result component
             />
           )}
-
 
           {/* Buttons */}
           <div className="mt-6 space-y-4">

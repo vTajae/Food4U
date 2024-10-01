@@ -1,16 +1,15 @@
 // suggestionAction.ts
 import { ActionFunction, json } from "@remix-run/cloudflare";
-import SuggestionService from "../../api/services/suggestionService";
+import SuggestionService, {
+  basicAPI,
+} from "../../api/services/suggestionService";
 
 export const action: ActionFunction = async ({ request }) => {
   try {
     const formData = await request.formData();
-    const action = formData.get("action");
-    const queryKey = formData.get("queryKey");
-    const query = formData.get("query");
-
-
-
+    const action = formData.get("action") as string;
+    const queryKey = formData.get("queryKey") as string;
+    const text = formData.get("query") as string;
 
     if (!formData) {
       return json({ error: "Invalid form submission" }, { status: 400 });
@@ -24,26 +23,26 @@ export const action: ActionFunction = async ({ request }) => {
     }
 
     let response;
+    const body = { queryKey: queryKey, text: text, action: action };
     // Handle different actions here
     switch (action) {
       case "meal":
+        response = (await SuggestionService.GeneralSuggestion(
+          body
+        )) as basicAPI;
+        if (response.status === false) {
+          return json({ message: `Suggestion fetched` });
+        }
+        return json({ message: `Suggestion fetched`, results: response });
 
-        
-        response = await SuggestionService.GeneralSuggestion(queryKey as string);
-
-        console.log(response, "YERRRR");
-        return json({ message: `Suggestion fetched`, data: response });
-      case "diets":
-        response = await SuggestionService.GeneralSuggestion(queryKey as string);
-        return json({ message: `Diet suggestions fetched`, data: response });
-      case "recipe":
-        response = await SuggestionService.GeneralSuggestion(queryKey as string);
-        return json({ message: `Recommended diet fetched`, data: response });
       default:
         return json({ message: `Unknown action` }, { status: 400 });
     }
   } catch (error) {
     console.error(error);
-    return json({ error: "An error occurred while processing your request" }, { status: 500 });
+    return json(
+      { error: "An error occurred while processing your request" },
+      { status: 500 }
+    );
   }
 };
