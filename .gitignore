@@ -12,6 +12,8 @@ __pycache__
 #myDevStuff
 .postgresql
 
+models-copy
+
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
 
