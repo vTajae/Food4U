@@ -45,18 +45,19 @@ export const loader: LoaderFunction = async ({ context }) => {
   }
 
   try {
-    if (
-      mySession.has("welcome") &&
-      mySession.get("welcome").isComplete === false
-    ) {
-      return redirect("/welcome");
-    }
+
+    // if (
+    //   mySession.has("welcome") &&
+    //   mySession.get("welcome").isComplete === false
+    // ) {
+    //   return redirect("/welcome");
+    // }
 
     let data = (await ProfileService.getAllData()) as ProfileSchema;
 
     // If no data, token might be invalid/expired; try refreshing
     if (!data.id) {
-      // console.log("Token is invalid or expired, attempting to refresh.");
+      console.log("Token is invalid or expired, attempting to refresh.");
 
       const refreshResult = await userService.refreshUser(
         myEnv,
@@ -72,6 +73,9 @@ export const loader: LoaderFunction = async ({ context }) => {
 
       // Retry fetching the profile after a successful token refresh
       data = (await ProfileService.getAllData()) as ProfileSchema;
+
+      console.log(data, "DATUUUH")
+      
       if (!data.id) {
         console.error("Failed to fetch data after token refresh.");
         session.unset("auth");
@@ -135,7 +139,6 @@ export default function Dashboard() {
 
   const [showWelcome, setShowWelcome] = useState(true);
 
-  console.log(fetcher.data);
 
   useEffect(() => {
     // Set the welcome screen to fade out after 1 second

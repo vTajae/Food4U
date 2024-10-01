@@ -9,7 +9,7 @@ const submitFormData = (
   fetcher: FetcherWithComponents<FetcherDataType>,
   formDataEntries: Record<string, string>,
   action: string,
-  method: "post" | "get" = "post"
+  method: "post" = "post"
 ) => {
   const formData = new FormData();
   Object.entries(formDataEntries).forEach(([key, value]) => {

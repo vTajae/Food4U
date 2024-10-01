@@ -29,8 +29,8 @@ class SuggestionService:
         User Profile:
         Age: {data.age}
         Athnicity: {data.ethnicity}
-        Dietary Preferences: {', '.join(data.attributes) if data.attributes else 'None'}
-        Dietary Restrictions: {', '.join(data.medical_history) if data.medical_history else 'None'}
+        Dietary Preferences: {', '.join([attr.attribute_name for attr in data.attributes]) if data.attributes else 'None'}
+        Dietary Restrictions: {', '.join([history.icd_details.description for history in data.medical_history]) if data.medical_history else 'None'}
         """
 
         # AI prompt to generate a food suggestion based on profile data

@@ -8,11 +8,6 @@ interface DisplayProps<T> {
   renderItem: (item: T, index: number) => React.ReactNode;
 }
 
-interface DisplayProps<T> {
-  data: T[];
-  renderItem: (item: T, index: number) => React.ReactNode;
-}
-
 const Display = <T,>({ data, renderItem }: DisplayProps<T>) => {
   return (
     <div className="w-full max-w-6xl mx-auto p-4">
@@ -33,8 +28,6 @@ const Display = <T,>({ data, renderItem }: DisplayProps<T>) => {
 
 export default Display;
 
-
-// Utility function to format ingredients
 const formatIngredients = (ingredients: string) => {
   const result = [];
   let temp = "";
@@ -51,7 +44,8 @@ const formatIngredients = (ingredients: string) => {
       openParen = false;
     }
 
-    if (char === "," && !openParen) {
+    // Check for both commas and semicolons as delimiters outside parentheses
+    if ((char === "," || char === ";") && !openParen) {
       result.push(temp.trim());
       temp = "";
     } else {
@@ -59,6 +53,7 @@ const formatIngredients = (ingredients: string) => {
     }
   }
 
+  // Push the last accumulated ingredient
   if (temp) {
     result.push(temp.trim());
   }

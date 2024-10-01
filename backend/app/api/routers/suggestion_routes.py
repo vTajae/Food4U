@@ -1,6 +1,6 @@
 from profile import Profile
 from typing import List, Optional
-from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, logger, status
 import random
 from fastapi import HTTPException, status
 from app.api.services.food4u.suggestion_service import SuggestionService
@@ -16,48 +16,6 @@ from app.api.schemas.foodDataCentral.search_result_food import SearchResultFood
 
 
 router = APIRouter()
-
-# @router.post("/api/suggestion")
-# async def get_general_suggestion(
-#     # request: SuggestionRequest,  # Unified input schema
-#     user: Profile = Depends(get_current_user),
-#     fdc_service: FDC_Service = Depends(get_fdc_service),
-#     suggestion_service: SuggestionService = Depends(get_suggestion_service),
-#     profile_service: ProfileService = Depends(get_profile_service)
-
-# ):
-
-
-#     # data = await profile_service.get_all_profile_info(user.id)
-
-#     # print(data, "data")
-
-#     """
-#     Fetch food items and then pass them into the suggestion service.
-#     """
-#     # Extract the food query parameters from the request
-#     # food_query = request.food_query
-
-#     # # Fetch the food list using the food query parameters
-#     # food_list = await fdc_service.get_foods_list(
-#     #     dataType=food_query.data_type,
-#     #     pageSize=food_query.page_size,
-#     #     pageNumber=food_query.page_number,
-#     #     sortBy=food_query.sort_by,
-#     #     sortOrder=food_query.sort_order
-#     # )
-
-#     # # Now pass the food list and suggestion query into the suggestion service
-#     # suggestion_data = {
-#     #     "foods": food_list,
-#     #     "user_preferences": data.attributes,
-#     #     "dietary_restrictions": data.diets
-#     # }
-
-#     # Call the suggestion service with the combined data
-#     # return await suggestion_service.get_general_suggestion(suggestion_data)
-
-#     return await suggestion_service.get_general_suggestion("hi")
 
 
 @router.post("/api/suggestion", response_model=BasicAPIResponse)
@@ -89,33 +47,47 @@ async def get_general_suggestion(
                 detail="Failed to generate a food suggestion"
             )
 
-        # Randomize page_size and page_number
-        # Random page size between 10 and 50
-        page_size = random.randint(10, 200)
-        # Random page number between 1 and 10
-        page_number = random.randint(1, page_size)
+        # Retry logic in case no food items are found
+        max_retries = 3
+        retry_count = 0
+        response = None
 
-        # Call the service to search for foods
-        response = await fdc_service.search_foods(
-            query=food_idea,
-            data_type=["Branded"],
-            page_size=page_size,
-            page_number=page_number,
-            sort_by="dataType.keyword"
-        )
+        while retry_count < max_retries:
+            # Randomize page_size and page_number
+            # Random page size between 10 and 200
+            page_size = random.randint(10, 200)
+            # Assume there are up to 10 pages (this could be dynamic)
+            total_pages = 10
+            page_number = random.randint(1, total_pages)
+
+            # Call the service to search for foods
+            response = await fdc_service.search_foods(
+                query=food_idea,
+                data_type=["Branded"],
+                page_size=page_size,
+                page_number=page_number,
+                sort_by="dataType.keyword"
+            )
+
+            if response and response.foods:
+                break  # Exit the loop if food items are found
+            retry_count += 1
+            logger.warning(
+                f"Retry {retry_count}: No food items found, retrying with different page and size.")
 
         if not response or not response.foods:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="No food items found"
+                detail="No food items found after multiple attempts."
             )
 
-              # Ensure that we have enough items to select 4
-        num_foods = min(len(response.foods), 3)  # Ensure we don't try to select more than available
+        # Ensure that we have enough items to select from
+        # Ensure we don't try to select more than available
+        num_foods = min(len(response.foods), 3)
 
-        # Randomly select 4 unique indices from the available food results
+        # Randomly select food items from the available food results
         random_indices = random.sample(range(len(response.foods)), num_foods)
-        result = [response.foods[i] for i in random_indices]  # Select the items based on the random indices
+        result = [response.foods[i] for i in random_indices]
 
         return BasicAPIResponse(
             status=True,
@@ -126,7 +98,7 @@ async def get_general_suggestion(
     except HTTPException as e:
         raise e
     except Exception as e:
-        # Handle unexpected errors
+        logger.exception(f"An error occurred: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An internal error occurred while processing your request"

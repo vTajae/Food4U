@@ -76,13 +76,15 @@
 
 @layer utilities {
   @media (max-width: 1024px) {
-    .lg-hide-after-3 > :nth-child(n + 2) {
+    /* Hide items after the 2nd one on medium screens */
+    .md-hide-after-2 > :nth-child(n + 3) {
       display: none;
     }
   }
 
   @media (max-width: 640px) {
-    .md-hide-after-2 > :nth-child(n + 1) {
+    /* Hide items after the 1st one on small screens */
+    .lg-hide-after-1 > :nth-child(n + 2) {
       display: none;
     }
   }

@@ -10,7 +10,7 @@ __pycache__
 *.pyc
 
 #myDevStuff
-models-copy
+.postgresql
 
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release

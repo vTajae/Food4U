@@ -20,6 +20,7 @@ export const loader: LoaderFunction = async () => {
 };
 
 // Server-side action handler
+// Server-side action handler
 export const action: ActionFunction = async ({ request, context }) => {
   const myEnv = context.cloudflare.env as Env;
   const mySession = context.session as Session;
@@ -28,17 +29,24 @@ export const action: ActionFunction = async ({ request, context }) => {
   try {
     const formData = await request.formData();
 
+    // Ensure formData is available
     if (!formData) {
-      context.session.flash("error", "Try using our client.");
-      return json({ error: "Login failed. Try using our client." });
+      context.session.flash("error", "Form data is missing.");
+      return json({ error: "Login failed. Form data is required." });
     }
 
-    // Extract fields directly from form data
-    const username = formData.get("username") as string;
-    const password = formData.get("password") as string;
-    const actionType = formData.get("actionType") as string;
+    // Extract fields safely from formData
+    const username = formData.get("username") as string | null;
+    const password = formData.get("password") as string | null;
+    const actionType = formData.get("actionType") as string | null;
 
-    // Ensure logging works correctly
+    // Validate that required fields are present
+    if (!username || !password || !actionType) {
+      context.session.flash("error", "Missing required fields.");
+      return json({ error: "Login failed. All fields are required." });
+    }
+
+    // Logging submission for debugging
     console.log("Submitted data:", { username, password, actionType });
 
     if (actionType === "login") {
@@ -49,19 +57,22 @@ export const action: ActionFunction = async ({ request, context }) => {
 
       if (loginResult.success && loginResult.user) {
         mySession.set("auth", { ...loginResult.user });
+        console.log("Session data after login:", mySession.data);
 
-        console.log(mySession.data);
+     
 
         const cookieHeader = await createSessionStorage(myEnv).commitSession(
           mySession
         );
+
+        
 
         return redirect("/dashboard", {
           headers: { "Set-Cookie": cookieHeader },
         });
       } else {
         context.session.flash("error", "Invalid username or password.");
-        return json({});
+        return json({ error: "Invalid username or password." });
       }
     } else if (actionType === "register") {
       const registerResult = await userService.registerUser({
@@ -71,6 +82,7 @@ export const action: ActionFunction = async ({ request, context }) => {
 
       if (registerResult.success) {
         mySession.set("welcome", { isComplete: false });
+        console.log("Session data after registration:", mySession.data);
 
         const cookieHeader = await createSessionStorage(myEnv).commitSession(
           mySession
@@ -80,22 +92,26 @@ export const action: ActionFunction = async ({ request, context }) => {
           headers: { "Set-Cookie": cookieHeader },
         });
       } else {
-        context.session.flash("error", "Registration failed. Try Again.");
-        return json({ error: "Registration failed. Try Again." });
+        context.session.flash("error", "Registration failed. Try again.");
+        return json({ error: "Registration failed. Try again." });
       }
     }
 
+    // If actionType is invalid
+    context.session.flash("error", "Invalid action type.");
     return json({ error: "Invalid action type." });
 
-    // Continue with the rest of your logic here
   } catch (error) {
+    // Log the error for server-side troubleshooting
+    console.error("Error processing request:", error);
     context.session.flash(
       "error",
       "An error occurred while processing your request."
     );
-    return json({ error: "Login failed due to an unexpected error." });
+    return json({ error: "An unexpected error occurred. Please try again." });
   }
 };
+
 
 // The component that renders the Login or Register form
 const Login = () => {
