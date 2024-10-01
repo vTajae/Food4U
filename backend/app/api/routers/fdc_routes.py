@@ -132,7 +132,7 @@ async def post_foods_list(
 async def post_foods_search(
     body: FoodSearchCriteria = Body(...),  # Use Body to grab the JSON payload
     fdc_service: FDC_Service = Depends(get_fdc_service)
-):
+) -> SearchResult:
     """
     Post search criteria to retrieve matching food results.
     """

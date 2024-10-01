@@ -1,16 +1,17 @@
 from profile import Profile
 from typing import List, Optional
-from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 
 from app.api.services.food4u.suggestion_service import SuggestionService
 from app.api.dependencies.auth_dep import get_current_user
 from app.api.dependencies.fdc_dep import get_fdc_service
 from app.api.dependencies.food4u_dep import get_profile_service, get_suggestion_service
 from app.api.services.fdc.fdc_service import FDC_Service
-from app.api.schemas.food4u.suggestion import SuggestionRequest
+from app.api.schemas.food4u.suggestion import BasicAPIResponse, Query4Food, SuggestionRequest
 from app.api.dependencies.spoon_dep import get_spoon_service
 from app.api.services.spoonacular.spoon_service import Spoon_Service
 from app.api.services.food4u.profile_service import ProfileService
+from app.api.schemas.foodDataCentral.search_result_food import SearchResultFood
 
 
 router = APIRouter()
@@ -18,16 +19,16 @@ router = APIRouter()
 # @router.post("/api/suggestion")
 # async def get_general_suggestion(
 #     # request: SuggestionRequest,  # Unified input schema
-#     user: Profile = Depends(get_current_user), 
+#     user: Profile = Depends(get_current_user),
 #     fdc_service: FDC_Service = Depends(get_fdc_service),
 #     suggestion_service: SuggestionService = Depends(get_suggestion_service),
 #     profile_service: ProfileService = Depends(get_profile_service)
 
 # ):
-    
-    
+
+
 #     # data = await profile_service.get_all_profile_info(user.id)
-    
+
 #     # print(data, "data")
 
 #     """
@@ -35,7 +36,7 @@ router = APIRouter()
 #     """
 #     # Extract the food query parameters from the request
 #     # food_query = request.food_query
-    
+
 #     # # Fetch the food list using the food query parameters
 #     # food_list = await fdc_service.get_foods_list(
 #     #     dataType=food_query.data_type,
@@ -44,36 +45,84 @@ router = APIRouter()
 #     #     sortBy=food_query.sort_by,
 #     #     sortOrder=food_query.sort_order
 #     # )
-    
+
 #     # # Now pass the food list and suggestion query into the suggestion service
 #     # suggestion_data = {
 #     #     "foods": food_list,
 #     #     "user_preferences": data.attributes,
 #     #     "dietary_restrictions": data.diets
 #     # }
-    
+
 #     # Call the suggestion service with the combined data
 #     # return await suggestion_service.get_general_suggestion(suggestion_data)
-    
+
 #     return await suggestion_service.get_general_suggestion("hi")
 
 
-
-@router.post("/api/suggestion")
+@router.post("/api/suggestion", response_model=BasicAPIResponse)
 async def get_general_suggestion(
-    data: SuggestionRequest,
+    data: Query4Food,
     user: Profile = Depends(get_current_user),
-
-    # text: Optional[str] = Query(default="full"),
+    profile_service: ProfileService = Depends(get_profile_service),
     fdc_service: FDC_Service = Depends(get_fdc_service),
     spoon_service: Spoon_Service = Depends(get_spoon_service),
-
     suggestion_service: SuggestionService = Depends(get_suggestion_service)
-):
+) -> BasicAPIResponse:
     """
-    Fetch a single food item by FDC ID.
+    Fetch a food suggestion and return the top food item.
+    Returns a structured response:
+    {
+        "status": bool,
+        "message": str,
+        "result": List[SearchResultFood]
+    }
     """
-    data.query = "hi"
-    return await suggestion_service.get_general_suggestion(data)
-    
+    try:
+        # Get profile information
+        user_data = await profile_service.get_all_profile_info(user.id)
+        if not user_data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Profile not found"
+            )
 
+        # Generate food suggestion message
+        food_idea = await suggestion_service.get_general_message2(user_data)
+        if not food_idea:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to generate a food suggestion"
+            )
+
+        # Call the service to search for foods
+        response = await fdc_service.search_foods(
+            query=food_idea,
+            data_type=["Branded"],
+            page_size=25,
+            page_number=3,
+            sort_by="dataType.keyword"
+        )
+
+        if not response or not response.foods:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No food items found"
+            )
+
+        # Limit the response to the top result
+        result = response.foods[:1]
+
+        return BasicAPIResponse(
+            status=True,
+            message="Food suggestion retrieved successfully",
+            result=result
+        )
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        # Handle unexpected errors
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An internal error occurred while processing your request"
+        )

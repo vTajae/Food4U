@@ -98,3 +98,33 @@ async def search_restaurants(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+
+
+
+
+
+@router.get("/spoon/foodSearch", response_model=SearchRestaurants200Response)
+async def search_food(
+    lat: float = Query(..., description="Latitude is required"),
+    lng: float = Query(..., description="Longitude is required"),
+    query: Optional[str] = Query(default=None),
+    distance: Optional[float] = Query(default=None),
+    budget: Optional[float] = Query(default=None),
+    cuisine: Optional[str] = Query(default=None),
+    min_rating: Optional[float] = Query(default=None),
+    is_open: Optional[bool] = Query(default=None),
+    sort: Optional[str] = Query(default=None),
+    page: Optional[int] = Query(default=None),
+    service: Spoon_Service = Depends(get_spoon_service),
+) -> SearchRestaurants200Response:
+    try:
+        result = await service.search_restaurants(
+            query, lat, lng, distance, budget, cuisine, min_rating, is_open, sort, page
+        )
+
+        # You can directly return the result, assuming it's correctly structured
+        return SearchRestaurants200Response(**result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+

@@ -1,6 +1,8 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
+from app.api.schemas.foodDataCentral.search_result_food import SearchResultFood
+
 # Define a schema for the food query
 class FoodQuery(BaseModel):
     data_type: Optional[List[str]] = Field(
@@ -47,8 +49,37 @@ class SuggestionQuery(BaseModel):
         description="List of dietary restrictions"
     )
 
+
+
+
+# Define a schema for the suggestion query
+class Query4Food(BaseModel):
+    queryKey: Optional[str] = Field(
+        default=None, 
+        description="QueryKey for suggestion"
+    )
+    action: Optional[str] = Field(
+        default=None, 
+        description="action for suggestion"
+    )
+    text:  Optional[str] = Field(
+        default=None, 
+        description="text for suggestion"
+    )
+
+
 # Define a combined schema to take input for both queries
 class SuggestionRequest(BaseModel):
     food_query: FoodQuery
     suggestion_query: SuggestionQuery
+    food4U: Query4Food
     
+
+# Define the Pydantic model for the expected API response
+class BasicAPIResponse(BaseModel):
+    status: bool
+    message: str
+    result: Optional[List[SearchResultFood]]  # Can be None or an empty list if no results are found
+
+    class Config:
+        from_attribute = True

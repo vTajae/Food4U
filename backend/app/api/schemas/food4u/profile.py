@@ -59,7 +59,25 @@ class ProfileDietSchema(BaseModel):
         from_attributes = True
 
 
-# Main Profile Schema
+# ICD Code Schema
+class ICDCodeSchema(BaseModel):
+    code: str
+    description: str
+
+    class Config:
+        from_attributes = True
+
+
+class PatientMedicalHistorySchema(BaseModel):
+    id: int
+    icd_details: Optional[ICDCodeSchema]  # Include ICD code details
+    date_diagnosed: Optional[datetime]
+    notes: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+
 class ProfileSchema(BaseModel):
     id: int
     age: Optional[int]
@@ -67,9 +85,10 @@ class ProfileSchema(BaseModel):
     location: Optional[str]
     created_at: datetime
     updated_at: datetime
-    attributes: List[ProfileAttributeSchema]
-    diets: List[ProfileDietSchema]
-    # Add other relationships (e.g., medical_history) similarly if needed
+    attributes: Optional[List[ProfileAttributeSchema]]
+    diets: Optional[List[ProfileDietSchema]]
+    # Updated to include medical history
+    medical_history: Optional[List[PatientMedicalHistorySchema]]
 
     class Config:
         from_attributes = True

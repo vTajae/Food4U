@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 from sqlalchemy import DECIMAL, Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, Relationship, mapped_column
@@ -12,10 +13,14 @@ class PatientMedicalHistory(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     profile_id: Mapped[int] = mapped_column(Integer, ForeignKey('profile.id', ondelete='CASCADE'))
     icd_code: Mapped[str] = mapped_column(String(10), ForeignKey('icd_codes.code', ondelete='RESTRICT'))
-    date_diagnosed: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    date_diagnosed: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
+    # Relationship with Profile (many-to-one)
     profile = Relationship("Profile", back_populates="medical_history")
+
+    # Relationship with ICDCodes
+    icd_details = Relationship("ICDCodes", backref="medical_histories")
 
     class Config:
         orm_mode = True

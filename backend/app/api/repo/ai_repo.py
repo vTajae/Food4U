@@ -7,7 +7,7 @@ from llama_cloud import TextNode
 from llama_index.core import VectorStoreIndex, Document, StorageContext, Settings
 from llama_index.embeddings.gemini import GeminiEmbedding
 from llama_index.vector_stores.qdrant import QdrantVectorStore
-import google.generativeai as palm  # Use 'palm' as per official documentation
+import google.generativeai as palm
 from qdrant_client import QdrantClient
 from app.config.llama_config import AIConfig
 from app.config.gemini_config import GeminiConfig
@@ -16,17 +16,21 @@ from app.config.gemini_config import GeminiConfig
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 class AIRepository:
     def __init__(self):
         logger.info("Initializing AIRepository.")
-        self.drive_service = self.authenticate_google_drive()
-        self.vector_store = self.initialize_vector_store()
-        self.index = self.initialize_index()
-        # Configure API key and credentials for Palm
-        credentials = GeminiConfig.get_palm_credentials()
 
-        palm.configure(api_key=GeminiConfig.GOOGLE_GEMINI_API_KEY, credentials=credentials)
+        # Authenticate with Google Drive
+        self.drive_service = self.authenticate_google_drive()
+
+        # Initialize Qdrant vector store
+        self.vector_store = self.initialize_vector_store()
+
+        # Initialize the index with text documents from Google Drive
+        self.index = self.initialize_index()
+
+        # Configure the PaLM client using the API key
+        palm.configure(api_key=GeminiConfig.GOOGLE_GEMINI_API_KEY)
         logger.info("AIRepository initialized successfully.")
 
     def authenticate_google_drive(self):
@@ -36,14 +40,15 @@ class AIRepository:
         service = build('drive', 'v3', credentials=credentials)
         logger.info("Google Drive authenticated successfully.")
         return service
-    
 
     def initialize_vector_store(self):
         """Initialize Qdrant vector store by connecting to the Qdrant Cloud Cluster."""
         logger.info("Initializing Qdrant vector store.")
         # Connect to the Qdrant Cloud cluster
-        client = QdrantClient(url=GeminiConfig.QDRANT_URL,
-                              api_key=GeminiConfig.QDRANT_API_KEY)
+        client = QdrantClient(
+            url=GeminiConfig.QDRANT_URL,
+            api_key=GeminiConfig.QDRANT_API_KEY
+        )
 
         # Fetch collections to verify connection
         collections = client.get_collections()
@@ -51,15 +56,20 @@ class AIRepository:
 
         # Initialize the vector store
         vector_store = QdrantVectorStore(
-            client=client, collection_name="document_collection")
+            client=client,
+            collection_name="document_collection"
+        )
         logger.info("Qdrant vector store initialized successfully.")
         return vector_store
 
     def initialize_index(self):
         """Initialize VectorStoreIndex using Qdrant vector store."""
         logger.info("Initializing VectorStoreIndex.")
-        documents = self.load_documents_from_google_drive(
-            GeminiConfig.GOOGLE_DRIVE_FOLDER_ID)
+
+        # Load text documents from Google Drive
+        documents = self.load_text_documents_from_google_drive(
+            GeminiConfig.GOOGLE_DRIVE_FOLDER_ID
+        )
         nodes = self.construct_nodes(documents)
 
         # Set the embedding model for LlamaIndex
@@ -71,125 +81,81 @@ class AIRepository:
 
         # Create a storage context for the vector store
         storage_context = StorageContext.from_defaults(
-            vector_store=self.vector_store)
+            vector_store=self.vector_store
+        )
         logger.info("Storage context created for vector store.")
 
         index = VectorStoreIndex(nodes=nodes, storage_context=storage_context)
         logger.info("VectorStoreIndex initialized successfully.")
         return index
 
-    # def load_documents_from_google_drive(self, folder_id):
-    #     """Load files from Google Drive and return them as Document objects."""
-    #     logger.info(f"Loading documents from Google Drive folder: {folder_id}")
-    #     documents = []
-    #     page_token = None
+    def load_text_documents_from_google_drive(self, folder_id):
+        """Load text files from Google Drive and return them as Document objects."""
+        logger.info(f"Loading text documents from Google Drive folder: {folder_id}")
+        documents = []
+        page_token = None
 
-    #     while True:
-    #         query = f"'{folder_id}' in parents and trashed=false"
-    #         results = self.drive_service.files().list(
-    #             q=query, spaces='drive',
-    #             fields='nextPageToken, files(id, name, mimeType)',
-    #             pageToken=page_token
-    #         ).execute()
+        while True:
+            query = (
+                f"'{folder_id}' in parents and trashed=false and mimeType='text/plain'"
+            )
+            results = self.drive_service.files().list(
+                q=query,
+                spaces='drive',
+                fields='nextPageToken, files(id, name, mimeType)',
+                pageToken=page_token
+            ).execute()
 
-    #         items = results.get('files', [])
-    #         if not items:
-    #             logger.warning(f"No files found in Google Drive folder: {folder_id}")
-    #             break
+            items = results.get('files', [])
+            if not items:
+                logger.warning(f"No text files found in Google Drive folder: {folder_id}")
+                break
 
-    #         with ThreadPoolExecutor(max_workers=4) as executor:
-    #             future_to_file = {
-    #                 executor.submit(
-    #                     self.load_file_content,
-    #                     item['id'], item['name'], item['mimeType']
-    #                 ): item for item in items
-    #             }
+            with ThreadPoolExecutor(max_workers=4) as executor:
+                future_to_file = {
+                    executor.submit(
+                        self.load_file_content,
+                        item['id'],
+                        item['name']
+                    ): item for item in items
+                }
 
-    #             for future in as_completed(future_to_file):
-    #                 file_content = future.result()
-    #                 if file_content:
-    #                     item = future_to_file[future]
-    #                     document = Document(
-    #                         text=file_content,
-    #                         metadata={"file_name": item['name']}
-    #                     )
-    #                     documents.append(document)
-    #                     logger.info(f"Loaded and processed file: {item['name']}")
+                for future in as_completed(future_to_file):
+                    file_content = future.result()
+                    if file_content:
+                        item = future_to_file[future]
+                        document = Document(
+                            text=file_content,
+                            metadata={"file_name": item['name']}
+                        )
+                        documents.append(document)
+                        logger.info(f"Loaded and processed file: {item['name']}")
 
-    #         page_token = results.get('nextPageToken', None)
-    #         if page_token is None:
-    #             break
+            page_token = results.get('nextPageToken', None)
+            if page_token is None:
+                break
 
-    #     logger.info(f"Total documents loaded: {len(documents)}")
-    #     return documents
+        logger.info(f"Total documents loaded: {len(documents)}")
+        return documents
 
-    # def load_file_content(self, file_id, file_name, mime_type):
-    #     """Load and process the content of the file via the Google Gemini API."""
-    #     logger.info(f"Loading file content for: {file_name}")
-    #     try:
-    #         request = self.drive_service.files().get_media(fileId=file_id)
-    #         file_stream = io.BytesIO()
-    #         downloader = MediaIoBaseDownload(file_stream, request)
-
-    #         done = False
-    #         while not done:
-    #             status, done = downloader.next_chunk()
-
-    #         file_stream.seek(0)
-    #         file_content = file_stream.read()
-
-
-    #         # Process the file content using the Gemini API document processor
-    #         return self.process_file_with_gemini(file_content, file_name, mime_type)
-
-    #     except Exception as e:
-    #         logger.error(f"Error loading file content from Google Drive: {e}")
-    #         return None
-
-    def process_file_with_gemini(self, file_content: bytes, file_name: str, mime_type: str):
-        """Process files using the Google Gemini Document Processing API."""
-        logger.info(f"Processing file with Gemini: {file_name}")
+    def load_file_content(self, file_id, file_name):
+        """Load the content of a text file from Google Drive."""
+        logger.info(f"Loading file content for: {file_name}")
         try:
-            # Check if the file format is supported
-            if mime_type in ['application/pdf', 'text/csv', 'text/plain', 'text/html']:
-                
-                
-                palm.configure(credentials=GeminiConfig.GOOGLE_SERVICE_ACCOUNT_JSON)
-                print(type(file_content), "file_content")
-                uploaded_file = palm.upload_file(file_content, name="test.pdf")
-                
-                model = palm.GenerativeModel("gemini-1.5-flash")
-                response = model.generate_content(["Give me a summary of this pdf file.", uploaded_file])
-                print(response.text)
+            request = self.drive_service.files().get_media(fileId=file_id)
+            file_stream = io.BytesIO()
+            downloader = MediaIoBaseDownload(file_stream, request)
 
+            done = False
+            while not done:
+                status, done = downloader.next_chunk()
 
-                if uploaded_file:
-                    logger.info(f"Successfully uploaded {file_name} to Gemini.")
-
-                    model = palm.GenerativeModel("gemini-1.5-flash")
-                    # Step 2: Generate content (e.g., summarize or extract text)
-                    prompt = "Extract and summarize the document content."
-                    response = model.generate_content(
-                        [prompt, uploaded_file])
-
-                    # Extract the text from the response
-                    document_text = response.get('text', '')
-
-                    if document_text:
-                        logger.info(f"Successfully processed {file_name} with Gemini.")
-                        return document_text
-                    else:
-                        logger.warning(f"Failed to extract text from {file_name}.")
-                        return None
-                else:
-                    logger.warning(f"Failed to upload {file_name} to Gemini.")
-                    return None
-            else:
-                logger.warning(f"Unsupported file type: {mime_type}")
-                return None
+            file_stream.seek(0)
+            file_content = file_stream.read().decode('utf-8')
+            return file_content
 
         except Exception as e:
-            logger.error(f"Error processing file {file_name} with Google Gemini: {e}")
+            logger.error(f"Error loading file content from Google Drive: {e}")
             return None
 
     def construct_nodes(self, documents):
@@ -198,7 +164,7 @@ class AIRepository:
         nodes = []
         for doc in documents:
             metadata = {"file_name": doc.metadata["file_name"]}
-            text_node = TextNode(text=doc.content, metadata=metadata)
+            text_node = TextNode(text=doc.text, metadata=metadata)
             nodes.append(text_node)
         logger.info(f"Total TextNode objects constructed: {len(nodes)}")
         return nodes
@@ -216,26 +182,26 @@ class AIRepository:
         logger.info(f"Query result: {result}")
         return result
 
-    def generate_summary(self, prompt):
+    def generate_summary(self, prompt:str):
         """Generate a response using the Gemini model."""
         logger.info(f"Generating summary with prompt: {prompt}")
-        # Prepare the prompt with the document texts
-        sample_files = [doc.text for doc in self.documents]
 
-        # Combine the prompt and sample files
-        full_prompt = prompt + "\n\n" + "\n\n".join(sample_files)
-
-        # Generate text using the Gemini model
-        response = palm.generate_text(
-            model='gemini-1.5-flash',
-            prompt=full_prompt,
-            temperature=0.7,
-            max_output_tokens=800,
+        model = palm.GenerativeModel("gemini-1.5-flash-latest")
+        response = model.generate_content(
+            prompt,
+            generation_config=palm.types.GenerationConfig(
+                # Only one candidate for now.
+                candidate_count=1,
+                stop_sequences=["x"],
+                max_output_tokens=20,
+                temperature=1.0,
+            ),
         )
 
-        if response.result:
-            logger.info(f"Generated summary: {response.result}")
-            return response.result
+
+        if response.text:
+            logger.info(f"Generated summary: {response.text}")
+            return response.text
         else:
             logger.error("Failed to generate response.")
             return None
