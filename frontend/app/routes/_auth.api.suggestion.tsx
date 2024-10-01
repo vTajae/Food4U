@@ -33,7 +33,7 @@ export const action: ActionFunction = async ({ request }) => {
         if (response.status === false) {
           return json({ message: `Suggestion fetched` });
         }
-        return json({ message: `Suggestion fetched`, results: response });
+        return json({ message: `Suggestion fetched`, results: response.result });
 
       default:
         return json({ message: `Unknown action` }, { status: 400 });
