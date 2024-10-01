@@ -3,6 +3,7 @@ import {
   ActionFunction,
   redirect,
   LoaderFunction,
+  Session,
 } from "@remix-run/cloudflare";
 import { FormProvider } from "../components/form/context";
 import Form from "../components/form/index";
@@ -14,6 +15,8 @@ import {
 import { ApiService } from "../../api/services/baseService";
 import { checkAuthentication } from "../context/session/checkAuthentication";
 import UserService from "../../api/services/userService";
+import { useActionData, useNavigate } from "@remix-run/react";
+import { createSessionStorage } from "../context/session/session";
 
 export const loader: LoaderFunction = async ({ context }) => {
   const myEnv = context.cloudflare.env as Env;
@@ -29,6 +32,11 @@ export const loader: LoaderFunction = async ({ context }) => {
     ApiService.clearToken();
     return redirect("/login");
   }
+
+
+  // if (mySession.get("welcome").isComplete === true) {
+  //   return redirect("/dashboard");
+  // }
 
   try {
     const data = await ProfileService.getAllData();
@@ -53,7 +61,7 @@ export const loader: LoaderFunction = async ({ context }) => {
       }
     }
 
-    return redirect("/dashboard");
+    return json({});
   } catch (error) {
     // Log error if necessary
     console.error("Error fetching user data:", error);
@@ -64,8 +72,9 @@ export const loader: LoaderFunction = async ({ context }) => {
   }
 };
 
-export const action: ActionFunction = async ({ request }) => {
+export const action: ActionFunction = async ({ context, request }) => {
   try {
+    const myEnv = context.cloudflare.env as Env;
     const formData = await request.formData();
     const preparedFormDataString = formData.get("submission");
 
@@ -111,6 +120,13 @@ export const action: ActionFunction = async ({ request }) => {
       );
     }
 
+    const mySession = context.session as Session;
+
+    mySession.set("welcome", { isComplete: true });
+    await createSessionStorage(myEnv).commitSession(
+      mySession
+    );
+
     // Return success response
     return json({ status: response.status, message: response.message });
   } catch (error) {
@@ -122,13 +138,29 @@ export const action: ActionFunction = async ({ request }) => {
   }
 };
 
+interface ActionData {
+  status: string;
+  message: string;
+}
+
 export default function Dashboard() {
+  const navgation = useNavigate();
+  const actionData = useActionData<ActionData>();
+
+  if (actionData?.status === "success") {
+    navgation("/dashboard");
+  }
+
   return (
-    <div>
-      <h1>Welcome to the Dashboard</h1>
-      <FormProvider>
-        <Form />
-      </FormProvider>
+    <div className="p-6 bg-gray-50 h-screen">
+      <h1 className="text-3xl font-bold text-blue-600 mb-8 text-center">
+        Let&apos;s get started.
+      </h1>
+      <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg">
+        <FormProvider>
+          <Form />
+        </FormProvider>
+      </div>
     </div>
   );
 }

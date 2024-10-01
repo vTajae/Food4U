@@ -17,7 +17,6 @@ class ProfileService extends ApiService {
     try {
       const result =  await this.post<basicAPI>("welcome", welcomeProfile);
 
-      console.log(result);
       return result;
     } catch (error) {
       console.error("Error creating profile:", error);

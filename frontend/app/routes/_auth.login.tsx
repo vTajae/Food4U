@@ -11,9 +11,7 @@ import UserService from "../../api/services/userService";
 import RegisterForm from "../components/login/registerForm";
 import LoginForm from "../components/login/loginForm";
 
-
 export const loader: LoaderFunction = async () => {
-
   // console.log(context.session.get("auth"), "auth");
   // if (context.session.has("auth")) {
   //   return redirect("/dashboard");
@@ -44,13 +42,20 @@ export const action: ActionFunction = async ({ request, context }) => {
     console.log("Submitted data:", { username, password, actionType });
 
     if (actionType === "login") {
-      const loginResult = await userService.loginUser({ username, password }, myEnv);
+      const loginResult = await userService.loginUser(
+        { username, password },
+        myEnv
+      );
 
       if (loginResult.success && loginResult.user) {
         mySession.set("auth", { ...loginResult.user });
+
+        console.log(mySession.data);
+
         const cookieHeader = await createSessionStorage(myEnv).commitSession(
           mySession
         );
+
         return redirect("/dashboard", {
           headers: { "Set-Cookie": cookieHeader },
         });
@@ -65,7 +70,15 @@ export const action: ActionFunction = async ({ request, context }) => {
       });
 
       if (registerResult.success) {
-        return redirect("/login");
+        mySession.set("welcome", { isComplete: false });
+
+        const cookieHeader = await createSessionStorage(myEnv).commitSession(
+          mySession
+        );
+
+        return redirect("/login", {
+          headers: { "Set-Cookie": cookieHeader },
+        });
       } else {
         context.session.flash("error", "Registration failed. Try Again.");
         return json({ error: "Registration failed. Try Again." });
@@ -89,31 +102,37 @@ const Login = () => {
   const [isRegister, setIsRegister] = useState(false); // Toggle between login and register forms
 
   return (
-    <div>
-      <div className="text-center">
+    <div className="p-6 max-w-lg mx-auto bg-white rounded-lg ">
+      <div className="flex justify-center mb-6">
         <button
           onClick={() => setIsRegister(false)}
-          className={`px-4 py-2 ${
-            !isRegister ? "bg-blue-500 text-white" : "bg-gray-200 text-black"
-          } rounded-lg m-2`}
+          className={`px-6 py-3 font-semibold rounded-lg m-2 transition-colors duration-300 ${
+            !isRegister
+              ? "bg-blue-500 text-white hover:bg-blue-600"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+          } focus:outline-none focus:ring-4 focus:ring-blue-300`}
         >
           Login
         </button>
         <button
           onClick={() => setIsRegister(true)}
-          className={`px-4 py-2 ${
-            isRegister ? "bg-blue-500 text-white" : "bg-gray-200 text-black"
-          } rounded-lg m-2`}
+          className={`px-6 py-3 font-semibold rounded-lg m-2 transition-colors duration-300 ${
+            isRegister
+              ? "bg-blue-500 text-white hover:bg-blue-600"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+          } focus:outline-none focus:ring-4 focus:ring-blue-300`}
         >
           Register
         </button>
       </div>
 
-      {isRegister ? (
-        <RegisterForm actionUrl="/login" />
-      ) : (
-        <LoginForm actionUrl="/login" />
-      )}
+      <div className="mt-6">
+        {isRegister ? (
+          <RegisterForm actionUrl="/login" />
+        ) : (
+          <LoginForm actionUrl="/login" />
+        )}
+      </div>
     </div>
   );
 };

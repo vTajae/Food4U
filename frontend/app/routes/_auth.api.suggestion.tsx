@@ -27,13 +27,18 @@ export const action: ActionFunction = async ({ request }) => {
     // Handle different actions here
     switch (action) {
       case "meal":
-        response = (await SuggestionService.GeneralSuggestion(
+      case "suggest":
+      case "diets":
+      case "recipie":
+        response = await SuggestionService.GeneralSuggestion(
           body
-        )) as basicAPI;
-        if (response.status === false) {
+        ) as basicAPI;
+
+
+        if (response.status === false || !response) {
           return json({ message: `Suggestion fetched` });
         }
-        return json({ message: `Suggestion fetched`, results: response.result });
+        return json({ message: `Suggestion fetched`, meal: response.result });
 
       default:
         return json({ message: `Unknown action` }, { status: 400 });

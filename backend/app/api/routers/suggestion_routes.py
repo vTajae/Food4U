@@ -1,7 +1,8 @@
 from profile import Profile
 from typing import List, Optional
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
-
+import random
+from fastapi import HTTPException, status
 from app.api.services.food4u.suggestion_service import SuggestionService
 from app.api.dependencies.auth_dep import get_current_user
 from app.api.dependencies.fdc_dep import get_fdc_service
@@ -69,13 +70,7 @@ async def get_general_suggestion(
     suggestion_service: SuggestionService = Depends(get_suggestion_service)
 ) -> BasicAPIResponse:
     """
-    Fetch a food suggestion and return the top food item.
-    Returns a structured response:
-    {
-        "status": bool,
-        "message": str,
-        "result": List[SearchResultFood]
-    }
+    Fetch a food suggestion and return a randomized food item from the results.
     """
     try:
         # Get profile information
@@ -94,12 +89,18 @@ async def get_general_suggestion(
                 detail="Failed to generate a food suggestion"
             )
 
+        # Randomize page_size and page_number
+        # Random page size between 10 and 50
+        page_size = random.randint(10, 200)
+        # Random page number between 1 and 10
+        page_number = random.randint(1, page_size)
+
         # Call the service to search for foods
         response = await fdc_service.search_foods(
             query=food_idea,
             data_type=["Branded"],
-            page_size=25,
-            page_number=3,
+            page_size=page_size,
+            page_number=page_number,
             sort_by="dataType.keyword"
         )
 
@@ -109,12 +110,16 @@ async def get_general_suggestion(
                 detail="No food items found"
             )
 
-        # Limit the response to the top result
-        result = response.foods[:1]
+              # Ensure that we have enough items to select 4
+        num_foods = min(len(response.foods), 3)  # Ensure we don't try to select more than available
+
+        # Randomly select 4 unique indices from the available food results
+        random_indices = random.sample(range(len(response.foods)), num_foods)
+        result = [response.foods[i] for i in random_indices]  # Select the items based on the random indices
 
         return BasicAPIResponse(
             status=True,
-            message="Food suggestion retrieved successfully",
+            message=f"Food suggestion retrieved successfully from page {page_number}, size {page_size}.",
             result=result
         )
 

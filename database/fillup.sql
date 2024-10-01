@@ -1,4 +1,4 @@
-INSERT INTO DietType (diet_name, description) VALUES
+INSERT INTO diet_type (diet_name, description) VALUES
 ('Gluten Free', 'Eliminating gluten by avoiding wheat, barley, rye, and other gluten-containing grains.'),
 ('Ketogenic', 'A high-fat, low-carbohydrate diet designed to shift the body into a state of ketosis.'),
 ('Vegetarian', 'Excludes meat and meat by-products, such as bones and gelatin.'),
@@ -13,7 +13,7 @@ INSERT INTO DietType (diet_name, description) VALUES
 
 
 
-INSERT INTO Intolerance (intolerance_name, description) VALUES
+INSERT INTO intolerance (intolerance_name, description) VALUES
 ('Dairy', 'Intolerance to milk and milk products such as cheese, butter, and yogurt.'),
 ('Egg', 'Intolerance to eggs, both yolks and whites.'),
 ('Gluten', 'Intolerance to gluten, a protein found in wheat, barley, and rye.'),

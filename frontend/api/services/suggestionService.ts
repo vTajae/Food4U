@@ -17,7 +17,7 @@ class ProfileService extends ApiService {
     ): Promise<basicAPI | void> {
     try {
       const result =  await this.post<basicAPI>("api/suggestion", queryKey);
-
+console.log(result);
       return result;
     } catch (error) {
       console.error("Error creating profile:", error);
