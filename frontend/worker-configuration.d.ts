@@ -6,5 +6,6 @@ interface Env {
 	USER_COOKIE_SECRET: "testing123";
 	JWT_SECRET_KEY: "happy";
 	JWT_ACCESS_TOKEN_EXPIRE_MINUTES: "30m";
+	API_BASE_URL: "https://food4u-nrpy.onrender.com";
 	cloudflare_db: D1Database;
 }

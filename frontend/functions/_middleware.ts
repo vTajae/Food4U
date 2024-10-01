@@ -1,35 +1,32 @@
-// import { redirect, Session } from "@remix-run/cloudflare";
-// import { checkAuthentication } from "../app/context/session/checkAuthentication";
+import { Session, redirect } from "@remix-run/cloudflare";
+import { checkAuthentication } from "../app/context/session/checkAuthentication";
 
-// // Define the structure of the environment variables
-// interface EnvWithKV {
-//   USER_SESSION_SECRET: string;
-//   USER_COOKIE_SECRET: string;
-//   ASSETS: object;
-//   theform: KVNamespace;
-//   __STATIC_CONTENT: KVNamespace;
-//   DB: D1Database;
-// }
+interface RequestContext {
+  request: Request;
+  next: (request: Request) => Promise<Response>;
+  session: Session;
+}
 
-// // Extend the overall context model including the request, session, and environment variables
-// interface RequestContext {
-//   request: Request;
-//   env: EnvWithKV;
-//   session: Session;
-//   next: (request: Request) => Promise<Response>;
-// }
+export async function onRequest(context: RequestContext) {
+  const { request, next, session } = context;
 
-// export async function onRequest(context: RequestContext) {
-//   const { request, session, next } = context;
+  const url = new URL(request.url);
+  const isAuthenticated = await checkAuthentication({ session });
 
-//   // Check if the user is authenticated using the session
-//   const isAuthenticated = await checkAuthentication({ session });
+  // Define protected route prefix and specific public routes
+  const protectedRoutePrefix = "/";  // Correct prefix based on your structure
+  const publicRoutes = ["/login"];
 
-//   console.log("isAuthenticated", isAuthenticated);
-//   // Redirect unauthenticated users trying to access the protected dashboard directly
-//   if (!isAuthenticated) {
-//     return redirect("/login");
-//   }
-//   // Allow the request to proceed if it doesn't match the conditions above
-//   return next(request);
-// }
+  // Redirect authenticated users away from login/register to the dashboard
+  if (publicRoutes.includes(url.pathname) && isAuthenticated) {
+    return redirect("/dashboard");
+  }
+
+  // Protect all routes starting with '/_auth' and redirect unauthenticated users to '/'
+  if (url.pathname.startsWith(protectedRoutePrefix) && !isAuthenticated && !url.pathname.startsWith("/login")) {
+    return redirect("/login");  // Redirect to login instead of "/"
+  }
+
+  // Allow the request to proceed for all other cases
+  return next(request);
+}
