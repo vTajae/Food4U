@@ -11,9 +11,7 @@ import UserService from "../../api/services/userService";
 import RegisterForm from "../components/login/registerForm";
 import LoginForm from "../components/login/loginForm";
 
-
 export const loader: LoaderFunction = async () => {
-
   // console.log(context.session.get("auth"), "auth");
   // if (context.session.has("auth")) {
   //   return redirect("/dashboard");
@@ -21,6 +19,7 @@ export const loader: LoaderFunction = async () => {
   return json({ isLoading: false });
 };
 
+// Server-side action handler
 // Server-side action handler
 export const action: ActionFunction = async ({ request, context }) => {
   const myEnv = context.cloudflare.env as Env;
@@ -30,33 +29,50 @@ export const action: ActionFunction = async ({ request, context }) => {
   try {
     const formData = await request.formData();
 
+    // Ensure formData is available
     if (!formData) {
-      context.session.flash("error", "Try using our client.");
-      return json({ error: "Login failed. Try using our client." });
+      context.session.flash("error", "Form data is missing.");
+      return json({ error: "Login failed. Form data is required." });
     }
 
-    // Extract fields directly from form data
-    const username = formData.get("username") as string;
-    const password = formData.get("password") as string;
-    const actionType = formData.get("actionType") as string;
+    // Extract fields safely from formData
+    const username = formData.get("username") as string | null;
+    const password = formData.get("password") as string | null;
+    const actionType = formData.get("actionType") as string | null;
 
-    // Ensure logging works correctly
+    // Validate that required fields are present
+    if (!username || !password || !actionType) {
+      context.session.flash("error", "Missing required fields.");
+      return json({ error: "Login failed. All fields are required." });
+    }
+
+    // Logging submission for debugging
     console.log("Submitted data:", { username, password, actionType });
 
     if (actionType === "login") {
-      const loginResult = await userService.loginUser({ username, password }, myEnv);
+      const loginResult = await userService.loginUser(
+        { username, password },
+        myEnv
+      );
 
       if (loginResult.success && loginResult.user) {
         mySession.set("auth", { ...loginResult.user });
+        console.log("Session data after login:", mySession.data);
+
+     
+
         const cookieHeader = await createSessionStorage(myEnv).commitSession(
           mySession
         );
+
+        
+
         return redirect("/dashboard", {
           headers: { "Set-Cookie": cookieHeader },
         });
       } else {
         context.session.flash("error", "Invalid username or password.");
-        return json({});
+        return json({ error: "Invalid username or password." });
       }
     } else if (actionType === "register") {
       const registerResult = await userService.registerUser({
@@ -65,55 +81,74 @@ export const action: ActionFunction = async ({ request, context }) => {
       });
 
       if (registerResult.success) {
-        return redirect("/login");
+        mySession.set("welcome", { isComplete: false });
+        console.log("Session data after registration:", mySession.data);
+
+        const cookieHeader = await createSessionStorage(myEnv).commitSession(
+          mySession
+        );
+
+        return redirect("/login", {
+          headers: { "Set-Cookie": cookieHeader },
+        });
       } else {
-        context.session.flash("error", "Registration failed. Try Again.");
-        return json({ error: "Registration failed. Try Again." });
+        context.session.flash("error", "Registration failed. Try again.");
+        return json({ error: "Registration failed. Try again." });
       }
     }
 
+    // If actionType is invalid
+    context.session.flash("error", "Invalid action type.");
     return json({ error: "Invalid action type." });
 
-    // Continue with the rest of your logic here
   } catch (error) {
+    // Log the error for server-side troubleshooting
+    console.error("Error processing request:", error);
     context.session.flash(
       "error",
       "An error occurred while processing your request."
     );
-    return json({ error: "Login failed due to an unexpected error." });
+    return json({ error: "An unexpected error occurred. Please try again." });
   }
 };
+
 
 // The component that renders the Login or Register form
 const Login = () => {
   const [isRegister, setIsRegister] = useState(false); // Toggle between login and register forms
 
   return (
-    <div>
-      <div className="text-center">
+    <div className="p-6 max-w-lg mx-auto bg-white rounded-lg ">
+      <div className="flex justify-center mb-6">
         <button
           onClick={() => setIsRegister(false)}
-          className={`px-4 py-2 ${
-            !isRegister ? "bg-blue-500 text-white" : "bg-gray-200 text-black"
-          } rounded-lg m-2`}
+          className={`px-6 py-3 font-semibold rounded-lg m-2 transition-colors duration-300 ${
+            !isRegister
+              ? "bg-blue-500 text-white hover:bg-blue-600"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+          } focus:outline-none focus:ring-4 focus:ring-blue-300`}
         >
           Login
         </button>
         <button
           onClick={() => setIsRegister(true)}
-          className={`px-4 py-2 ${
-            isRegister ? "bg-blue-500 text-white" : "bg-gray-200 text-black"
-          } rounded-lg m-2`}
+          className={`px-6 py-3 font-semibold rounded-lg m-2 transition-colors duration-300 ${
+            isRegister
+              ? "bg-blue-500 text-white hover:bg-blue-600"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+          } focus:outline-none focus:ring-4 focus:ring-blue-300`}
         >
           Register
         </button>
       </div>
 
-      {isRegister ? (
-        <RegisterForm actionUrl="/login" />
-      ) : (
-        <LoginForm actionUrl="/login" />
-      )}
+      <div className="mt-6">
+        {isRegister ? (
+          <RegisterForm actionUrl="/login" />
+        ) : (
+          <LoginForm actionUrl="/login" />
+        )}
+      </div>
     </div>
   );
 };

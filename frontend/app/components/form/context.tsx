@@ -84,7 +84,7 @@ export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
       if (existingQuestionIndex !== -1) {
         updatedAnswers = [...prevState.answers];
 
-        console.log("answers", answers);  
+        // console.log("answers", answers);  
         updatedAnswers[existingQuestionIndex].answers = answers;
       } else {
         const newQuestion: Question = {

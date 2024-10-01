@@ -98,64 +98,102 @@ const Form: React.FC = () => {
   };
 
   return (
-    <div>
-      {isFinalStep ? (
-        <div>
-          <h2>Review Your Answers</h2>
-          {state.answers.map((question) => {
-            const questionInfo = questions.find(
-              (q) => q.questionId === question.questionId
-            );
-            return (
-              <div key={question.questionId}>
-                <h3>{questionInfo?.questionText}</h3>
-                {Array.isArray(question.answers) ? (
-                  <p>
-                    {(question.answers as Suggestion[])
-                      .map((a) => {
-                        const name = a.name ? a.name : "";
-                        const value = a.value ? ` ${a.value}` : ""; // Append value if it exists
-                        return name + value; // Concatenate name and value
-                      })
-                      .join(", ")}
-                  </p>
-                ) : (
-                  <p>{question.answers}</p>
-                )}
-              </div>
-            );
-          })}
-
-          {renderMessage()}
+    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 p-6 bg-white rounded-lg shadow-lg">
+    {isFinalStep ? (
+      <div className="col-span-1 md:col-span-8 md:col-start-3 lg:col-span-6 lg:col-start-4 bg-gray-50 p-6 rounded-lg">
+        <h2 className="text-2xl font-bold text-blue-600 mb-6 text-center">
+          Review Your Answers
+        </h2>
+        {state.answers.map((question) => {
+          const questionInfo = questions.find(
+            (q) => q.questionId === question.questionId
+          );
+          return (
+            <div key={question.questionId} className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                {questionInfo?.questionText}
+              </h3>
+              {Array.isArray(question.answers) ? (
+                <p className="text-gray-600">
+                  {(question.answers as Suggestion[])
+                    .map((a) => {
+                      const name = a.name ? a.name : "";
+                      const value = a.value ? ` ${a.value}` : "";
+                      return name + value;
+                    })
+                    .join(", ")}
+                </p>
+              ) : (
+                <p className="text-gray-600">{question.answers}</p>
+              )}
+            </div>
+          );
+        })}
+  
+        {renderMessage()}
+  
+        <div className="grid grid-cols-2 gap-4 mt-6">
           <button
             type="button"
             onClick={goToPreviousStep}
             disabled={isSubmitting}
+            className={`px-4 py-2 rounded-lg font-medium ${
+              isSubmitting
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-blue-500 text-white hover:bg-blue-600 transition"
+            }`}
           >
             Back
           </button>
-          <button type="button" onClick={handleSubmit} disabled={isSubmitting}>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className={`px-4 py-2 rounded-lg font-medium ${
+              isSubmitting
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-green-500 text-white hover:bg-green-600 transition"
+            }`}
+          >
             {isSubmitting ? "Submitting..." : "Submit"}
           </button>
         </div>
-      ) : (
-        <div>
+      </div>
+    ) : (
+      <div className="col-span-1 md:col-span-8 md:col-start-3 lg:col-span-6 lg:col-start-4 flex flex-col bg-gray-50 rounded-lg p-6">
+        {/* Question component fills the remaining space */}
+        <div className="flex-1 p-4 overflow-auto">
           <QuestionComponent {...questions[state.currentStep]} />
-          <div>
+        </div>
+  
+        {/* Button container fixed at the bottom */}
+        <div className="p-4">
+          <div className="flex justify-between">
             <button
               type="button"
               disabled={state.currentStep === 0}
               onClick={goToPreviousStep}
+              className={`px-4 py-2 rounded-lg font-medium ${
+                state.currentStep === 0
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-blue-500 text-white hover:bg-blue-600 transition"
+              }`}
             >
               Previous
             </button>
-            <button type="button" onClick={goToNextStep}>
+            <button
+              type="button"
+              onClick={goToNextStep}
+              className="px-4 py-2 rounded-lg font-medium bg-blue-500 text-white hover:bg-blue-600 transition"
+            >
               Next
             </button>
           </div>
         </div>
-      )}
-    </div>
+      </div>
+    )}
+  </div>
+  
   );
 };
 

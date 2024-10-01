@@ -1,18 +1,9 @@
 export interface SearchResultProps {
   message?: string | string[];
   errors?: Record<string, string[]>;
-  fetching: boolean;
 }
 
-export function SearchResult({ message, errors, fetching }: SearchResultProps) {
-  if (fetching) {
-    return (
-      <div className="mt-6 p-4 flex items-center justify-center text-sm text-red-500">
-        <p className="animate-pulse">Loading...</p>
-      </div>
-    );
-  }
-
+export function SearchResult({ message, errors }: SearchResultProps) {
   if (!message && !errors) {
     return null;
   }
@@ -23,8 +14,12 @@ export function SearchResult({ message, errors, fetching }: SearchResultProps) {
         <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-800 p-4 rounded-md shadow-md">
           {Object.entries(errors).map(([field, messages]) => (
             <div key={field} className="mb-2">
-              <strong className="block font-semibold text-blue-700">{field}:</strong>
-              <span className="text-sm text-blue-600">{messages.join(", ")}</span>
+              <strong className="block font-semibold text-blue-700">
+                {field}:
+              </strong>
+              <span className="text-sm text-blue-600">
+                {messages.join(", ")}
+              </span>
             </div>
           ))}
         </div>
@@ -43,7 +38,7 @@ export function SearchResult({ message, errors, fetching }: SearchResultProps) {
               <p className="text-sm text-blue-600">No results found</p>
             )
           ) : (
-            <p className="text-sm text-blue-600">{message || "No results found"}</p>
+            <p className="text-sm text-blue-600">{`LastUpdated at: ${new Date().toLocaleString()}`|| "No results found"}</p>
           )}
         </div>
       )}

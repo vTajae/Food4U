@@ -78,17 +78,17 @@ class ProfileRepository:
 
         return profile
 
-
     async def get_all_profile_info(self, profile_id: int) -> ProfileSchema:
         # Query profile with all related data using joinedload to fetch related entities
         result = await self.db.execute(
             select(Profile)
             .options(
-                joinedload(Profile.attributes),  # Load attributes relationship
+                # Load attributes relationship
+                joinedload(Profile.attributes),
                 # Load diets and related diet types
                 joinedload(Profile.diets).joinedload(ProfileDiet.diet_type),
-                # Load medical history relationship
-                joinedload(Profile.medical_history),
+                # Load medical history and the related ICD codes through the icd_details relationship
+                joinedload(Profile.medical_history).joinedload(PatientMedicalHistory.icd_details),
             )
             .filter(Profile.id == profile_id)
         )
@@ -100,5 +100,4 @@ class ProfileRepository:
             return {"error": "Profile not found"}
 
         # Return the profile as a Pydantic model
-        return profile
-
+        return ProfileSchema.from_orm(profile)

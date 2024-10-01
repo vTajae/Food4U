@@ -1,23 +1,25 @@
+import { QuerySuggest, SearchResultFood } from "../../api/schemas/suggestion";
 import { ApiService } from "./baseService";
 
-interface basicAPI {
+export interface basicAPI {
   status: boolean;
   message: string;
+  result: SearchResultFood
 }
+
+
 
 // Define a service for handling profile-related HTTP requests
 class ProfileService extends ApiService {
 
   static async GeneralSuggestion(
-    queryKey: string
+    queryKey: QuerySuggest
     ): Promise<basicAPI | void> {
     try {
       const result =  await this.post<basicAPI>("api/suggestion", queryKey);
-
-      console.log(result, "YERRRR");
       return result;
     } catch (error) {
-      console.error("Error creating profile:", error);
+      console.error("Error Grabbing Suggestion:", error);
     }
   }
 }

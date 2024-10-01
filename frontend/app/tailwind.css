@@ -46,3 +46,46 @@
   animation-delay: .2s; /* Starts after welcome fades out */
   animation-fill-mode: forwards;
 }
+
+
+
+/* Custom Scrollbar Styles */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #c1c1c1;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #a8a8a8;
+}
+
+/* Firefox Support */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 transparent;
+}
+
+
+@layer utilities {
+  @media (max-width: 1024px) {
+    /* Hide items after the 2nd one on medium screens */
+    .md-hide-after-2 > :nth-child(n + 3) {
+      display: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    /* Hide items after the 1st one on small screens */
+    .lg-hide-after-1 > :nth-child(n + 2) {
+      display: none;
+    }
+  }
+}

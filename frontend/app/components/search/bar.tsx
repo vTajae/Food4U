@@ -9,7 +9,7 @@ const submitFormData = (
   fetcher: FetcherWithComponents<FetcherDataType>,
   formDataEntries: Record<string, string>,
   action: string,
-  method: "post" | "get" = "post"
+  method: "post" = "post"
 ) => {
   const formData = new FormData();
   Object.entries(formDataEntries).forEach(([key, value]) => {
@@ -113,13 +113,16 @@ interface ButtonProps {
 export function ActionButton({
   fetcher,
   text,
-  route,
+  route = "/api/suggestion", // Default route
   action,
   queryKey,
 }: ButtonProps) {
+  const isLoading = fetcher.state === "submitting" || fetcher.state === "loading";
+
   const handleClick = () => {
     submitFormData(fetcher, { text, action, queryKey }, route);
   };
+  
 
   return (
     <button
@@ -132,8 +135,9 @@ export function ActionButton({
         hover:bg-red-600 hover:scale-105 
         shadow-lg shadow-red-300/50 
         focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-400"
+      disabled={isLoading} // Disable button when loading
     >
-      {text}
+      {isLoading ? "Submitting..." : text}
     </button>
   );
 }

@@ -16,7 +16,7 @@ const QuestionComponent: React.FC<QuestionProps> = ({
 }) => {
   const { state, setAnswer } = useFormContext();
 
-  // Initialize the state as an array of Suggestion[], which can hold price or medical suggestions
+  // Initialize the state as an array of Suggestion[]
   const [selectedAnswers, setSelectedAnswers] = useState<Suggestion[]>([]);
 
   useEffect(() => {
@@ -41,15 +41,16 @@ const QuestionComponent: React.FC<QuestionProps> = ({
     // Convert the string input into a Suggestion array for the price
     const priceAsSuggestion: Suggestion[] = [{ value: value }]; // No code, since it's just a price input
 
-    setSelectedAnswers(priceAsSuggestion);
 
     // Update the form context with the price as a Suggestion array
     setAnswer(questionId, priceAsSuggestion);
   };
 
   return (
-    <div className="p-6 bg-blue-50 rounded-lg shadow-md">
-      <h3 className="text-lg font-semibold text-blue-800 mb-4">
+    <div className="p-6 bg-white rounded-lg">
+      {/* Updated background to white and adjusted padding */}
+      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        {/* Changed text color for better readability */}
         {questionText}
       </h3>
 
@@ -59,7 +60,8 @@ const QuestionComponent: React.FC<QuestionProps> = ({
           placeholder="Enter price"
           value={selectedAnswers[0]?.value || ""}
           onChange={handleInputChange}
-          className="w-full px-4 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-200 ease-in-out"
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 ease-in-out"
+          /* Improved input field styling */
         />
       ) : (
         <SearchBarWithButtons
@@ -72,16 +74,30 @@ const QuestionComponent: React.FC<QuestionProps> = ({
       )}
 
       {Array.isArray(selectedAnswers) && selectedAnswers.length > 0 && (
-        <ul className="mt-4 space-y-2">
+        <div className="mt-4 flex flex-wrap gap-2">
+          {/* Display selected answers as removable badges */}
           {selectedAnswers.map((item) => (
-            <li
+            <span
               key={`${item.name}-${item.code || ""}`}
-              className="bg-white px-4 py-2 rounded-lg shadow-sm text-blue-800"
+              className="bg-blue-100 text-gray-800 px-3 py-1 rounded-full text-sm flex items-center"
             >
               {item.name} {item.code ? `(${item.code})` : ""}
-            </li>
+              {/* Remove button */}
+              <button
+                onClick={() => {
+                  const updatedAnswers = selectedAnswers.filter(
+                    (answer) => answer !== item
+                  );
+                  setSelectedAnswers(updatedAnswers);
+                  setAnswer(questionId, updatedAnswers);
+                }}
+                className="ml-2 text-red-500 hover:text-red-700 focus:outline-none"
+              >
+                &times;
+              </button>
+            </span>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

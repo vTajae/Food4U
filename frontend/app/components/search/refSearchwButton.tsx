@@ -88,20 +88,29 @@ export const SearchBarWithButtons: React.FC<SearchBarWithButtonsProps> = ({
   };
 
   return (
-    <div className="search-bar-with-buttons">
-      <input
-        type="text"
-        value={inputValue}
-        onChange={handleInputChange}
-        placeholder={placeholderText}
-        className="search-input"
-      />
-      {fetcher.state === "loading" && <p>Loading...</p>}
-      {message && <p>{message}</p>}
+    <div className="p-6 rounded-lg max-w-2xl mx-auto">
+      <div className="flex items-center space-x-4">
+        <input
+          type="text"
+          value={inputValue}
+          onChange={handleInputChange}
+          placeholder={placeholderText}
+          className="w-full px-4 py-2 border border-blue-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+        />
+        {fetcher.state === "loading" && (
+          <p className="text-gray-500">Loading...</p>
+        )}
+      </div>
+
+      {message && <p className="text-red-500 mt-2">{message}</p>}
+
       {suggestions.length > 0 && (
-        <div className="checkbox-list">
+        <div className="mt-4 grid grid-cols-1 gap-4">
           {suggestions.map((suggestion) => (
-            <label key={`${suggestion.name}-${suggestion.code || ""}`}>
+            <label
+              key={`${suggestion.name}-${suggestion.code || ""}`}
+              className="flex items-center space-x-3"
+            >
               <input
                 type="checkbox"
                 checked={selectedSuggestions.some(
@@ -109,8 +118,12 @@ export const SearchBarWithButtons: React.FC<SearchBarWithButtonsProps> = ({
                     s.name === suggestion.name && s.code === suggestion.code
                 )}
                 onChange={() => handleCheckboxChange(suggestion)}
+                className="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
-              {suggestion.name} {suggestion.code ? `: ${suggestion.code}` : ""}
+              <span className="text-gray-800">
+                {suggestion.name}{" "}
+                {suggestion.code ? `: ${suggestion.code}` : ""}
+              </span>
             </label>
           ))}
         </div>
