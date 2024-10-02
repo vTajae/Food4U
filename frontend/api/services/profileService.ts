@@ -31,11 +31,24 @@ class ProfileService extends ApiService {
 
       return response;
     } catch (error) {
-      console.error("Error getting all profile data:", error);
+      console.error("Error creating profile:", error);
     }
   }
 
-  
+  // // Method to update an existing profile by ID
+  // static async updateProfile(
+  //   profileId: number,
+  //   welcomeProfile: welcomeProfile
+  // ): Promise<welcomeProfile | void> {
+  //   try {
+  //     return await this.patch<welcomeProfile>(
+  //       `profile/${profileId}`,
+  //       welcomeProfile
+  //     );
+  //   } catch (error) {
+  //     console.error(`Error updating profile with ID ${profileId}:`, error);
+  //   }
+  // }
 }
 
 export default ProfileService;

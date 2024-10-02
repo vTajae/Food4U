@@ -4,7 +4,6 @@ const API_BASE_URL ="https://food4u-nrpy.onrender.com";
 
 export class ApiService {
   private static token: string | null = null; // Store token globally
-
   // Default headers for requests; will be updated with authorization tokens when needed
   static defaultHeaders: HeadersInit = {
     "Content-Type": "application/json",
@@ -19,6 +18,11 @@ export class ApiService {
   static clearToken(): void {
     this.token = null;
   }
+
+    // Method to clear the token
+    static getToken(): string | null {
+      return this.token;
+    }
 
   protected static getRequestOptions(
     method: string,
@@ -49,7 +53,7 @@ export class ApiService {
     if (this.token) {
       return {
         ...headers,
-        Authorization: `Bearer ${this.token}`, // Add Authorization header
+        "Authorization": `Bearer ${this.token}`, // Add Authorization header
       };
     }
     return headers;
@@ -88,6 +92,10 @@ export class ApiService {
   // POST request to submit data
   static async post<T>(url: string, body: unknown): Promise<T | void> {
     try {
+
+      const token = ApiService.getToken();
+
+      console.log("Token in the placee:", token);
       const response = await fetch(
         `${API_BASE_URL}/${url}`,
         this.getRequestOptions("POST", body)

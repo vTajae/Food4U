@@ -70,33 +70,57 @@ class UserService extends ApiService {
         return { success: false, message: "Incorrect password." };
       }
 
-      const token = await Auth.generateToken(
-        {
-          user_id: user.user_id,
-          username: user.username,
-          role: user.user_role,
-        },
-        env.JWT_SECRET_KEY, // Your JWT secret key
-        { expiresIn: env.JWT_ACCESS_TOKEN_EXPIRE_MINUTES }
-      );
-
-      // Set the JWT token globally in ApiService
-      ApiService.setToken(token);
-
-      return {
-        success: true,
-        user: {
+      // Ensure all required properties are present
+      if (
+        passwordMatch &&
+        user.username &&
+        typeof user.user_id === "number" &&
+        user.createdAt &&
+        user.updatedAt &&
+        user.user_role
+      ) {
+        const loginCookieData = {
           username: user.username,
           id: user.user_id,
           role: user.user_role,
-        },
-        message: "User logged in successfully.",
-      };
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        };
+
+        const token = await Auth.generateToken(
+          {
+            user_id: user.user_id,
+            username: user.username,
+            role: user.user_role,
+          },
+          env.JWT_SECRET_KEY, // Your JWT secret key
+          { expiresIn: env.JWT_ACCESS_TOKEN_EXPIRE_MINUTES } // Set token expiration
+        );
+
+        ApiService.setToken(token);
+
+        await UserService.getSingle("profile");
+
+
+
+
+        return {
+          success: true,
+          user: loginCookieData,
+          message: "User logged in successfully.",
+        };
+      } else {
+        return { success: false, message: "User data incomplete." };
+      }
     } catch (error) {
       console.error("Error during login:", error);
-      return { success: false, message: "Login process failed." };
+      return {
+        success: false,
+        message: "Login process failed due to a server error.",
+      };
     }
   }
+
 
 
   async refreshUser(env: Env, id: number) {

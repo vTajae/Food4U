@@ -58,7 +58,12 @@ export const action: ActionFunction = async ({ request, context }) => {
 
 
       if (loginResult.success && loginResult.user) {
-        mySession.set("auth", { ...loginResult.user });
+
+        mySession.set("auth", { 
+          ...loginResult.user,
+
+
+         });
         console.log("Session data after login:", mySession.data);
 
      
@@ -67,7 +72,6 @@ export const action: ActionFunction = async ({ request, context }) => {
           mySession
         );
 
-        
 
         return redirect("/dashboard", {
           headers: { "Set-Cookie": cookieHeader },

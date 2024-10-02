@@ -125,12 +125,15 @@ export const action: ActionFunction = async ({ context, request }) => {
     const mySession = context.session as Session;
 
     mySession.set("welcome", { isComplete: true });
-    await createSessionStorage(myEnv).commitSession(
+    const cookieHeader = await createSessionStorage(myEnv).commitSession(
       mySession
     );
 
     // Return success response
-    return redirect("/dashboard");
+    return redirect("/dashboard", {
+      headers: { "Set-Cookie": cookieHeader },
+    });
+  
   } catch (error) {
     console.error("Error:", error);
     return json(
