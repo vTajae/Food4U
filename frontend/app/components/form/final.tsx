@@ -16,7 +16,7 @@
 //   const filteredAnswers: WelcomeQuestions = {
 //     questions: answers.questions.map(({ options, ...rest }) => rest),
 //   };
-//   console.log(filteredAnswers);
+//   //console.log(filteredAnswers);
 
 
 //   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,7 +36,7 @@
 //           lockInValues();  // Lock the answers after successful submission
 //         } else {
 //           console.error('Error:', response.statusText);
-//           console.log(filteredAnswers);
+//           //console.log(filteredAnswers);
 //         }
 //       } catch (error) {
 //         console.error('Error:', error);

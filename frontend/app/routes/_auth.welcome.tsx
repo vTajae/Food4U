@@ -45,7 +45,7 @@ export const loader: LoaderFunction = async ({ context }) => {
 
     // 3. If the token is invalid (403 Forbidden), attempt to refresh it or redirect to login
     if (!data) {
-      console.log("Token is invalid or expired, attempting to refresh.");
+      //console.log("Token is invalid or expired, attempting to refresh.");
 
       // Attempt to refresh the token
       const refreshResult = await userService.refreshUser(
@@ -53,7 +53,7 @@ export const loader: LoaderFunction = async ({ context }) => {
         isAuthenticated.id
       );
 
-      console.log("refreshResult", refreshResult);
+      //console.log("refreshResult", refreshResult);
 
       if (refreshResult.success === false || !refreshResult) {
         // If token refresh failed, unset the session and redirect to login
@@ -92,10 +92,10 @@ export const action: ActionFunction = async ({ context, request }) => {
     // Validate the form data using Zod
     const result = welcomeFormDataSchema.safeParse(parsedData);
 
-    console.log("Parsed data:", parsedData);
+    //console.log("Parsed data:", parsedData);
 
     if (!result.success) {
-      console.log(result.error.errors);
+      //console.log(result.error.errors);
       return json(
         {
           success: false,
@@ -108,7 +108,7 @@ export const action: ActionFunction = async ({ context, request }) => {
 
     const validFormData: WelcomeFormData = result.data;
 
-    console.log("Valid form data:", validFormData);
+    //console.log("Valid form data:", validFormData);
     // Send the data to the ProfileService
     const response = await ProfileService.createWelcomeProfile(validFormData);
 

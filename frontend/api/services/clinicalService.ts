@@ -57,7 +57,7 @@ export class ClinicalService {
       apiUrl += `&df=${Array.isArray(displayFields) ? displayFields.join(",") : displayFields}`;
     }
   
-    console.log("API URL:", apiUrl);
+    ////console.log("API URL:", apiUrl);
   
     try {
       const response = await fetch(apiUrl, this.getRequestOptions("GET"));
@@ -131,7 +131,7 @@ export class ClinicalService {
   
       if (route === "conditions") {
         if (!data[2]?.icd10cm) {
-          console.log(`No icd10cm data found for query: ${query}`);
+          ////console.log(`No icd10cm data found for query: ${query}`);
           return null;
         }
   
@@ -147,7 +147,7 @@ export class ClinicalService {
         return Array.from(uniqueResults.values());
       } else if (route === "icd10cm") {
         if (!data[3]) {
-          console.log(`No icd10cm data found for query: ${query}`);
+          ////console.log(`No icd10cm data found for query: ${query}`);
           return null;
         }
   

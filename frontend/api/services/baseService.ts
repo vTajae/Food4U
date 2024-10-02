@@ -34,7 +34,7 @@ export class ApiService {
       ...this.addAuthorizationHeader(customHeaders || {}), // Include JWT in headers
     };
 
-    console.log("headers", headers);
+    ////console.log("headers", headers);
 
     const options: RequestInit = {
       method,
@@ -93,9 +93,8 @@ export class ApiService {
   static async post<T>(url: string, body: unknown): Promise<T | void> {
     try {
 
-      const token = ApiService.getToken();
 
-      console.log("Token in the placee:", token);
+      // ////console.log("Token in the placee:", token);
       const response = await fetch(
         `${API_BASE_URL}/${url}`,
         this.getRequestOptions("POST", body)

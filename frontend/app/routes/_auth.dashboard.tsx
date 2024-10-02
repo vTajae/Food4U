@@ -57,7 +57,7 @@ export const loader: LoaderFunction = async ({ context }) => {
 
     // If no data, token might be invalid/expired; try refreshing
     if (!data.id) {
-      console.log("Token is invalid or expired, attempting to refresh.");
+      //console.log("Token is invalid or expired, attempting to refresh.");
 
       const refreshResult = await userService.refreshUser(
         myEnv,
@@ -74,7 +74,7 @@ export const loader: LoaderFunction = async ({ context }) => {
       // Retry fetching the profile after a successful token refresh
       data = (await ProfileService.getAllData()) as ProfileSchema;
 
-      console.log(data, "DATUUUH")
+      //console.log(data, "DATUUUH")
       
       if (!data.id) {
         console.error("Failed to fetch data after token refresh.");
@@ -85,7 +85,7 @@ export const loader: LoaderFunction = async ({ context }) => {
       }
     }
 
-    // console.log({ isAuthenticated, data });
+    // //console.log({ isAuthenticated, data });
     mySession.unset("welcome");
 
     // Pass the profile data to the component via loader
@@ -118,7 +118,7 @@ export const action: ActionFunction = async ({ request, context }) => {
     }
     const action = formData.get("action");
 
-    // console.log({action: action, query: query, formData: formData});
+    // //console.log({action: action, query: query, formData: formData});
 
     switch (action) {
       case "search":

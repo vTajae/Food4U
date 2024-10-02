@@ -10,8 +10,8 @@ export const loader: LoaderFunction = async ({ request }) => {
   const query = url.searchParams.get("query");
   const type = url.searchParams.get("type");
 
-  // console.log('Query:', query);
-  // console.log('Type:', type);
+  // //console.log('Query:', query);
+  // //console.log('Type:', type);
 
   if (!query || !type) {
     return json({ suggestions: [] });
@@ -85,7 +85,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       (s) => s.name && s.name.toLowerCase().includes(query.toLowerCase())
     );
 
-    console.log(suggestions);
+    //console.log(suggestions);
 
     return json({ suggestions: filteredSuggestions });
   }

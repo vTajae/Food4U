@@ -54,7 +54,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ actionUrl, initialActionType = "l
     if (response.redirected) {
       window.location.href = response.url;
     } else {
-      console.log("Error during submission:", await response.json());
+      //console.log("Error during submission:", await response.json());
     }
   };
 

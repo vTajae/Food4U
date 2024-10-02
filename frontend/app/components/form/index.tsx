@@ -66,11 +66,11 @@ const Form: React.FC = () => {
 
   // Handle navigation upon successful submission
   useEffect(() => {
-    console.log("Fetcher state:", fetcher.state);
-    console.log("Fetcher data:", fetcher.data);
+    //console.log("Fetcher state:", fetcher.state);
+    //console.log("Fetcher data:", fetcher.data);
 
     if (fetcher.data?.status) {
-      console.log("Submission successful");
+      //console.log("Submission successful");
       // Clear the form state
       localStorage.removeItem("formState");
       // Navigate to /dashboard
@@ -78,7 +78,7 @@ const Form: React.FC = () => {
     }
   }, [fetcher.data, fetcher.state, navigate]);
 
-  console.log(fetcher.data);
+  //console.log(fetcher.data);
 
   // Display success or error message
   const renderMessage = () => {
@@ -91,7 +91,7 @@ const Form: React.FC = () => {
   const handleSubmit = () => {
     const formData = new FormData();
     formData.append("submission", JSON.stringify(preparedFormData));
-    console.log("FormData:", formData);
+    //console.log("FormData:", formData);
 
     // Submit the form data using fetcher
     fetcher.submit(formData, { method: "post", action: "/welcome" });

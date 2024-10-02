@@ -13,7 +13,7 @@ import LoginForm from "../components/login/loginForm";
 // export const loader: LoaderFunction = async ({ request, context }) => {
 //   const myEnv = context.cloudflare.env as Env;
 //   const mySession = context.session as Session;
-//   // console.log(context.session.get("auth"), "auth");
+//   // //console.log(context.session.get("auth"), "auth");
 //   // if (context.session.has("auth")) {
 //   //   return redirect("/dashboard");
 //   // }
@@ -47,7 +47,7 @@ export const action: ActionFunction = async ({ request, context }) => {
     }
 
     // Logging submission for debugging
-    console.log("Submitted data:", { username, password, actionType });
+    //console.log("Submitted data:", { username, password, actionType });
 
     if (actionType === "login") {
       const loginResult = await userService.loginUser(
@@ -64,7 +64,7 @@ export const action: ActionFunction = async ({ request, context }) => {
 
 
          });
-        console.log("Session data after login:", mySession.data);
+        //console.log("Session data after login:", mySession.data);
 
      
 
@@ -88,7 +88,7 @@ export const action: ActionFunction = async ({ request, context }) => {
 
       if (registerResult.success) {
         mySession.set("welcome", { isComplete: false });
-        console.log("Session data after registration:", mySession.data);
+        //console.log("Session data after registration:", mySession.data);
 
         const cookieHeader = await createSessionStorage(myEnv).commitSession(
           mySession

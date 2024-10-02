@@ -11,7 +11,7 @@ export const action: ActionFunction = async ({ request }) => {
     const queryKey = formData.get("queryKey") as string;
     const text = formData.get("query") as string;
 
-    console.log(formData);
+    //console.log(formData);
 
     if (!formData) {
       return json({ error: "Invalid form submission" }, { status: 400 });
