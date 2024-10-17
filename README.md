@@ -78,3 +78,8 @@ For **speed, affordability**, and **flexibility** during team creation and separ
 4. The UI can always use a clean-up, as well as pushing the limits on unique, user-friendly, and stylish GUIs for our users.
 
 Ultimately, this app aims to help anyone with dietary restrictions and others like them—like me, the guy who doesn't like onions. Those affected by dietary restrictions often struggle to find safe and enjoyable dining experiences. In that process, time and energy are spent clarifying and double-checking to ensure the food was made properly. Restaurants need to pay more attention to this vital issue, and **Food4U** will help lead that change.
+
+
+🔗 **Code Samples**
+
+Coming soon ...
