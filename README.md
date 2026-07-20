@@ -1,85 +1,91 @@
-# Food4U Project
+# Food4U 🍽️
 
----
+**AI-powered meal recommendations for people with dietary restrictions and medical conditions.**
 
-## 🌟 **Inspiration**
-Someone special to me is affected by dietary food restrictions. I noticed the quality of service at many restaurants needs great improvement when it comes to accommodating such a diverse community of individuals. As someone who doesn't prefer onions myself, I too find it difficult to get my meal made correctly the first time. The future of this application is to **hold businesses accountable** for providing a quality experience. Time is money, and I cannot afford a remake on my lunch break. :')
+Food4U takes a user's dietary preferences, allergies, and medical profile (including ICD-10-CM condition codes) and generates personalized, safe meal suggestions. Built solo for my first hackathon — designed like a production system.
 
----
+## Architecture
 
-## 🍽️ **What it Does**
-Generates a meal based on user preferences such as diet or allergy. We intake medical information such as ICD-10-CM codes and use that to query a food suggestion from the Gemini API. Though a simplistic approach, this is what made it to the submission. The original idea considered much deeper analysis for a fine-tuned quality response.
+Two independently deployed services communicating over authenticated HTTP:
 
----
+```
+┌─────────────────────────────┐         ┌──────────────────────────────┐
+│  Frontend — Cloudflare       │   JWT   │  Backend — Python FastAPI    │
+│  Remix (React) on Pages      │ ◄─────► │  hosted on Render            │
+│  • D1 (SQLite) user accounts │  token  │  • Repository/Service/Route  │
+│  • KV session storage        │ exchange│    layered architecture      │
+│  • React Hook Form + Zod     │         │  • CockroachDB (Postgres)    │
+└─────────────────────────────┘         │  • Qdrant vector store       │
+                                        │  • LlamaIndex + Gemini API   │
+                                        └──────────┬───────────────────┘
+                                                   │
+                              External data: USDA FoodData Central,
+                              Spoonacular, Google Gemini
+```
 
-## 🛠️ **How We Built It**
+**Why two servers?** Separation of concerns and independent deployment: the edge-rendered frontend stays fast and cheap on Cloudflare's free tier, while the Python backend owns AI orchestration and data-heavy integrations. Each side scales and deploys on its own cadence.
 
-### Frontend (Server 1):
-- **Framework**: Cloudflare Remix-Run SDK for a fast full-stack app.
-- **Database**: D1 SQLite DB for user accounts, KV storages for session management.
-- **Authentication**: JWT token exchange between Server 1 and Server 2 for validation and authentication.
-- **Tech Stack**: React with React Hook Form and Zod for validation, React Context, and LocalStorage for user progress persistence.
+## Tech Stack
 
-This modular approach with React helps with **scalability** and **reusability**. The balance between speed and flexibility ensures that **Food4U** is optimized to be data-portable, secure, and scalable.
+| Layer | Technology |
+|---|---|
+| Frontend | Remix (React), TypeScript, React Hook Form, Zod, Tailwind CSS |
+| Edge platform | Cloudflare Pages + Workers, D1 (SQLite), KV, Wrangler |
+| Auth | JWT token exchange between services (`@tsndr/cloudflare-worker-jwt`, bcrypt) |
+| Backend | Python, FastAPI, SQLAlchemy 2.0 (async), asyncpg, Uvicorn |
+| AI / Retrieval | Google Gemini, LlamaIndex, Qdrant vector store |
+| Food data | USDA FoodData Central API, Spoonacular API |
+| Datastores | CockroachDB (backend), D1 + KV (frontend) |
 
-### Backend (Server 2):
-- **Framework**: Python FastAPI for logic and meal generation.
-- **External APIs**: Google API, Spoonacular, FoodDataCentral, CockroachDB, Qdrant, LLamindex, Gemini.
-- **AI Food Recommendation**: Data from questions is used to generate optimal results and improve user queries.
+## Repository Layout
 
-### Database:
-- **Profile**: Holds user data.
-- **Medical History**: Stores the user's medical profile.
-- **Attributes**: Tracks dietary preferences.
-- **Diet Profile**: Used for personalized meal suggestions.
+```
+frontend/   Remix app — routes, components, form flows, D1 schema, Wrangler config
+backend/    FastAPI app — routers, services, repositories, schemas, AI pipeline
+```
 
-The original database design dynamically fills itself as users make queries, allowing for a **progressive and personalized experience**. What you see here is a minimalist approach due to the time and resources invested in the project.
+The backend follows a **repository → service → route** pattern: routers handle HTTP, services hold business logic, repositories own data access. Pydantic schemas validate every boundary, mirrored by Zod schemas on the frontend.
 
-### Deployment:
-- **Frontend**: Deployed via Cloudflare SDK for quick and secure updates.
-- **Backend**: Hosted on Render.com with whitelisted secure connections between servers.
+## Running Locally
 
-### Why 2 Servers?
-For **speed, affordability**, and **flexibility** during team creation and separation of duties with respect to everyone's expertise.
+### Frontend
 
----
+```bash
+cd frontend
+npm install
+npm run d1:local-initialize   # seed local D1 database
+npm run dev                   # Remix dev server (Vite)
+```
 
-## 🚧 **Challenges We Ran Into**
-- Contribution: We started with 5, but I was the last man standing. **The show must go on.**
-- Feature Creep: In the initial stages, there were many good ideas, but it became clear over time that some participants were not capable or qualified to execute their parts, contrary to their introductions.
-- Deployment: The Vite dev environment worked like a charm, but issues arose with Wrangler and Cloudflare's proxy handling my own API requests. You don't want to `response.json()` too many times in a single request, haha.
-- Closing async sessions and avoiding multiple sessions on a single instance—no leaks. This error haunted me throughout the project.
-- Motivation: There were long... long nights. I almost called it quits two nights before the deadline. Then I spoke to my close friend, and the flame was reignited. The reason I began this project.
+Deploy: `npm run deploy` (builds and pushes to Cloudflare Pages).
 
----
+### Backend
 
-## 🏆 **Accomplishments**
-- **Improving the restaurant experience** for those with dietary restrictions.
-- **Persistence**: Pushing through as a one-man army.
-- **Completed my First Hackathon**
-- Paving the way to standardize how restaurants accommodate dietary restrictions—locally, then nationally, and then globally.
+```bash
+cd backend
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn server:app --reload
+```
 
----
+Interactive OpenAPI docs are auto-generated by FastAPI at `/docs`.
 
-## 📚 **What We Learned**
-- More aggressive feature branching helps maintain focus on **User Stories**.
-- Dedicate time to documentation. It's a MUST.
-- Balancing leadership with camaraderie.
-- Speed: Every opportunity to build a full-stack app is a race against time—_challenge accepted_, of course.
-- ICD-10-CM codes are unique identifiers used to classify medical conditions.
-- Machine learning is more than just an API request to ChatGPT. Vector stores, deep variable analysis, and prompt engineering are required for a successful narrow AI project. This project uses general AI.
+Both services expect environment variables for API keys (Gemini, Spoonacular, FDC), database URLs, and the shared JWT secret — see `frontend/wrangler` config and `backend/app/config`.
 
----
+## The Story
 
-## 🚀 **What's Next for Food4U**
-1. **Improving user experience** through fine-tuned AI suggestions based on medical conditions and datasets.
-2. Collaborating with **delivery apps** like DoorDash or UberEats to ensure restaurants deliver accurate orders.
-3. Providing **documentation to protect customers** from incorrect meals, reducing the risk of disruptions in their day.
-4. The UI can always use a clean-up, as well as pushing the limits on unique, user-friendly, and stylish GUIs for our users.
+**Inspiration.** Someone special to me is affected by dietary food restrictions, and I've watched how poorly many restaurants accommodate that community. (I don't like onions myself — I know the pain of a remade lunch on a short break.) Food4U's long-term goal is to hold businesses accountable for getting orders right the first time.
 
-Ultimately, this app aims to help anyone with dietary restrictions and others like them—like me, the guy who doesn't like onions. Those affected by dietary restrictions often struggle to find safe and enjoyable dining experiences. In that process, time and energy are spent clarifying and double-checking to ensure the food was made properly. Restaurants need to pay more attention to this vital issue, and **Food4U** will help lead that change.
+**Hackathon reality.** The team started at five; I finished as the last one standing. Highlights of what that taught me:
 
+- Aggressive feature-branching keeps a solo sprint focused on user stories.
+- Cloudflare's proxy and Wrangler behave differently from the Vite dev server — don't `response.json()` a body twice.
+- Async session hygiene matters: one session per instance, always closed, no leaks.
+- Real AI features need more than an API call — vector stores, prompt engineering, and careful variable analysis.
+- Documentation is a MUST, not a nice-to-have.
 
-🔗 **Code Samples**
+**What's next.** Fine-tuned suggestions from medical datasets, delivery-app integrations, and a UI pass. Ultimately: safer, faster dining for anyone with dietary restrictions.
 
-Coming soon ...
+## License
+
+[MIT](./LICENSE)
