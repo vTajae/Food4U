@@ -132,7 +132,7 @@ const Login = () => {
             !isRegister
               ? "bg-blue-500 text-white hover:bg-blue-600"
               : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-          } focus:outline-none focus:ring-4 focus:ring-blue-300`}
+          } focus:outline-hidden focus:ring-4 focus:ring-blue-300`}
         >
           Login
         </button>
@@ -142,7 +142,7 @@ const Login = () => {
             isRegister
               ? "bg-blue-500 text-white hover:bg-blue-600"
               : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-          } focus:outline-none focus:ring-4 focus:ring-blue-300`}
+          } focus:outline-hidden focus:ring-4 focus:ring-blue-300`}
         >
           Register
         </button>

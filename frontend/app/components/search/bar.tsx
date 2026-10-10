@@ -72,10 +72,10 @@ export function SearchBar({
         placeholder={placeholderText}
         className="
       w-full md:w-3/4 px-4 py-3 border border-blue-300 
-      rounded-lg text-gray-700 focus:outline-none 
+      rounded-lg text-gray-700 focus:outline-hidden 
       focus:ring-2 focus:ring-blue-400 
       transition duration-200 ease-in-out 
-      shadow-sm"
+      shadow-xs"
       />
 
       {errors.query && (
@@ -90,7 +90,7 @@ export function SearchBar({
       transition-transform duration-300 
       hover:bg-red-600 hover:scale-105 
       shadow-lg shadow-red-300/50 
-      focus:outline-none focus:ring-2 
+      focus:outline-hidden focus:ring-2 
       focus:ring-offset-2 focus:ring-red-400"
         disabled={isLoading} // Disable button when loading
       >
@@ -134,7 +134,7 @@ export function ActionButton({
         transition-transform duration-300 
         hover:bg-red-600 hover:scale-105 
         shadow-lg shadow-red-300/50 
-        focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-400"
+        focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-400"
       disabled={isLoading} // Disable button when loading
     >
       {isLoading ? "Submitting..." : text}

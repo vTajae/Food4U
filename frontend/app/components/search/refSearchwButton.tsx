@@ -95,7 +95,7 @@ export const SearchBarWithButtons: React.FC<SearchBarWithButtonsProps> = ({
           value={inputValue}
           onChange={handleInputChange}
           placeholder={placeholderText}
-          className="w-full px-4 py-2 border border-blue-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          className="w-full px-4 py-2 border border-blue-500 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition"
         />
         {fetcher.state === "loading" && (
           <p className="text-gray-500">Loading...</p>
@@ -118,7 +118,7 @@ export const SearchBarWithButtons: React.FC<SearchBarWithButtonsProps> = ({
                     s.name === suggestion.name && s.code === suggestion.code
                 )}
                 onChange={() => handleCheckboxChange(suggestion)}
-                className="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                className="h-5 w-5 text-blue-600 border-gray-300 rounded-sm focus:ring-blue-500"
               />
               <span className="text-gray-800">
                 {suggestion.name}{" "}

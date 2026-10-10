@@ -60,7 +60,7 @@ const QuestionComponent: React.FC<QuestionProps> = ({
           placeholder="Enter price"
           value={selectedAnswers[0]?.value || ""}
           onChange={handleInputChange}
-          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 ease-in-out"
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition duration-200 ease-in-out"
           /* Improved input field styling */
         />
       ) : (
@@ -91,7 +91,7 @@ const QuestionComponent: React.FC<QuestionProps> = ({
                   setSelectedAnswers(updatedAnswers);
                   setAnswer(questionId, updatedAnswers);
                 }}
-                className="ml-2 text-red-500 hover:text-red-700 focus:outline-none"
+                className="ml-2 text-red-500 hover:text-red-700 focus:outline-hidden"
               >
                 &times;
               </button>

@@ -149,7 +149,7 @@ export default function Dashboard() {
   return (
     <div
       className={`grid 
-        bg-gradient-to-b from-cyan-400 to-blue-700
+        bg-linear-to-b from-cyan-400 to-blue-700
         text-white min-h-screen w-full flex flex-col justify-center items-center
         transition-opacity duration-500 ease-in-out
       `}

@@ -75,7 +75,7 @@ const RenderResultItem: React.FC<{ item: SearchResultFood; index: number }> = ({
   return (
     <div
       key={item.fdcId || index}
-      className="w-full bg-white border border-gray-200 rounded-lg shadow overflow-hidden"
+      className="w-full bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden"
     >
       <div className="p-4">
         {/* Title */}
@@ -84,7 +84,7 @@ const RenderResultItem: React.FC<{ item: SearchResultFood; index: number }> = ({
             onClick={() => {
               // Add your click handler logic here
             }}
-            className="hover:text-blue-600 focus:outline-none"
+            className="hover:text-blue-600 focus:outline-hidden"
           >
             {item.description || `Item ${index + 1}`}
           </button>
@@ -120,7 +120,7 @@ const RenderResultItem: React.FC<{ item: SearchResultFood; index: number }> = ({
           {formattedIngredients.length > 0 && (
             <button
               onClick={() => setShowIngredients(!showIngredients)}
-              className="bg-blue-500 text-white font-medium text-base py-2 px-6 rounded-lg hover:bg-blue-600 transition duration-200 mr-2 mb-2 focus:outline-none focus:ring-4 focus:ring-blue-300"
+              className="bg-blue-500 text-white font-medium text-base py-2 px-6 rounded-lg hover:bg-blue-600 transition duration-200 mr-2 mb-2 focus:outline-hidden focus:ring-4 focus:ring-blue-300"
             >
               {showIngredients ? "Hide Ingredients" : "Show Ingredients"}
             </button>
@@ -128,7 +128,7 @@ const RenderResultItem: React.FC<{ item: SearchResultFood; index: number }> = ({
           {item.foodNutrients && item.foodNutrients.length > 0 && (
             <button
               onClick={() => setShowNutrients(!showNutrients)}
-              className="bg-green-500 text-white font-medium text-base py-2 px-6 rounded-lg hover:bg-green-600 transition duration-200 mb-2 focus:outline-none focus:ring-4 focus:ring-green-300"
+              className="bg-green-500 text-white font-medium text-base py-2 px-6 rounded-lg hover:bg-green-600 transition duration-200 mb-2 focus:outline-hidden focus:ring-4 focus:ring-green-300"
             >
               {showNutrients ? "Hide Nutrients" : "Show Nutrients"}
             </button>
