@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 
+/* Only scan app code for class names; docs such as DESIGN.md mention classes as examples. */
+@source not "../DESIGN.md";
+@source not "../README.md";
+
 /*
   Design tokens from frontend/DESIGN.md ("Pantry Label"). DESIGN.md is the
   source of truth: change a value there first, then mirror it here.
