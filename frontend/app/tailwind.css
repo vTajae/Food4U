@@ -5,11 +5,11 @@
 
 /* login / register */
 .input-field {
-    @apply w-full py-3 px-4 bg-gray-800 text-white rounded-lg border border-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 shadow-sm transition duration-150 ease-in-out placeholder-gray-400;
+    @apply w-full py-3 px-4 bg-gray-800 text-white rounded-lg border border-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 shadow-sm transition duration-150 ease-in-out placeholder-gray-400;
   }
   
   .btn-primary {
-    @apply bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-opacity-50 transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-105;
+    @apply bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-green-300/50 transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-105;
   }
 
 /* dashboard */
