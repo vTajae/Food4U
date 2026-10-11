@@ -3,6 +3,16 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FetcherWithComponents } from "@remix-run/react";
 import { FetcherDataType } from "../../../api/schemas/refs";
+import { Button } from "~/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "~/components/ui/form";
+import { Input } from "~/components/ui/input";
 
 // Simplified submitFormData helper
 const submitFormData = (
@@ -40,12 +50,9 @@ export function SearchBar({
   queryKey,
   action,
 }: SearchBarProps) {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<{ query: string }>({
+  const form = useForm<{ query: string }>({
     resolver: zodResolver(searchSchema),
+    defaultValues: { query: "" },
   });
 
   // Set loading indicator based on fetcher state
@@ -62,41 +69,30 @@ export function SearchBar({
 
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="flex flex-col items-center gap-4 p-6 bg-blue-50 rounded-lg shadow-md"
-    >
-      <input
-        type="text"
-        {...register("query")}
-        placeholder={placeholderText}
-        className="
-      w-full md:w-3/4 px-4 py-3 border border-blue-300 
-      rounded-lg text-gray-700 focus:outline-hidden 
-      focus:ring-2 focus:ring-blue-400 
-      transition duration-200 ease-in-out 
-      shadow-xs"
-      />
-
-      {errors.query && (
-        <p className="text-red-500 text-sm mt-1">{errors.query.message}</p>
-      )}
-
-      <button
-        type="submit"
-        className="
-      bg-red-500 text-white font-semibold 
-      rounded-lg py-2 px-6 mt-2 
-      transition-transform duration-300 
-      hover:bg-red-600 hover:scale-105 
-      shadow-lg shadow-red-300/50 
-      focus:outline-hidden focus:ring-2 
-      focus:ring-offset-2 focus:ring-red-400"
-        disabled={isLoading} // Disable button when loading
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="mx-auto flex w-full max-w-reading-max flex-col gap-3 rounded-(--rounded-lg) border border-line bg-surface p-4 text-left font-body text-ink sm:flex-row sm:items-start"
       >
-        {isLoading ? "Searching..." : "Search"} {/* Change button text */}
-      </button>
-    </form>
+        <FormField
+          control={form.control}
+          name="query"
+          render={({ field }) => (
+            <FormItem className="flex-1">
+              <FormLabel className="sr-only">Ask about food</FormLabel>
+              <FormControl>
+                <Input type="text" placeholder={placeholderText} {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Button type="submit" disabled={isLoading} aria-busy={isLoading}>
+          {isLoading ? "Searching..." : "Search"} {/* Change button text */}
+        </Button>
+      </form>
+    </Form>
   );
 }
 
