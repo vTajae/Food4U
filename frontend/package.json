@@ -14,8 +14,8 @@
     "typecheck": "tsc",
     "typegen": "wrangler types",
     "cf-typegen": "wrangler types",
-    "d1:local-initialize": "wrangler d1 execute cloudflare_db --local --file=./database/basic.sql",
-    "d1:remote-initialize": "wrangler d1 execute cloudflare_db --remote --file=./database/basic.sql"
+    "d1:local-initialize": "wrangler d1 execute food4u-db --local --file=./database/basic.sql",
+    "d1:remote-initialize": "wrangler d1 execute food4u-db --remote --file=./database/basic.sql"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

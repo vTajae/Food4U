@@ -18,14 +18,13 @@
     "JWT_ACCESS_TOKEN_EXPIRE_MINUTES": "30m",
     "API_BASE_URL": "https://food4u-nrpy.onrender.com"
   },
-  // Local dev uses the ids below as local store names; replace with the real
-  // namespace/database ids from the Cloudflare dashboard before deploying.
-  "kv_namespaces": [{ "binding": "cloudflare_KV", "id": "REPLACE_WITH_KV_NAMESPACE_ID" }],
+  // Production resources: KV namespace "food4u-sessions" and D1 database "food4u-db".
+  "kv_namespaces": [{ "binding": "cloudflare_KV", "id": "22a2864b0c8048d88c0b760e048ea568" }],
   "d1_databases": [
     {
       "binding": "cloudflare_db",
-      "database_name": "cloudflare_db",
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID"
+      "database_name": "food4u-db",
+      "database_id": "9136a800-4a6e-4775-8881-f251127f2dd4"
     }
   ]
 }
