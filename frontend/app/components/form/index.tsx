@@ -4,6 +4,7 @@ import { useFormContext } from "./context";
 import QuestionComponent from "./questionBase";
 import { useFetcher, useNavigate } from "@remix-run/react";
 import { Suggestion } from "../../../api/schemas/refs"; // Adjust the path as necessary
+import { toast } from "sonner";
 
 interface ActionData {
   status: boolean;
@@ -80,13 +81,12 @@ const Form: React.FC = () => {
 
   //console.log(fetcher.data);
 
-  // Display success or error message
-  const renderMessage = () => {
-    if (fetcher.data && !fetcher.data.status) {
-      return <p style={{ color: "red" }}>{fetcher.data.message}</p>;
+  // Show a failed submission's message as a toast
+  useEffect(() => {
+    if (fetcher.data && !fetcher.data.status && fetcher.data.message) {
+      toast.error(fetcher.data.message);
     }
-    return null;
-  };
+  }, [fetcher.data]);
 
   const handleSubmit = () => {
     const formData = new FormData();
@@ -129,8 +129,6 @@ const Form: React.FC = () => {
             </div>
           );
         })}
-  
-        {renderMessage()}
   
         <div className="grid grid-cols-2 gap-4 mt-6">
           <button

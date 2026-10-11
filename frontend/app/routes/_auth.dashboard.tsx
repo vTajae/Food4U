@@ -216,14 +216,12 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {/* Display Errors or Messages */}
+              {/* Errors or messages appear as toasts */}
               {fetcher.data && (
-                <div className="col-span-1">
-                  <SearchResult
-                    message={fetcher.data?.message}
-                    errors={fetcher.data?.errors}
-                  />
-                </div>
+                <SearchResult
+                  message={fetcher.data?.message}
+                  errors={fetcher.data?.errors}
+                />
               )}
 
               {/* Action Buttons */}
