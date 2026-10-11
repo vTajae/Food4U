@@ -1,0 +1,216 @@
+{
+  "shots": [
+    {
+      "file": "next-01-login-mobile.png",
+      "url": "/login"
+    },
+    {
+      "file": "next-02-login-errors-mobile.png",
+      "url": "/login"
+    },
+    {
+      "file": "next-03-register-mobile.png",
+      "url": "/login"
+    },
+    {
+      "file": "next-04-after-register-mobile.png",
+      "url": "/login"
+    },
+    {
+      "file": "next-05-after-login-mobile.png",
+      "url": "/login"
+    },
+    {
+      "file": "next-06-login-dark-mobile.png",
+      "url": "/login"
+    },
+    {
+      "file": "next-07-dashboard-mobile.png",
+      "url": "/dev-preview?view=dashboard"
+    },
+    {
+      "file": "next-08-account-menu-mobile.png",
+      "url": "/dev-preview?view=dashboard"
+    },
+    {
+      "file": "next-09-cards-skeleton-empty-mobile.png",
+      "url": "/dev-preview?view=cards"
+    },
+    {
+      "file": "next-10-welcome-step-mobile.png",
+      "url": "/dev-preview?view=welcome"
+    },
+    {
+      "file": "next-11-welcome-review-mobile.png",
+      "url": "/dev-preview?view=welcome"
+    },
+    {
+      "file": "next-12-dashboard-dark-mobile.png",
+      "url": "/dev-preview?view=dashboard"
+    },
+    {
+      "file": "next-01-login-desktop.png",
+      "url": "/login"
+    },
+    {
+      "file": "next-02-login-errors-desktop.png",
+      "url": "/login"
+    },
+    {
+      "file": "next-03-register-desktop.png",
+      "url": "/login"
+    },
+    {
+      "file": "next-04-after-register-desktop.png",
+      "url": "/login"
+    },
+    {
+      "file": "next-05-after-login-desktop.png",
+      "url": "/login"
+    },
+    {
+      "file": "next-06-login-dark-desktop.png",
+      "url": "/login"
+    },
+    {
+      "file": "next-07-dashboard-desktop.png",
+      "url": "/dev-preview?view=dashboard"
+    },
+    {
+      "file": "next-08-account-menu-desktop.png",
+      "url": "/dev-preview?view=dashboard"
+    },
+    {
+      "file": "next-09-cards-skeleton-empty-desktop.png",
+      "url": "/dev-preview?view=cards"
+    },
+    {
+      "file": "next-10-welcome-step-desktop.png",
+      "url": "/dev-preview?view=welcome"
+    },
+    {
+      "file": "next-11-welcome-review-desktop.png",
+      "url": "/dev-preview?view=welcome"
+    },
+    {
+      "file": "next-12-dashboard-dark-desktop.png",
+      "url": "/dev-preview?view=dashboard"
+    }
+  ],
+  "checks": [
+    {
+      "name": "mobile: / -> /login without session",
+      "ok": true,
+      "detail": "200 http://localhost:3001/login"
+    },
+    {
+      "name": "mobile: client validation shows both errors",
+      "ok": true,
+      "detail": "[\"Enter a valid email address.\",\"Use at least 6 characters.\"]"
+    },
+    {
+      "name": "mobile: invalid field flagged",
+      "ok": true,
+      "detail": "true"
+    },
+    {
+      "name": "mobile: register sets __session cookie (KV session)",
+      "ok": true,
+      "detail": "__session"
+    },
+    {
+      "name": "mobile: register switches to Log in tab",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mobile: login handled (dashboard if backend accepts, else error shown)",
+      "ok": false,
+      "detail": "/login"
+    },
+    {
+      "name": "mobile: empty ask shows inline error",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mobile: account menu opens with Sign out",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mobile: Check strip only on the card with data",
+      "ok": true,
+      "detail": "1"
+    },
+    {
+      "name": "mobile: stepper progress exposed",
+      "ok": true,
+      "detail": "60"
+    },
+    {
+      "name": "desktop: / -> /login without session",
+      "ok": true,
+      "detail": "200 http://localhost:3001/login"
+    },
+    {
+      "name": "Tab reaches the Log in tab",
+      "ok": true,
+      "detail": "{\"tag\":\"BUTTON\",\"role\":\"tab\",\"name\":null,\"text\":\"Log in\"}"
+    },
+    {
+      "name": "ArrowRight switches to Create account",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desktop: client validation shows both errors",
+      "ok": true,
+      "detail": "[\"Enter a valid email address.\",\"Use at least 6 characters.\"]"
+    },
+    {
+      "name": "desktop: invalid field flagged",
+      "ok": true,
+      "detail": "true"
+    },
+    {
+      "name": "desktop: register sets __session cookie (KV session)",
+      "ok": true,
+      "detail": "__session"
+    },
+    {
+      "name": "desktop: register switches to Log in tab",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desktop: login handled (dashboard if backend accepts, else error shown)",
+      "ok": true,
+      "detail": "/login"
+    },
+    {
+      "name": "desktop: empty ask shows inline error",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desktop: account menu opens with Sign out",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desktop: Check strip only on the card with data",
+      "ok": true,
+      "detail": "1"
+    },
+    {
+      "name": "desktop: stepper progress exposed",
+      "ok": true,
+      "detail": "60"
+    }
+  ],
+  "consoleErrors": {
+    "mobile": [],
+    "desktop": []
+  }
+}

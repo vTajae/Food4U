@@ -1,0 +1,71 @@
+{
+  "shots": [
+    {
+      "file": "item3-01-login-mobile.png",
+      "url": "/login"
+    },
+    {
+      "file": "item3-03-login-errors-mobile.png",
+      "url": "/login"
+    },
+    {
+      "file": "item3-04-register-mobile.png",
+      "url": "/login"
+    },
+    {
+      "file": "item3-05-register-errors-mobile.png",
+      "url": "/login"
+    },
+    {
+      "file": "item3-01-login-desktop.png",
+      "url": "/login"
+    },
+    {
+      "file": "item3-02-login-tab-focus-desktop.png",
+      "url": "/login"
+    },
+    {
+      "file": "item3-03-login-errors-desktop.png",
+      "url": "/login"
+    },
+    {
+      "file": "item3-04-register-desktop.png",
+      "url": "/login"
+    },
+    {
+      "file": "item3-05-register-errors-desktop.png",
+      "url": "/login"
+    }
+  ],
+  "checks": [
+    {
+      "name": "Tab focuses the Login tab",
+      "ok": true,
+      "detail": "{\"tag\":\"BUTTON\",\"role\":\"tab\",\"name\":null,\"text\":\"Login\",\"invalid\":null}"
+    },
+    {
+      "name": "ArrowRight selects Register and shows its form",
+      "ok": true,
+      "detail": "{\"tag\":\"BUTTON\",\"role\":\"tab\",\"name\":null,\"text\":\"Register\",\"invalid\":null}"
+    },
+    {
+      "name": "ArrowLeft returns to Login",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Enter submits; first invalid field focused (ref forwarding works)",
+      "ok": true,
+      "detail": "{\"a\":{\"tag\":\"INPUT\",\"role\":null,\"name\":\"username\",\"text\":\"\",\"invalid\":\"true\"},\"msgs\":[\"Invalid email address\",\"Password must be at least 6 characters long\"]}"
+    },
+    {
+      "name": "Error message linked via aria-describedby",
+      "ok": true,
+      "detail": ":r5:-form-item-description :r5:-form-item-message"
+    }
+  ],
+  "consoleErrors": {
+    "mobile": [],
+    "desktop": []
+  }
+}
