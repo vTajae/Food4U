@@ -1,6 +1,10 @@
 @import 'tailwindcss';
-/* Enter/exit animations used by shadcn/ui (animate-in, fade-in-0, zoom-in-95, ...). */
-@import 'tw-animate-css';
+/*
+  Enter/exit animations used by shadcn/ui (animate-in, fade-in-0, zoom-in-95, ...).
+  Imported by path: the package only exports a "style" condition, which the
+  RSC/SSR build environments do not resolve.
+*/
+@import '../node_modules/tw-animate-css/dist/tw-animate.css';
 
 /* Only scan app code for class names; docs such as DESIGN.md mention classes as examples. */
 @source not "../DESIGN.md";
@@ -11,9 +15,7 @@
   source of truth: change a value there first, then mirror it here.
 
   `static` emits every token as a CSS variable even when no utility uses it
-  yet, so plain CSS (and shadcn/ui later) can reference var(--color-*).
-  Tailwind's default palette, fonts and radius scale are kept because
-  legacy components still use them (rounded-sm/md/lg, gray-*, blue-*).
+  yet, so plain CSS (and shadcn/ui) can reference var(--color-*).
 */
 @theme static {
   /* Colors (light). Dark values are swapped in below. */
@@ -35,7 +37,7 @@
   --color-avoid: #a3301f;
   --color-avoid-tint: #fce6e1;
 
-  /* Font families (loaded in app/root.tsx) */
+  /* Font families (loaded in app/layout.tsx) */
   --font-display: "Young Serif", Georgia, serif;
   --font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
   --font-data: "Atkinson Hyperlegible Mono", ui-monospace, monospace;
@@ -80,12 +82,9 @@
   --text-data-caps--font-weight: 600;
 
   /*
-    Spacing. DESIGN.md's 4px base is Tailwind's default --spacing (0.25rem),
-    so its steps are the numeric scale: xs=1, sm=2, md=3, lg=4, xl=6,
-    2xl=8, 3xl=12 (p-4 = 16px = spacing.lg). The step names are not
-    registered as --spacing-* because Tailwind would also apply them to
-    max-w-sm/lg/2xl and shrink existing layouts. Plain --space-* variables
-    are set further down for use in plain CSS.
+    Spacing steps xs..3xl (4/8/12/16/24/32/48px) are Tailwind's default 4px
+    scale: xs=1, sm=2, md=3, lg=4, xl=6, 2xl=8, 3xl=12. Only the layout widths
+    are registered here.
   */
   --spacing-gutter-mobile: 16px;
   --spacing-gutter-desktop: 32px;
@@ -93,15 +92,20 @@
   --spacing-page-max: 1120px;
   --spacing-tap-min: 44px;
 
+  /* Radius (DESIGN.md rounded.*). The legacy classes that depended on Tailwind's
+     default sizes are gone, so these now own rounded-sm/md/lg. */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
   /* Elevation: only for things that float above the page (DESIGN.md › Elevation) */
   --shadow-overlay: 0 8px 24px rgb(35 32 42 / 0.12), 0 2px 6px rgb(35 32 42 / 0.08);
 }
 
 /*
   shadcn/ui semantic names, wired to the DESIGN.md tokens so components added
-  later with `npx shadcn add` render on-brand. They reference the tokens
-  above, so the dark theme swap below carries through automatically.
-  `inline` keeps the var() reference in the generated utilities.
+  later with `npx shadcn add` render on-brand and follow the dark swap.
 */
 @theme inline {
   --color-foreground: var(--color-ink);
@@ -122,41 +126,24 @@
   --color-ring: var(--color-focus);
 }
 
-/*
-  Radius and spacing steps as plain variables.
-
-  Radius: DESIGN.md's rounded.sm/md/lg share names with Tailwind's default
-  rounded-sm/md/lg (4/6/8px), which existing components use. Registering
-  them as --radius-* would restyle those components, so they live here as
-  plain variables mirroring the DESIGN.md token path. Use them with
-  `rounded-(--rounded-md)`, and move them into @theme once the legacy
-  classes are gone (backlog items 3 and 5).
-*/
 @layer base {
   :root {
-    --rounded-sm: 6px;
-    --rounded-md: 10px;
-    --rounded-lg: 16px;
+    color-scheme: light;
+    /* Same values as --radius-*, kept for components written as rounded-(--rounded-md). */
+    --rounded-sm: var(--radius-sm);
+    --rounded-md: var(--radius-md);
+    --rounded-lg: var(--radius-lg);
     --rounded-full: 9999px;
-
-    --space-xs: 4px;
-    --space-sm: 8px;
-    --space-md: 12px;
-    --space-lg: 16px;
-    --space-xl: 24px;
-    --space-2xl: 32px;
-    --space-3xl: 48px;
   }
-}
 
-/*
-  Dark theme: follows the OS setting, and data-theme="light" | "dark" on
-  <html> overrides it. Only token values change; components never restyle
-  for dark mode.
-*/
-@layer base {
+  /*
+    Dark theme: follows the OS setting; data-theme="light" | "dark" on <html>
+    overrides it (set by the theme toggle, applied before paint by the inline
+    script in app/layout.tsx). Only token values change.
+  */
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
+      color-scheme: dark;
       --color-primary: #c7a6dd;
       --color-primary-hover: #d6bde7;
       --color-primary-soft: #33283d;
@@ -178,6 +165,7 @@
   }
 
   :root[data-theme="dark"] {
+    color-scheme: dark;
     --color-primary: #c7a6dd;
     --color-primary-hover: #d6bde7;
     --color-primary-soft: #33283d;
@@ -196,13 +184,26 @@
     --color-avoid: #f4a193;
     --color-avoid-tint: #40211c;
   }
-}
 
-/*
-  Reduced motion: shadcn/ui parts (marked with data-slot) skip their
-  enter/exit animations and transitions.
-*/
-@layer base {
+  html {
+    background-color: var(--color-background);
+  }
+
+  body {
+    min-height: 100dvh;
+    background-color: var(--color-background);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Visible focus everywhere (DESIGN.md › Do's): 2px aubergine outline at 2px offset. */
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  /* Reduced motion: shadcn/ui parts (data-slot) skip enter/exit animations and transitions. */
   @media (prefers-reduced-motion: reduce) {
     [data-slot] {
       animation: none !important;
@@ -223,107 +224,15 @@
   }
 }
 
-/*
-  The default border color has changed to `currentcolor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
-@layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
-  }
+/* Thin scrollbars inside card disclosures (ingredients, nutrients). */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-strong) transparent;
 }
-
-@utility md-hide-after-2 {
-  @media (max-width: 1024px) {
-    /* Hide items after the 2nd one on medium screens */
-    & > :nth-child(n + 3) {
-      display: none;
-    }
-  }
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
 }
-
-@utility lg-hide-after-1 {
-  @media (max-width: 640px) {
-    /* Hide items after the 1st one on small screens */
-    & > :nth-child(n + 2) {
-      display: none;
-    }
-  }
-}
-
-@layer utilities {
-  /* login / register */
-  .input-field {
-    @apply w-full py-3 px-4 bg-gray-800 text-white rounded-lg border border-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 shadow-xs transition duration-150 ease-in-out placeholder-gray-400;
-  }
-
-  .btn-primary {
-    @apply bg-linear-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg focus:outline-hidden focus:ring-2 focus:ring-green-300/50 transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-105;
-  }
-
-  /* dashboard */
-
-  @keyframes fade-in {
-    0% {
-      opacity: 0;
-    }
-    100% {
-      opacity: 1;
-    }
-  }
-
-  @keyframes fade-out {
-    0% {
-      opacity: 1;
-    }
-    100% {
-      opacity: 0;
-    }
-  }
-
-  /* Welcome screen fades out */
-  .welcome-screen {
-    animation: fade-out 1s ease-in-out forwards;
-    animation-delay: 0.4s; /* Starts after welcome fades out */
-  }
-
-  /* Dashboard content fades in */
-  .dashboard-content {
-    opacity: 0;
-    animation: fade-in 1s ease-in-out;
-    animation-delay: 0.2s; /* Starts after welcome fades out */
-    animation-fill-mode: forwards;
-  }
-
-  /* Custom Scrollbar Styles */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: #c1c1c1;
-    border-radius: 4px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: #a8a8a8;
-  }
-
-  /* Firefox Support */
-  .custom-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: #c1c1c1 transparent;
-  }
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--color-line-strong);
+  border-radius: 4px;
 }

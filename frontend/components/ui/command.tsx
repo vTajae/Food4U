@@ -1,3 +1,5 @@
+"use client";
+
 // shadcn/ui Command (new-york-v4) on cmdk, restyled with DESIGN.md tokens.
 // CommandDialog is omitted (not used). Items are 44px tall for touch.
 import * as React from "react";

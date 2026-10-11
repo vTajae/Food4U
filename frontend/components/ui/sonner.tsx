@@ -1,3 +1,5 @@
+"use client";
+
 // shadcn/ui Sonner Toaster, without next-themes (the app has no theme provider yet).
 // DESIGN.md › Toasts: ink background, surface text, 10px radius, 5s, pauses on hover/focus.
 import * as React from "react";

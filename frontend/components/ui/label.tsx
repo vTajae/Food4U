@@ -1,3 +1,5 @@
+"use client";
+
 // shadcn/ui Label (new-york-v4), restyled with DESIGN.md tokens.
 import * as React from "react";
 import { Label as LabelPrimitive } from "radix-ui";

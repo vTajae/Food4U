@@ -1,3 +1,5 @@
+"use client";
+
 // shadcn/ui Form (new-york-v4): react-hook-form bindings with accessible labels,
 // descriptions and error messages. Restyled with DESIGN.md tokens.
 import * as React from "react";

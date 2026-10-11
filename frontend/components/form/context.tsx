@@ -1,3 +1,5 @@
+"use client";
+
 import React, {
   createContext,
   ReactNode,
@@ -5,7 +7,7 @@ import React, {
   useState,
   useEffect,
 } from "react";
-import { Suggestion } from "../../../api/schemas/refs";
+import { Suggestion } from "../../api/schemas/refs";
 
 interface Question {
   questionId: number;

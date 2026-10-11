@@ -1,3 +1,5 @@
+"use client";
+
 // shadcn/ui Tabs (new-york-v4), restyled with DESIGN.md tokens: a rice track with
 // the active tab on a white plate in aubergine. Radix handles arrow-key navigation.
 import * as React from "react";

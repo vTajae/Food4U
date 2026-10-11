@@ -1,10 +1,12 @@
+"use client";
+
 import React, { useEffect, useId, useState } from "react";
 import { X } from "lucide-react";
 import { SearchBarWithButtons } from "../search/refSearchwButton";
 import { Badge } from "~/components/ui/badge";
 import { Input } from "~/components/ui/input";
 import { useFormContext } from "./context";
-import type { Suggestion } from "../../../api/schemas/refs";
+import type { Suggestion } from "../../api/schemas/refs";
 
 interface QuestionProps {
   questionId: number;

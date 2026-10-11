@@ -1,3 +1,5 @@
+"use client";
+
 // shadcn/ui Input (new-york-v4), restyled with DESIGN.md tokens.
 // 16px text so iOS Safari does not zoom on focus; forwardRef for react-hook-form on React 18.
 import * as React from "react";

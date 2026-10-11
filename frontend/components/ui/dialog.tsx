@@ -1,3 +1,5 @@
+"use client";
+
 // shadcn/ui Dialog (new-york-v4), restyled with DESIGN.md tokens:
 // white plate, 16px radius, overlay shadow, rgba(23,21,27,0.4) dim.
 import * as React from "react";

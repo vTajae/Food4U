@@ -1,12 +1,13 @@
+"use client";
+
 // SearchBarWithButtons.tsx
 // Multi-select combobox (shadcn Command + Popover) over /api/refs suggestions.
 import React, { useEffect, useId, useRef, useState } from "react";
 import debounce from "lodash.debounce";
-import { useFetcher } from "@remix-run/react";
 import { DebouncedFunc } from "lodash";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
-import { Suggestion } from "../../../api/schemas/refs";
+import { Suggestion } from "../../api/schemas/refs";
 import { Button } from "~/components/ui/button";
 import {
   Command,
@@ -45,11 +46,12 @@ export const SearchBarWithButtons: React.FC<SearchBarWithButtonsProps> = ({
   const [open, setOpen] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [inputValue, setInputValue] = useState<string>("");
-  const fetcher = useFetcher<RefBarFetchType>();
+  const [isLoading, setIsLoading] = useState(false);
   const listId = useId();
+  const requestSeq = useRef(0);
 
   // Use a ref to store the debounced function with correct typing
-  const fetchSuggestionsRef = useRef<DebouncedFunc<(query: string) => void>>();
+  const fetchSuggestionsRef = useRef<DebouncedFunc<(query: string) => void>>(undefined);
 
   // Initialize the debounced function
   useEffect(() => {
@@ -58,34 +60,40 @@ export const SearchBarWithButtons: React.FC<SearchBarWithButtonsProps> = ({
         setSuggestions([]);
         return;
       }
-      fetcher.load(
-        `/api/refs?query=${encodeURIComponent(query)}&type=${encodeURIComponent(
-          queryKey
-        )}`
-      );
+      const seq = ++requestSeq.current;
+      setIsLoading(true);
+      fetch(
+        `/api/refs?query=${encodeURIComponent(query)}&type=${encodeURIComponent(queryKey)}`
+      )
+        .then((res) => res.json() as Promise<RefBarFetchType>)
+        .then((data) => {
+          if (seq !== requestSeq.current) return; // a newer search superseded this one
+          if (data.suggestions) {
+            setSuggestions(data.suggestions);
+          } else {
+            setSuggestions([]);
+            if (data.message) toast.error(data.message, { id: `refs-${queryKey}` });
+          }
+        })
+        .catch(() => {
+          if (seq === requestSeq.current) toast.error("Couldn't load suggestions.");
+        })
+        .finally(() => {
+          if (seq === requestSeq.current) setIsLoading(false);
+        });
     }, 300);
 
     // Cleanup function to cancel debounced calls on unmount or queryKey change
     return () => {
       fetchSuggestionsRef.current?.cancel();
     };
-  }, [queryKey, fetcher]);
+  }, [queryKey]);
 
   // Effect to call the debounced function whenever inputValue changes
   useEffect(() => {
     const inputvalue = inputValue.trim();
     fetchSuggestionsRef.current?.(inputvalue);
   }, [inputValue]);
-
-  // Effect to handle fetcher data updates; server messages surface as a toast.
-  useEffect(() => {
-    if (fetcher.data && fetcher.data.suggestions) {
-      setSuggestions(fetcher.data.suggestions);
-    } else if (fetcher.data && fetcher.data.message) {
-      setSuggestions([]);
-      toast.error(fetcher.data.message, { id: `refs-${queryKey}` });
-    }
-  }, [fetcher.data, queryKey]);
 
   const isSelected = (suggestion: Suggestion) =>
     selectedSuggestions.some(
@@ -103,7 +111,6 @@ export const SearchBarWithButtons: React.FC<SearchBarWithButtonsProps> = ({
     onSuggestionSelect(updatedSelected);
   };
 
-  const isLoading = fetcher.state === "loading";
   const hasQuery = inputValue.trim().length > 0;
 
   return (

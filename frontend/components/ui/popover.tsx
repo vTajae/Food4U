@@ -1,3 +1,5 @@
+"use client";
+
 // shadcn/ui Popover (new-york-v4), restyled with DESIGN.md tokens (white plate, overlay shadow).
 import * as React from "react";
 import { Popover as PopoverPrimitive } from "radix-ui";
