@@ -1,7 +1,16 @@
 // Display.tsx
 
 import { SearchResultFood } from "../../../api/schemas/suggestion";
-import React, { useState } from "react";
+import React, { useId, useState } from "react";
+import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 
 interface DisplayProps<T> {
   data: T[];
@@ -71,133 +80,122 @@ const RenderResultItem: React.FC<{ item: SearchResultFood; index: number }> = ({
   const formattedIngredients = item.ingredients
     ? formatIngredients(item.ingredients)
     : [];
+  const ingredientsId = useId();
+  const nutrientsId = useId();
 
   return (
-    <div
-      key={item.fdcId || index}
-      className="w-full bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden"
-    >
-      <div className="p-4">
-        {/* Title */}
-        <h5 className="text-xl font-semibold tracking-tight text-gray-900 text-center">
-          <button
-            onClick={() => {
-              // Add your click handler logic here
-            }}
-            className="hover:text-blue-600 focus:outline-hidden"
-          >
-            {item.description || `Item ${index + 1}`}
-          </button>
-        </h5>
+    <Card key={item.fdcId || index} className="w-full text-left">
+      <CardHeader>
+        <CardTitle>{item.description || `Item ${index + 1}`}</CardTitle>
+      </CardHeader>
 
-        {/* Optional Brand Owner and Scientific Name */}
-        {item.brandOwner && (
-          <p className="text-gray-700 mt-2">
-            <strong className="font-semibold text-gray-900">
-              Brand Owner:
-            </strong>{" "}
-            {item.brandOwner}
-          </p>
-        )}
-        {item.scientificName && (
-          <p className="text-gray-700 mt-1">
-            <strong className="font-semibold text-gray-900">
-              Scientific Name:
-            </strong>{" "}
-            {item.scientificName}
-          </p>
-        )}
+      {(item.brandOwner || item.scientificName || item.additionalDescriptions) && (
+        <CardContent className="flex flex-col gap-1 text-body-md">
+          {/* Optional Brand Owner and Scientific Name */}
+          {item.brandOwner && (
+            <p>
+              <span className="font-bold">Brand Owner:</span> {item.brandOwner}
+            </p>
+          )}
+          {item.scientificName && (
+            <p>
+              <span className="font-bold">Scientific Name:</span>{" "}
+              {item.scientificName}
+            </p>
+          )}
 
-        {/* Additional Descriptions */}
-        {item.additionalDescriptions && (
-          <p className="text-gray-500 italic mt-2">
-            {item.additionalDescriptions}
-          </p>
-        )}
+          {/* Additional Descriptions */}
+          {item.additionalDescriptions && (
+            <p className="text-ink-muted">{item.additionalDescriptions}</p>
+          )}
+        </CardContent>
+      )}
 
-        {/* Buttons */}
-        <div className="flex flex-wrap items-center mt-4 mb-5">
+      {/* Disclosure buttons */}
+      {(formattedIngredients.length > 0 ||
+        (item.foodNutrients && item.foodNutrients.length > 0)) && (
+        <CardFooter>
           {formattedIngredients.length > 0 && (
-            <button
+            <Button
+              variant="secondary"
+              aria-expanded={showIngredients}
+              aria-controls={ingredientsId}
               onClick={() => setShowIngredients(!showIngredients)}
-              className="bg-blue-500 text-white font-medium text-base py-2 px-6 rounded-lg hover:bg-blue-600 transition duration-200 mr-2 mb-2 focus:outline-hidden focus:ring-4 focus:ring-blue-300"
             >
               {showIngredients ? "Hide Ingredients" : "Show Ingredients"}
-            </button>
+            </Button>
           )}
           {item.foodNutrients && item.foodNutrients.length > 0 && (
-            <button
+            <Button
+              variant="secondary"
+              aria-expanded={showNutrients}
+              aria-controls={nutrientsId}
               onClick={() => setShowNutrients(!showNutrients)}
-              className="bg-green-500 text-white font-medium text-base py-2 px-6 rounded-lg hover:bg-green-600 transition duration-200 mb-2 focus:outline-hidden focus:ring-4 focus:ring-green-300"
             >
               {showNutrients ? "Hide Nutrients" : "Show Nutrients"}
-            </button>
+            </Button>
           )}
-        </div>
+        </CardFooter>
+      )}
 
-        {/* Ingredients */}
-        {showIngredients && (
-          <div className="text-gray-700">
-            <strong className="font-semibold text-gray-900">
-              Ingredients:
-            </strong>
-            <div className="mt-3 max-h-40 overflow-y-auto custom-scrollbar">
-              <ul className="list-inside list-none flex flex-wrap gap-x-3 gap-y-2">
-                {formattedIngredients.map((ingredient, idx) => (
-                  <li
-                    key={idx}
-                    className="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm inline-block"
-                  >
+      {/* Ingredients */}
+      {showIngredients && (
+        <CardContent id={ingredientsId}>
+          <h4 className="text-heading-sm">Ingredients</h4>
+          <div className="custom-scrollbar mt-3 max-h-40 overflow-y-auto">
+            <ul className="flex flex-wrap gap-2">
+              {formattedIngredients.map((ingredient, idx) => (
+                <li key={idx}>
+                  <Badge variant="neutral" className="whitespace-normal">
                     {ingredient}
-                  </li>
-                ))}
-              </ul>
-            </div>
+                  </Badge>
+                </li>
+              ))}
+            </ul>
           </div>
-        )}
+        </CardContent>
+      )}
 
-        {/* Nutrients */}
-        {showNutrients && (
-          <div className="text-gray-700 mt-4">
-            <strong className="font-semibold text-gray-900">Nutrients:</strong>
-            <div className="mt-2 max-h-40 overflow-y-auto custom-scrollbar">
-              <table className="min-w-full text-left text-sm">
-                <thead>
-                  <tr>
-                    <th className="px-2 py-1 font-semibold text-gray-700 border-b">
-                      Nutrient
-                    </th>
-                    <th className="px-2 py-1 font-semibold text-gray-700 border-b">
-                      Amount
-                    </th>
-                    <th className="px-2 py-1 font-semibold text-gray-700 border-b">
-                      Unit
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {item.foodNutrients &&
-                    item.foodNutrients.map((nutrient, nutrientIndex) => (
-                      <tr
-                        key={nutrientIndex}
-                        className="odd:bg-white even:bg-gray-50"
-                      >
-                        <td className="px-2 py-1 border-b">
-                          {nutrient.nutrientName}
-                        </td>
-                        <td className="px-2 py-1 border-b">{nutrient.value}</td>
-                        <td className="px-2 py-1 border-b">
-                          {nutrient.unitName}
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
+      {/* Nutrients */}
+      {showNutrients && (
+        <CardContent id={nutrientsId}>
+          <h4 className="text-heading-sm">Nutrients</h4>
+          <div className="custom-scrollbar mt-2 max-h-40 overflow-y-auto">
+            <table className="min-w-full text-left">
+              <thead>
+                <tr className="font-data text-data-caps text-ink-muted uppercase">
+                  <th scope="col" className="border-b border-line px-2 py-1.5">
+                    Nutrient
+                  </th>
+                  <th scope="col" className="border-b border-line px-2 py-1.5 text-right">
+                    Amount
+                  </th>
+                  <th scope="col" className="border-b border-line px-2 py-1.5">
+                    Unit
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="text-body-sm">
+                {item.foodNutrients &&
+                  item.foodNutrients.map((nutrient, nutrientIndex) => (
+                    <tr key={nutrientIndex}>
+                      <td className="border-b border-line px-2 py-1.5">
+                        {nutrient.nutrientName}
+                      </td>
+                      <td className="border-b border-line px-2 py-1.5 text-right font-data text-data-md">
+                        {nutrient.value}
+                      </td>
+                      <td className="border-b border-line px-2 py-1.5">
+                        {nutrient.unitName}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
           </div>
-        )}
-      </div>
-    </div>
+        </CardContent>
+      )}
+    </Card>
   );
 };
 
