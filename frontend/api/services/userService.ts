@@ -17,8 +17,6 @@ class UserService extends ApiService {
 
   async registerUser(userData: userRegister) {
     try {
-      console.log(userData, "userData");
-  
       // Check if user already exists
       const existingUser = await this.userRepository.findUserByUsername(userData.username);
   
@@ -130,8 +128,6 @@ class UserService extends ApiService {
 
       // Assuming the user is already authenticated and the user data is accessible
       const user = await this.userRepository.findUserById(id);
-      
-      console.log(user, "user");
 
       if (!user) {
         return { success: false, message: "No authenticated user found." };
