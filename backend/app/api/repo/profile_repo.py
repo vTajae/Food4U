@@ -23,6 +23,11 @@ class ProfileRepository:
         result = await self.db.execute(stmt)
         return result.scalars().first()
 
+    async def get_profile_by_public_id(self, public_id: str) -> Optional[Profile]:
+        stmt = select(Profile).where(Profile.public_id == public_id)
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
+
     async def add_user(self, user: Profile) -> Optional[Profile]:
         try:
             self.db.add(user)

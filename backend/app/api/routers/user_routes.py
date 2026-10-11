@@ -6,7 +6,7 @@ from fastapi import APIRouter, Body, Query
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError, PyJWTError
 from jwt import decode
-from app.api.dependencies.auth_dep import get_current_user
+from app.api.dependencies.auth_dep import bearer_token, get_current_user, public_id_from_claims
 from app.api.dependencies.user_dep import get_user_service
 from app.api.schemas.food4u.user import UserLoginSchema, UserModel, UserResponse
 from app.api.services.user_service import UserService
@@ -30,42 +30,36 @@ USER_JWT_SECRET_KEY = os.getenv('USER_JWT_SECRET_KEY')
 USER_JWT_ALGORITHM = os.getenv('USER_JWT_ALGORITHM')
 
 
-@router.get("/profile", response_model=UserModel)
-async def create_profile(
-    request: Request,
-    service: UserService = Depends(get_user_service)
-):
-    token = request.headers.get("Authorization")
-
-    print(token, "token")
-
-    if token is None:
-        raise HTTPException(status_code=403, detail="Token is missing")
-
+async def _ensure_profile(request: Request, service: UserService) -> UserModel:
+    """Create-or-get the caller's profile, keyed by the JWT's public id."""
+    token = bearer_token(request)
     try:
-        # Extract the token value
-        token = token.split(" ")[1]  # Assumes "Bearer <token>"
-        # Decode the JWT token
-        payload = decode(token, USER_JWT_SECRET_KEY,
-                         algorithms=[USER_JWT_ALGORITHM])
-        user_id: str = payload.get("user_id")
-
-        if user_id is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
-
-        # Call the service to create or retrieve the user profile
-        profile = await service.create_profile(userId=user_id)
-
-        print(profile, "profile")
-
-        if profile:
-            return profile  # FastAPI will serialize this using the response_model
-        else:
-            raise HTTPException(
-                status_code=400, detail="Profile creation failed")
-
-    except InvalidSignatureError:
+        payload = decode(token, USER_JWT_SECRET_KEY, algorithms=[USER_JWT_ALGORITHM])
+    except ExpiredSignatureError:
+        raise HTTPException(status_code=403, detail="Token has expired")
+    except PyJWTError:
         raise HTTPException(status_code=401, detail="Could not validate token")
+
+    public_id = public_id_from_claims(payload)
+    if public_id is None:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    profile = await service.create_profile(public_id)
+    if not profile:
+        raise HTTPException(status_code=400, detail="Profile creation failed")
+    return profile
+
+
+@router.post("/profile", response_model=UserModel)
+async def ensure_profile(request: Request, service: UserService = Depends(get_user_service)):
+    """Idempotent: creates the profile on first call, returns it afterwards."""
+    return await _ensure_profile(request, service)
+
+
+@router.get("/profile", response_model=UserModel, deprecated=True)
+async def create_profile(request: Request, service: UserService = Depends(get_user_service)):
+    """Kept for older clients. It creates on first call, so prefer POST /profile."""
+    return await _ensure_profile(request, service)
 
 
 @router.post("/login", response_model=UserResponse)

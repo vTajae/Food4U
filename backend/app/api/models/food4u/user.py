@@ -15,6 +15,9 @@ class Profile(Base):
     __tablename__ = 'profile'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    # Stable identity shared with the frontend (JWT `user_id`). UUID for new users,
+    # 'legacy-<id>' for rows that predate it (see migrations/0001_profile_public_id.sql).
+    public_id: Mapped[Optional[str]] = mapped_column(String(64), unique=True, index=True, nullable=True)
     age: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
     ethnicity: Mapped[str] = mapped_column(String(100), nullable=True, default=None)
     location: Mapped[str] = mapped_column(String(255), nullable=True)

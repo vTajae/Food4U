@@ -10,7 +10,8 @@ class UserCreate(BaseModel):
 
 
 class UserModel(BaseModel):
-    id: int
+    id: int  # internal row id; identity is public_id
+    public_id: Optional[str] = None
     # hashed_password: str
     # expires_at: datetime
 

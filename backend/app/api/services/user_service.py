@@ -31,15 +31,21 @@ class UserService:
     async def invalidate_refresh_token(self, token: str):
         return await self.auth_repo.invalidate_token(token)
 
-    async def create_profile(self, userId: int) -> Optional[Profile]:
-        existing_user = await self.user_repo.get_profile_by_id(userId)
-        if existing_user:
-            return existing_user
+    async def create_profile(self, public_id: str) -> Optional[Profile]:
+        """Create-or-get the profile for a public id. The integer `id` is internal
+        (DB default); it never leaves the backend as an identity."""
+        existing = await self.user_repo.get_profile_by_public_id(public_id)
+        if existing:
+            return existing
 
-        user = Profile(id=userId)
-        new_user = await self.user_repo.add_user(user)
+        new_user = await self.user_repo.add_user(Profile(public_id=public_id))
+        if new_user is None:
+            # Lost a race with a concurrent create: the row exists now.
+            new_user = await self.user_repo.get_profile_by_public_id(public_id)
+        return new_user
 
-        return new_user  # Will be None if creation failed
+    async def get_profile_by_public_id(self, public_id: str) -> Optional[Profile]:
+        return await self.user_repo.get_profile_by_public_id(public_id)
 
     def generate_jwt_token(self, user_id: int):
         return jwt.encode({"user_id": user_id}, USER_JWT_SECRET_KEY, algorithm=USER_JWT_ALGORITHM)
