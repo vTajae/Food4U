@@ -53,6 +53,7 @@ The backend follows a **repository → service → route** pattern: routers hand
 ```bash
 cd frontend
 npm install
+cp wrangler.toml.example wrangler.toml   # local bindings; dev-only placeholder values
 npm run d1:local-initialize   # seed local D1 database
 npm run dev                   # Remix dev server (Vite)
 ```
