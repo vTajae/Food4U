@@ -1,8 +1,6 @@
 import { hash, compare } from "bcrypt-ts";
 import { decode, verify, sign } from "@tsndr/cloudflare-worker-jwt";
 
-const JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 30; // 30 minutes
-
 class Auth {
   static async hashPassword(
     password: string,
@@ -31,7 +29,7 @@ class Auth {
       payload = {
         ...payload,
         exp:
-          Math.floor(Date.now() / JWT_ACCESS_TOKEN_EXPIRE_MINUTES) +
+          Math.floor(Date.now() / 1000) +
           Auth.parseDurationToSeconds(options.expiresIn),
       };
     }
