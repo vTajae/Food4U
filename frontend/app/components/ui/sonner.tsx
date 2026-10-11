@@ -13,7 +13,8 @@ const Toaster = (props: ToasterProps) => {
       toastOptions={{
         classNames: {
           toast: "font-body text-body-sm",
-          description: "text-body-sm",
+          // Sonner defaults descriptions to a dark gray; keep them legible on ink.
+          description: "text-body-sm !text-line",
         },
       }}
       style={
