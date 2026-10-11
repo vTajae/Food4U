@@ -17,6 +17,7 @@ import { FetcherDataType } from "../../api/schemas/refs";
 import ProfileService from "../../api/services/profileService";
 import { ProfileSchema } from "../../api/schemas/profile";
 import Display, { renderResultItem } from "../components/search/display";
+import { Skeleton } from "~/components/ui/skeleton";
 import { SearchResult } from "../components/search/results";
 
 export const searchSchema = z.object({
@@ -178,10 +179,27 @@ export default function Dashboard() {
 
           {/* Loading or Display Results */}
           {fetcher.state === "submitting" || fetcher.state === "loading" ? (
-            <div className="flex flex-col items-center justify-center col-span-1 mt-6 space-y-4">
-              <div className="text-lg font-semibold">Loading results...</div>
-              {/* Optionally you can use a spinner */}
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+            <div className="col-span-1 mt-6 flex flex-col items-center gap-4">
+              <div role="status" className="text-lg font-semibold">
+                Loading results...
+              </div>
+              {/* Skeleton cards shaped like the result cards that are coming */}
+              <ul className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-8 p-4 md:grid-cols-2 lg:grid-cols-3">
+                {[0, 1, 2].map((i) => (
+                  <li
+                    key={i}
+                    className="flex flex-col gap-4 rounded-(--rounded-lg) border border-line bg-surface p-5"
+                  >
+                    <Skeleton className="h-7 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-5/6" />
+                    <div className="mt-2 flex gap-3">
+                      <Skeleton className="h-12 w-40 rounded-(--rounded-md)" />
+                      <Skeleton className="h-12 w-36 rounded-(--rounded-md)" />
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
           ) : (
             <>
