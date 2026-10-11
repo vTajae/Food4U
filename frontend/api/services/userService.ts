@@ -1,6 +1,6 @@
 // src/services/UserService.ts
 
-import Auth from "../../app/context/auth/auth-service";
+import Auth from "../../lib/auth-service";
 import {  userLogin, userRegister } from "../schemas/user";
 import UserRepository from "../repo/userRepository";
 import { ApiService } from "./baseService";
@@ -105,6 +105,7 @@ class UserService extends ApiService {
         return {
           success: true,
           user: loginCookieData,
+          token, // stored in the KV session and re-applied per request
           message: "User logged in successfully.",
         };
       } else {
@@ -147,7 +148,7 @@ class UserService extends ApiService {
       // Set the new token in the headers
       ApiService.setToken(newToken);
 
-      return { success: true, message: "Token refreshed successfully." };
+      return { success: true, token: newToken, message: "Token refreshed successfully." };
     } catch (error) {
       console.error("Error during token refresh:", error);
       return { success: false, message: "Failed to refresh token." };
