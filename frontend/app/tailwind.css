@@ -1,4 +1,6 @@
 @import 'tailwindcss';
+/* Enter/exit animations used by shadcn/ui (animate-in, fade-in-0, zoom-in-95, ...). */
+@import 'tw-animate-css';
 
 /* Only scan app code for class names; docs such as DESIGN.md mention classes as examples. */
 @source not "../DESIGN.md";
@@ -10,8 +12,8 @@
 
   `static` emits every token as a CSS variable even when no utility uses it
   yet, so plain CSS (and shadcn/ui later) can reference var(--color-*).
-  Tailwind's default palette, fonts and radius scale are kept because the
-  existing components still use them.
+  Tailwind's default palette, fonts and radius scale are kept because
+  legacy components still use them (rounded-sm/md/lg, gray-*, blue-*).
 */
 @theme static {
   /* Colors (light). Dark values are swapped in below. */
@@ -90,6 +92,34 @@
   --spacing-reading-max: 640px;
   --spacing-page-max: 1120px;
   --spacing-tap-min: 44px;
+
+  /* Elevation: only for things that float above the page (DESIGN.md › Elevation) */
+  --shadow-overlay: 0 8px 24px rgb(35 32 42 / 0.12), 0 2px 6px rgb(35 32 42 / 0.08);
+}
+
+/*
+  shadcn/ui semantic names, wired to the DESIGN.md tokens so components added
+  later with `npx shadcn add` render on-brand. They reference the tokens
+  above, so the dark theme swap below carries through automatically.
+  `inline` keeps the var() reference in the generated utilities.
+*/
+@theme inline {
+  --color-foreground: var(--color-ink);
+  --color-card: var(--color-surface);
+  --color-card-foreground: var(--color-ink);
+  --color-popover: var(--color-surface);
+  --color-popover-foreground: var(--color-ink);
+  --color-primary-foreground: var(--color-on-primary);
+  --color-secondary: var(--color-surface);
+  --color-secondary-foreground: var(--color-primary);
+  --color-muted: var(--color-background);
+  --color-muted-foreground: var(--color-ink-muted);
+  --color-accent: var(--color-primary-soft);
+  --color-accent-foreground: var(--color-primary);
+  --color-destructive: var(--color-avoid);
+  --color-border: var(--color-line);
+  --color-input: var(--color-line-strong);
+  --color-ring: var(--color-focus);
 }
 
 /*
@@ -165,6 +195,19 @@
     --color-care-tint: #3a2e14;
     --color-avoid: #f4a193;
     --color-avoid-tint: #40211c;
+  }
+}
+
+/*
+  Reduced motion: shadcn/ui parts (marked with data-slot) skip their
+  enter/exit animations and transitions.
+*/
+@layer base {
+  @media (prefers-reduced-motion: reduce) {
+    [data-slot] {
+      animation: none !important;
+      transition: none !important;
+    }
   }
 }
 

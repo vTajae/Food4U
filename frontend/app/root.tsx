@@ -8,6 +8,7 @@ import {
 import type { LinksFunction } from "@remix-run/cloudflare";
 import "./tailwind.css";
 import React from "react";
+import { Toaster } from "~/components/ui/sonner";
 
 // Typefaces from DESIGN.md; the font-display/font-body/font-data tokens in tailwind.css use them.
 export const links: LinksFunction = () => [
@@ -25,7 +26,9 @@ export const links: LinksFunction = () => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    // Light theme pinned until the legacy screens are restyled (Sprint 1 item 5);
+    // otherwise OS dark mode would darken only the token-based components.
+    <html lang="en" data-theme="light">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -34,6 +37,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
+        <Toaster />
         <ScrollRestoration />
         <Scripts />
       </body>
