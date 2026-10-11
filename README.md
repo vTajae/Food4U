@@ -37,11 +37,15 @@ Two independently deployed services communicating over authenticated HTTP:
 | Food data | USDA FoodData Central API, Spoonacular API |
 | Datastores | CockroachDB (backend), D1 + KV (frontend) |
 
+## Documentation
+
+Start at [`docs/README.md`](docs/README.md): every document in the order it was written (origins, vision, Sprint 1 reports, diagnosis), the branch map, and how to run the tests and feedback loops.
+
 ## Repository Layout
 
 ```
-frontend/   Next.js app — app/ routes, components, lib (session/auth), api/ services, D1 schema, Wrangler config
-backend/    FastAPI app — routers, services, repositories, schemas, AI pipeline
+frontend/   Next.js app — app/ routes, components, lib (session/auth), api/ services, D1 schema, Wrangler config, tests/, scripts/e2e/
+backend/    FastAPI app — routers, services, repositories, schemas, AI pipeline, migrations/, tests/
 ```
 
 The backend follows a **repository → service → route** pattern: routers handle HTTP, services hold business logic, repositories own data access. Pydantic schemas validate every boundary, mirrored by Zod schemas on the frontend.
