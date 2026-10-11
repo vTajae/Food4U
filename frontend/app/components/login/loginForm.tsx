@@ -4,6 +4,16 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useActionData } from "@remix-run/react";
+import { Button } from "~/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "~/components/ui/form";
+import { Input } from "~/components/ui/input";
 
 interface LoginFormProps {
   actionUrl: string; // Allows reuse for different action URLs if needed
@@ -30,12 +40,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ actionUrl, initialActionType = "l
   const [actionType] = useState(initialActionType);
 
   // Set up React Hook Form with Zod schema validation
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginSchema>({
+  const form = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
+    defaultValues: { username: "", password: "" },
   });
 
   // Handle form submission
@@ -59,64 +66,69 @@ const LoginForm: React.FC<LoginFormProps> = ({ actionUrl, initialActionType = "l
   };
 
   return (
-<section className=" flex flex-col justify-center items-center">
-  <h1 className="text-center text-4xl font-bold text-blue-600 mb-8">Login</h1>
+    <section className="flex flex-col items-center">
+      <h1 className="mb-6 text-center font-display text-display-md text-ink">Login</h1>
 
-  <form
-    onSubmit={handleSubmit(onSubmit)}
-    className="max-w-lg w-full mx-auto p-8 bg-linear-to-r from-gray-800 to-gray-900 rounded-lg shadow-lg"
-  >
-    <input type="hidden" name="actionType" value={actionType} />
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          noValidate
+          className="flex w-full flex-col gap-5 rounded-(--rounded-lg) border border-line bg-surface p-6"
+        >
+          <input type="hidden" name="actionType" value={actionType} />
 
-    {/* Email Field */}
-    <div className="mb-6">
-      <label htmlFor="username" className="block text-gray-300 text-lg font-medium mb-2">
-        Email
-      </label>
-      <input
-        type="text"
-        id="username"
-        {...register("username")}
-        name="username"
-        className="w-full px-4 py-2 rounded-lg bg-gray-700 text-gray-200 border border-gray-600 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-        placeholder="Enter your Email"
-      />
-      {errors.username && <p className="text-red-500 text-sm italic mt-2">{errors.username.message}</p>}
-    </div>
+          <FormField
+            control={form.control}
+            name="username"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input
+                    type="text"
+                    inputMode="email"
+                    autoComplete="username"
+                    placeholder="Enter your Email"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-    {/* Password Field */}
-    <div className="mb-6">
-      <label htmlFor="password" className="block text-gray-300 text-lg font-medium mb-2">
-        Password
-      </label>
-      <input
-        type="password"
-        id="password"
-        {...register("password")}
-        name="password"
-        className="w-full px-4 py-2 rounded-lg bg-gray-700 text-gray-200 border border-gray-600 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-        placeholder="Enter your password"
-      />
-      {errors.password && <p className="text-red-500 text-sm italic mt-2">{errors.password.message}</p>}
-    </div>
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input
+                    type="password"
+                    autoComplete="current-password"
+                    placeholder="Enter your password"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-    {/* Error Message */}
-    {actionData?.error && (
-      <div className="text-red-500 text-sm italic mb-3">{actionData.error}</div>
-    )}
+          {/* Error Message */}
+          {actionData?.error && (
+            <p role="alert" className="text-body-sm text-avoid">
+              {actionData.error}
+            </p>
+          )}
 
-    {/* Submit Button */}
-    <div className="flex items-center justify-between mt-6">
-      <button
-        className="w-full px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 focus:outline-hidden focus:ring-4 focus:ring-blue-300 transition duration-200"
-        type="submit"
-      >
-        Login
-      </button>
-    </div>
-  </form>
-</section>
-
+          <Button type="submit" className="w-full">
+            Login
+          </Button>
+        </form>
+      </Form>
+    </section>
   );
 };
 
