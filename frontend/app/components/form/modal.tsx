@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -18,6 +18,12 @@ interface ModalProps {
 
 // Confirmation dialog: shown while mounted. Escape or clicking outside counts as "No".
 const Modal: React.FC<ModalProps> = ({ title, description, onConfirm, onCancel }) => {
+  // There is no DialogTrigger, so remember what had focus when the modal opened
+  // and return focus there when it closes (Radix would otherwise drop it on <body>).
+  const [returnFocusTo] = useState(() =>
+    typeof document === "undefined" ? null : (document.activeElement as HTMLElement | null)
+  );
+
   return (
     <Dialog
       open
@@ -25,7 +31,13 @@ const Modal: React.FC<ModalProps> = ({ title, description, onConfirm, onCancel }
         if (!open) onCancel();
       }}
     >
-      <DialogContent showCloseButton={false}>
+      <DialogContent
+        showCloseButton={false}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          returnFocusTo?.focus();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
