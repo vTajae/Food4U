@@ -7,3 +7,11 @@ node_modules
 
 .wrangler
 wrangler.toml
+
+# Next.js / vinext / Cloudflare
+/.next/
+/dist/
+/.cloudflare/
+.dev.vars
+wrangler.jsonc.local
+.vinext/

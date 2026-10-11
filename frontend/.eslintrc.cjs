@@ -56,6 +56,8 @@ module.exports = {
       plugins: ["@typescript-eslint", "import"],
       parser: "@typescript-eslint/parser",
       settings: {
+        // Provided by the Workers runtime (workerd); not resolvable from node_modules.
+        "import/core-modules": ["cloudflare:workers"],
         "import/internal-regex": "^~/",
         "import/resolver": {
           node: {

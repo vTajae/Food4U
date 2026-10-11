@@ -11,7 +11,7 @@ Two independently deployed services communicating over authenticated HTTP:
 ```
 ┌─────────────────────────────┐         ┌──────────────────────────────┐
 │  Frontend — Cloudflare       │   JWT   │  Backend — Python FastAPI    │
-│  Remix (React) on Pages      │ ◄─────► │  hosted on Render            │
+│  Next.js 16 on vinext (Workers)      │ ◄─────► │  hosted on Render            │
 │  • D1 (SQLite) user accounts │  token  │  • Repository/Service/Route  │
 │  • KV session storage        │ exchange│    layered architecture      │
 │  • React Hook Form + Zod     │         │  • CockroachDB (Postgres)    │
@@ -29,8 +29,8 @@ Two independently deployed services communicating over authenticated HTTP:
 
 | Layer | Technology |
 |---|---|
-| Frontend | Remix (React), TypeScript, React Hook Form, Zod, Tailwind CSS |
-| Edge platform | Cloudflare Pages + Workers, D1 (SQLite), KV, Wrangler |
+| Frontend | Next.js 16 (App Router) on vinext, React 19, TypeScript, React Hook Form, Zod, Tailwind CSS 4, shadcn/ui |
+| Edge platform | Cloudflare Workers, D1 (SQLite), KV, Wrangler 4 |
 | Auth | JWT token exchange between services (`@tsndr/cloudflare-worker-jwt`, bcrypt) |
 | Backend | Python, FastAPI, SQLAlchemy 2.0 (async), asyncpg, Uvicorn |
 | AI / Retrieval | Google Gemini, LlamaIndex, Qdrant vector store |
@@ -40,7 +40,7 @@ Two independently deployed services communicating over authenticated HTTP:
 ## Repository Layout
 
 ```
-frontend/   Remix app — routes, components, form flows, D1 schema, Wrangler config
+frontend/   Next.js app — app/ routes, components, lib (session/auth), api/ services, D1 schema, Wrangler config
 backend/    FastAPI app — routers, services, repositories, schemas, AI pipeline
 ```
 
@@ -53,12 +53,13 @@ The backend follows a **repository → service → route** pattern: routers hand
 ```bash
 cd frontend
 npm install
-cp wrangler.toml.example wrangler.toml   # local bindings; dev-only placeholder values
-npm run d1:local-initialize   # seed local D1 database
-npm run dev                   # Remix dev server (Vite)
+cp .dev.vars.example .dev.vars   # dev-only placeholder secrets
+npm run d1:local-initialize      # seed local D1 database
+npm run typegen                  # binding types from wrangler.jsonc
+npm run dev                      # vinext dev server on http://localhost:3001
 ```
 
-Deploy: `npm run deploy` (builds and pushes to Cloudflare Pages).
+Deploy: `npm run deploy` (builds with vinext and deploys the Worker via `@vinext/cloudflare`).
 
 ### Backend
 
