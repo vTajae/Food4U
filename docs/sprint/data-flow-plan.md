@@ -12,8 +12,14 @@ A Food4U user is identified everywhere by a stable `public_id`; login never depe
 | `frontend: fix JWT expiry…` | `exp` in seconds (was year 3860) | `npm test` → token-expiry test |
 | `frontend: stable public id in D1…` | `user.public_id`, token carries it, login is D1-only, `ApiError`, 20 s fetch timeout, `ensureProfile` | `npm test` → 4 passed; tsc 1 pre-existing; lint 5 pre-existing |
 | `frontend: dashboard handles each backend answer…` | explicit 403/expired/unavailable handling | Playwright `login-loop.mjs` → `/dashboard` in ~30 s |
+| `d00d0f9` test: welcome round trip (OMX, slice 4) | POST /profile → /welcome → /user/profile at the no-DB seam | pytest 6 passed |
+| `e1e5f80` backend: remove dead login/refresh (OMX, slice 6) | dead routes + 4 token helpers gone; route-surface test | pytest 7 passed |
+| `e8aac05` backend: isolate AI imports (OMX, slice 7) | user_routes loads no AI package; conftest stubs removed | pytest 8 passed; fresh-process import check |
+| `15c8472` backend: deprecation log on GET /profile (slice 5 prep) | one WARNING per hit, no token; POST silent | pytest 11 passed |
 
 ## Remaining slices, in order (each has a stop condition)
+
+_Slices 4, 6 and 7 are done and slice 5 is prepared (deprecation log; removal waits for a week of zero hits after the frontend deploy). Slices 1–3 are owner-gated: see `data-flow-report.md` §7._
 1. **Apply the two migrations** — owner-gated (production data): `backend/migrations/0001_profile_public_id.sql` on CockroachDB, then `frontend/database/migrations/0001_user_public_id.sql` on the remote D1 (`npm run d1:remote-initialize` is destructive; use the migration file). Stop: `SELECT count(*) FROM profile WHERE public_id IS NULL` = 0 and the D1 equivalent = 0.
 2. **Deploy the backend** (Render) from this branch. Stop: `curl` with a UUID-claim token → `GET /user/profile` returns 403 "User not found" (not 500), `POST /profile` returns 200 with that `public_id`, and a `legacy-1` token still returns profile 1.
 3. **Deploy the frontend Worker** (`npm run deploy`, after secrets + binding ids). Stop: the Playwright loop against the deployed URL lands on `/welcome` for a new user, and a user who completed onboarding sees `/dashboard` with chips.
