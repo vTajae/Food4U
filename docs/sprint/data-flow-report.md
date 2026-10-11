@@ -44,3 +44,14 @@ Checks on HEAD: backend pytest 5/5; frontend `npm test` 4/4; `tsc` 1 error (pre-
 
 ## 6. Still open (owner-gated or needs the deploy) → `data-flow-plan.md`
 Migrations on CockroachDB and remote D1; backend deploy; Worker deploy; e2e against the deployed pair; removal of the deprecated `GET /profile` and the dead auth routes; AI-import locality.
+
+## 7. Close of the run (2026-10-11) and the owner runbook
+OMX executed slices 4, 6 and 7 (`d00d0f9`, `e1e5f80`, `e8aac05`). Claude took over for the last code slice, the slice 5 prep (`15c8472`): every hit on the deprecated `GET /profile` now logs one WARNING with the public id and user agent, never the token. Checks on HEAD: backend pytest **11 passed** with no AI packages installed; frontend `npm test` 4/4. **No code slices are left.** The remaining steps touch production, so the owner runs them, in this order:
+
+1. **CockroachDB migration** (before the backend deploy, because the new code reads `profile.public_id`): run `backend/migrations/0001_profile_public_id.sql`. Check: `SELECT count(*) FROM profile WHERE public_id IS NULL` returns 0.
+2. **Render deploy** of `backend/` from this branch. Set `USER_JWT_SECRET_KEY` to the same value as the Worker's `JWT_SECRET_KEY`, with `USER_JWT_ALGORITHM=HS256`. Check: a UUID-claim token gets 403 "User not found" (not 500) from `GET /user/profile`, `POST /profile` returns 200, and a `legacy-1` token still reads profile 1 (`backend/scripts/loop-profile.sh`).
+3. **Remote D1 migration** (before the Worker deploy, because registration now inserts `public_id`): `wrangler d1 execute food4u-db --remote --file=./database/migrations/0001_user_public_id.sql`. Do **not** run `d1:remote-initialize`, which recreates the tables.
+4. **Worker deploy** (`npm run deploy`, after the secrets and binding ids), then `node scripts/e2e/login-loop.mjs <worker url>`. Check: a new user lands on `/welcome`.
+5. **Remove `GET /profile`** once the Render logs show no `deprecated GET /profile used` lines for a week.
+
+Profile rows 2 and 99999 remain in production from the diagnosis probes. You chose to leave them.
