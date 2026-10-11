@@ -23,6 +23,7 @@ from app.api.utils.utils import RateLimitUtil
 
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -59,7 +60,14 @@ async def ensure_profile(request: Request, service: UserService = Depends(get_us
 @router.get("/profile", response_model=UserModel, deprecated=True)
 async def create_profile(request: Request, service: UserService = Depends(get_user_service)):
     """Kept for older clients. It creates on first call, so prefer POST /profile."""
-    return await _ensure_profile(request, service)
+    profile = await _ensure_profile(request, service)
+    # One line per hit so removal can be timed from logs. Never log the token.
+    logger.warning(
+        "deprecated GET /profile used public_id=%s ua=%s",
+        profile.public_id,
+        request.headers.get("user-agent") or "-",
+    )
+    return profile
 
 
 @router.get("/dashboard")
