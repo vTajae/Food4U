@@ -1,5 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useId, useState } from "react";
+import { X } from "lucide-react";
 import { SearchBarWithButtons } from "../search/refSearchwButton";
+import { Badge } from "~/components/ui/badge";
+import { Input } from "~/components/ui/input";
 import { useFormContext } from "./context";
 import type { Suggestion } from "../../../api/schemas/refs";
 
@@ -15,6 +18,7 @@ const QuestionComponent: React.FC<QuestionProps> = ({
   queryKey,
 }) => {
   const { state, setAnswer } = useFormContext();
+  const headingId = useId();
 
   // Initialize the state as an array of Suggestion[]
   const [selectedAnswers, setSelectedAnswers] = useState<Suggestion[]>([]);
@@ -47,21 +51,19 @@ const QuestionComponent: React.FC<QuestionProps> = ({
   };
 
   return (
-    <div className="p-6 bg-white rounded-lg">
-      {/* Updated background to white and adjusted padding */}
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">
-        {/* Changed text color for better readability */}
+    <div className="flex flex-col gap-4 rounded-(--rounded-lg) bg-surface p-6 font-body text-ink">
+      <h3 id={headingId} className="text-body-lg font-bold text-ink">
         {questionText}
       </h3>
 
       {queryKey === "price" ? (
-        <input
+        <Input
           type="text"
+          inputMode="decimal"
+          aria-labelledby={headingId}
           placeholder="Enter price"
           value={selectedAnswers[0]?.value || ""}
           onChange={handleInputChange}
-          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition duration-200 ease-in-out"
-          /* Improved input field styling */
         />
       ) : (
         <SearchBarWithButtons
@@ -70,34 +72,38 @@ const QuestionComponent: React.FC<QuestionProps> = ({
           placeholderText="Type to search"
           queryKey={queryKey}
           selectedSuggestions={selectedAnswers as Suggestion[]}
+          labelledBy={headingId}
         />
       )}
 
       {Array.isArray(selectedAnswers) && selectedAnswers.length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-2">
-          {/* Display selected answers as removable badges */}
-          {selectedAnswers.map((item) => (
-            <span
-              key={`${item.name}-${item.code || ""}`}
-              className="bg-blue-100 text-gray-800 px-3 py-1 rounded-full text-sm flex items-center"
-            >
-              {item.name} {item.code ? `(${item.code})` : ""}
-              {/* Remove button */}
-              <button
-                onClick={() => {
-                  const updatedAnswers = selectedAnswers.filter(
-                    (answer) => answer !== item
-                  );
-                  setSelectedAnswers(updatedAnswers);
-                  setAnswer(questionId, updatedAnswers);
-                }}
-                className="ml-2 text-red-500 hover:text-red-700 focus:outline-hidden"
-              >
-                &times;
-              </button>
-            </span>
-          ))}
-        </div>
+        <ul aria-label="Your answers" className="flex flex-wrap gap-2">
+          {/* Selected answers as removable constraint chips */}
+          {selectedAnswers.map((item) => {
+            const label = `${item.name}${item.code ? ` (${item.code})` : ""}`;
+            return (
+              <li key={`${item.name}-${item.code || ""}`}>
+                <Badge className="pr-0">
+                  {label}
+                  <button
+                    type="button"
+                    aria-label={`Remove ${label}`}
+                    onClick={() => {
+                      const updatedAnswers = selectedAnswers.filter(
+                        (answer) => answer !== item
+                      );
+                      setSelectedAnswers(updatedAnswers);
+                      setAnswer(questionId, updatedAnswers);
+                    }}
+                    className="-my-1 inline-flex size-11 cursor-pointer items-center justify-center rounded-full text-primary hover:text-primary-hover focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-focus"
+                  >
+                    <X aria-hidden="true" className="size-4" />
+                  </button>
+                </Badge>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );

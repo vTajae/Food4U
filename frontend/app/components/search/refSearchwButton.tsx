@@ -1,15 +1,30 @@
 // SearchBarWithButtons.tsx
-import React, { useEffect, useRef, useState } from "react";
+// Multi-select combobox (shadcn Command + Popover) over /api/refs suggestions.
+import React, { useEffect, useId, useRef, useState } from "react";
 import debounce from "lodash.debounce";
 import { useFetcher } from "@remix-run/react";
 import { DebouncedFunc } from "lodash";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { toast } from "sonner";
 import { Suggestion } from "../../../api/schemas/refs";
+import { Button } from "~/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "~/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
+import { cn } from "~/lib/utils";
 
 interface SearchBarWithButtonsProps {
   onSuggestionSelect: (selectedSuggestions: Suggestion[]) => void;
   queryKey: string;
   placeholderText?: string;
   selectedSuggestions: Suggestion[];
+  labelledBy?: string; // id of the visible question that names this field
 }
 
 export type RefBarFetchType = {
@@ -18,16 +33,20 @@ export type RefBarFetchType = {
   errors?: Record<string, string[]>;
 };
 
+const suggestionKey = (s: Suggestion) => `${s.name}-${s.code || ""}`;
+
 export const SearchBarWithButtons: React.FC<SearchBarWithButtonsProps> = ({
   onSuggestionSelect,
   queryKey,
   placeholderText = "Search...",
   selectedSuggestions,
+  labelledBy,
 }) => {
+  const [open, setOpen] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [inputValue, setInputValue] = useState<string>("");
-  const [message, setMessage] = useState<string | null>(null);
   const fetcher = useFetcher<RefBarFetchType>();
+  const listId = useId();
 
   // Use a ref to store the debounced function with correct typing
   const fetchSuggestionsRef = useRef<DebouncedFunc<(query: string) => void>>();
@@ -58,26 +77,23 @@ export const SearchBarWithButtons: React.FC<SearchBarWithButtonsProps> = ({
     fetchSuggestionsRef.current?.(inputvalue);
   }, [inputValue]);
 
-  // Effect to handle fetcher data updates
+  // Effect to handle fetcher data updates; server messages surface as a toast.
   useEffect(() => {
     if (fetcher.data && fetcher.data.suggestions) {
       setSuggestions(fetcher.data.suggestions);
-      setMessage(null);
     } else if (fetcher.data && fetcher.data.message) {
       setSuggestions([]);
-      setMessage(fetcher.data.message);
+      toast.error(fetcher.data.message, { id: `refs-${queryKey}` });
     }
-  }, [fetcher.data]);
+  }, [fetcher.data, queryKey]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
-  };
-
-  const handleCheckboxChange = (suggestion: Suggestion) => {
-    const isSelected = selectedSuggestions.some(
+  const isSelected = (suggestion: Suggestion) =>
+    selectedSuggestions.some(
       (s) => s.name === suggestion.name && s.code === suggestion.code
     );
-    const updatedSelected = isSelected
+
+  const handleToggle = (suggestion: Suggestion) => {
+    const updatedSelected = isSelected(suggestion)
       ? selectedSuggestions.filter(
           (s) => !(s.name === suggestion.name && s.code === suggestion.code)
         )
@@ -87,47 +103,86 @@ export const SearchBarWithButtons: React.FC<SearchBarWithButtonsProps> = ({
     onSuggestionSelect(updatedSelected);
   };
 
+  const isLoading = fetcher.state === "loading";
+  const hasQuery = inputValue.trim().length > 0;
+
   return (
-    <div className="p-6 rounded-lg max-w-2xl mx-auto">
-      <div className="flex items-center space-x-4">
-        <input
-          type="text"
-          value={inputValue}
-          onChange={handleInputChange}
-          placeholder={placeholderText}
-          className="w-full px-4 py-2 border border-blue-500 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition"
-        />
-        {fetcher.state === "loading" && (
-          <p className="text-gray-500">Loading...</p>
-        )}
-      </div>
-
-      {message && <p className="text-red-500 mt-2">{message}</p>}
-
-      {suggestions.length > 0 && (
-        <div className="mt-4 grid grid-cols-1 gap-4">
-          {suggestions.map((suggestion) => (
-            <label
-              key={`${suggestion.name}-${suggestion.code || ""}`}
-              className="flex items-center space-x-3"
-            >
-              <input
-                type="checkbox"
-                checked={selectedSuggestions.some(
-                  (s) =>
-                    s.name === suggestion.name && s.code === suggestion.code
-                )}
-                onChange={() => handleCheckboxChange(suggestion)}
-                className="h-5 w-5 text-blue-600 border-gray-300 rounded-sm focus:ring-blue-500"
-              />
-              <span className="text-gray-800">
-                {suggestion.name}{" "}
-                {suggestion.code ? `: ${suggestion.code}` : ""}
-              </span>
-            </label>
-          ))}
-        </div>
-      )}
+    <div className="mx-auto w-full max-w-reading-max">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="secondary"
+            role="combobox"
+            aria-expanded={open}
+            aria-controls={listId}
+            aria-labelledby={labelledBy}
+            className="w-full justify-between px-3.5 text-body-md font-normal text-ink"
+          >
+            <span className={cn(selectedSuggestions.length === 0 && "text-ink-muted")}>
+              {selectedSuggestions.length > 0
+                ? `${selectedSuggestions.length} selected`
+                : placeholderText}
+            </span>
+            <ChevronsUpDown aria-hidden="true" className="text-ink-muted" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          align="start"
+          className="w-(--radix-popover-trigger-width) min-w-72 p-0"
+        >
+          {/* Server-side search, so cmdk's own filtering is off. */}
+          <Command shouldFilter={false}>
+            <CommandInput
+              value={inputValue}
+              onValueChange={setInputValue}
+              placeholder={placeholderText}
+              aria-label={placeholderText}
+            />
+            <CommandList id={listId} aria-busy={isLoading}>
+              {isLoading && (
+                <div role="status" className="px-3 py-4 text-body-sm text-ink-muted">
+                  Loading...
+                </div>
+              )}
+              {!isLoading && hasQuery && (
+                <CommandEmpty>No matches. Try a different word.</CommandEmpty>
+              )}
+              {suggestions.length > 0 && (
+                <CommandGroup>
+                  {suggestions.map((suggestion) => {
+                    const selected = isSelected(suggestion);
+                    return (
+                      <CommandItem
+                        key={suggestionKey(suggestion)}
+                        value={suggestionKey(suggestion)}
+                        onSelect={() => handleToggle(suggestion)}
+                        data-checked={selected}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className={cn(
+                            "flex size-5 shrink-0 items-center justify-center rounded-(--rounded-sm) border border-line-strong",
+                            selected && "border-primary bg-primary text-on-primary"
+                          )}
+                        >
+                          {selected && <Check className="size-4 text-on-primary" />}
+                        </span>
+                        <span>
+                          {suggestion.name}{" "}
+                          {suggestion.code ? `: ${suggestion.code}` : ""}
+                          {/* cmdk owns aria-selected (the highlighted row), so announce the checked state as text. */}
+                          {selected && <span className="sr-only"> (selected)</span>}
+                        </span>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              )}
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 };
