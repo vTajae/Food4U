@@ -55,5 +55,7 @@ export async function authenticate(
   session.data.auth = result.user;
   session.data.token = result.token;
   await commitSession(session);
+  // Login depends on D1 only. The backend profile is ensured by the dashboard,
+  // which can show a proper "service unavailable" state if the backend is asleep.
   redirect("/dashboard");
 }

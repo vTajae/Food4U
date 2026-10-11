@@ -21,8 +21,10 @@ export async function submitWelcome(payload: WelcomeFormData): Promise<WelcomeRe
     return { ok: false, message: "Some answers look invalid. Please review them." };
   }
 
-  const response = await ProfileService.createWelcomeProfile(parsed.data);
-  if (!response) {
+  try {
+    await ProfileService.createWelcomeProfile(parsed.data);
+  } catch (error) {
+    console.error("Welcome submission failed:", error instanceof Error ? error.message : error);
     return { ok: false, message: "Couldn't save your profile. Please try again." };
   }
 
