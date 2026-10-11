@@ -9,6 +9,7 @@ import { createSessionStorage } from "../context/session/session";
 import UserService from "../../api/services/userService";
 import RegisterForm from "../components/login/registerForm";
 import LoginForm from "../components/login/loginForm";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 
 // export const loader: LoaderFunction = async ({ request, context }) => {
 //   const myEnv = context.cloudflare.env as Env;
@@ -124,37 +125,24 @@ const Login = () => {
   const [isRegister, setIsRegister] = useState(false); // Toggle between login and register forms
 
   return (
-    <div className="p-6 max-w-lg mx-auto bg-white rounded-lg ">
-      <div className="flex justify-center mb-6">
-        <button
-          onClick={() => setIsRegister(false)}
-          className={`px-6 py-3 font-semibold rounded-lg m-2 transition-colors duration-300 ${
-            !isRegister
-              ? "bg-blue-500 text-white hover:bg-blue-600"
-              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-          } focus:outline-hidden focus:ring-4 focus:ring-blue-300`}
-        >
-          Login
-        </button>
-        <button
-          onClick={() => setIsRegister(true)}
-          className={`px-6 py-3 font-semibold rounded-lg m-2 transition-colors duration-300 ${
-            isRegister
-              ? "bg-blue-500 text-white hover:bg-blue-600"
-              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-          } focus:outline-hidden focus:ring-4 focus:ring-blue-300`}
-        >
-          Register
-        </button>
-      </div>
+    <div className="mx-auto w-full max-w-md px-4 py-8 font-body text-ink">
+      {/* Radix Tabs: arrow keys move between tabs; only the active form is mounted. */}
+      <Tabs
+        value={isRegister ? "register" : "login"}
+        onValueChange={(value) => setIsRegister(value === "register")}
+      >
+        <TabsList aria-label="Log in or create an account">
+          <TabsTrigger value="login">Login</TabsTrigger>
+          <TabsTrigger value="register">Register</TabsTrigger>
+        </TabsList>
 
-      <div className="mt-6">
-        {isRegister ? (
-          <RegisterForm actionUrl="/login" />
-        ) : (
+        <TabsContent value="login">
           <LoginForm actionUrl="/login" />
-        )}
-      </div>
+        </TabsContent>
+        <TabsContent value="register">
+          <RegisterForm actionUrl="/login" />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
