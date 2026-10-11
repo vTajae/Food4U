@@ -7,48 +7,31 @@ interface basicAPI {
   message: string;
 }
 
+/** Backend `POST /profile` response: the internal row id plus the public id we sent. */
+export interface EnsuredProfile {
+  id: number;
+  public_id?: string | null;
+}
 
-// Define a service for handling profile-related HTTP requests
+// Profile-related HTTP requests. Every method throws ApiError on a backend error;
+// callers branch on `status` (403 = no profile for this identity yet).
 class ProfileService extends ApiService {
-  // Method to create a new profile
-  static async createWelcomeProfile(
-    welcomeProfile: WelcomeFormData
-  ): Promise<basicAPI | void> {
-    try {
-      const result =  await this.post<basicAPI>("welcome", welcomeProfile);
-
-      return result;
-    } catch (error) {
-      console.error("Error creating profile:", error);
-    }
+  /**
+   * Create-or-get the backend profile for the current identity. Idempotent.
+   * Call this once after login (best effort) and whenever the backend reports
+   * "User not found".
+   */
+  static async ensureProfile(): Promise<EnsuredProfile> {
+    return this.post<EnsuredProfile>("profile");
   }
 
-  static async getAllData(): Promise<ProfileSchema | void> {
-    try {
-      
-      const response = await this.getSingle<ProfileSchema>("user/profile");
-
-
-      return response;
-    } catch (error) {
-      console.error("Error creating profile:", error);
-    }
+  static async createWelcomeProfile(welcomeProfile: WelcomeFormData): Promise<basicAPI> {
+    return this.post<basicAPI>("welcome", welcomeProfile);
   }
 
-  // // Method to update an existing profile by ID
-  // static async updateProfile(
-  //   profileId: number,
-  //   welcomeProfile: welcomeProfile
-  // ): Promise<welcomeProfile | void> {
-  //   try {
-  //     return await this.patch<welcomeProfile>(
-  //       `profile/${profileId}`,
-  //       welcomeProfile
-  //     );
-  //   } catch (error) {
-  //     console.error(`Error updating profile with ID ${profileId}:`, error);
-  //   }
-  // }
+  static async getAllData(): Promise<ProfileSchema> {
+    return this.getSingle<ProfileSchema>("user/profile");
+  }
 }
 
 export default ProfileService;

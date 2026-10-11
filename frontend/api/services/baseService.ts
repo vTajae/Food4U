@@ -1,28 +1,45 @@
 // Base URL should be configured from environment or configuration files
-const API_BASE_URL ="https://food4u-nrpy.onrender.com";
+const API_BASE_URL = "https://food4u-nrpy.onrender.com";
+// The backend sleeps on Render's free tier; a request must fail fast enough
+// for the UI to show its "unavailable" state instead of hanging the page.
+const REQUEST_TIMEOUT_MS = 20_000;
 
+/** A non-2xx response from the backend, with enough detail for callers to branch on. */
+export class ApiError extends Error {
+  readonly status: number;
+  readonly url: string;
+  readonly detail: string | undefined;
+
+  constructor(status: number, url: string, detail?: string) {
+    super(`Backend responded ${status} for ${url}${detail ? `: ${detail}` : ""}`);
+    this.name = "ApiError";
+    this.status = status;
+    this.url = url;
+    this.detail = detail;
+  }
+}
 
 export class ApiService {
-  private static token: string | null = null; // Store token globally
-  // Default headers for requests; will be updated with authorization tokens when needed
+  // The JWT for the current request. Workers share one isolate across requests,
+  // so callers load it from the session right before each use (lib/auth.ts:
+  // applyBackendToken) and headers are built synchronously below.
+  private static token: string | null = null;
+
   static defaultHeaders: HeadersInit = {
     "Content-Type": "application/json",
   };
 
-  // Method to set JWT token after login
   static setToken(token: string): void {
     this.token = token;
   }
 
-  // Method to clear the token
   static clearToken(): void {
     this.token = null;
   }
 
-    // Method to clear the token
-    static getToken(): string | null {
-      return this.token;
-    }
+  static getToken(): string | null {
+    return this.token;
+  }
 
   protected static getRequestOptions(
     method: string,
@@ -31,90 +48,64 @@ export class ApiService {
   ): RequestInit {
     const headers = {
       ...this.defaultHeaders,
-      ...this.addAuthorizationHeader(customHeaders || {}), // Include JWT in headers
+      ...this.addAuthorizationHeader(customHeaders || {}),
     };
-
-    ////console.log("headers", headers);
 
     const options: RequestInit = {
       method,
       headers,
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     };
-
-    if (body) {
+    if (body !== undefined) {
       options.body = JSON.stringify(body);
     }
-
     return options;
   }
 
-  // Add the JWT token to the request headers if available
   private static addAuthorizationHeader(headers: HeadersInit): HeadersInit {
     if (this.token) {
-      return {
-        ...headers,
-        "Authorization": `Bearer ${this.token}`, // Add Authorization header
-      };
+      return { ...headers, Authorization: `Bearer ${this.token}` };
     }
     return headers;
   }
 
-  // Handle response from server
+  /**
+   * Throws ApiError on non-2xx (with the backend's `detail` when it sends one)
+   * so callers can tell "no profile yet" (403) from "backend down" (5xx).
+   */
   private static async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
-      console.error(`Bad response code ${response.status} from ${response.url}`);
-      throw new Error(`Failed to fetch: ${response.statusText}`);
+      let detail: string | undefined;
+      try {
+        const body = (await response.json()) as { detail?: unknown };
+        if (typeof body.detail === "string") detail = body.detail;
+      } catch {
+        /* non-JSON error body */
+      }
+      throw new ApiError(response.status, response.url, detail);
     }
-
     try {
-      const data = await response.json(); // Use JSON response, not body directly
-      return data as T;
-    } catch (error) {
-      console.error("Failed to parse response JSON:", error);
-      throw new Error("Invalid JSON response");
+      return (await response.json()) as T;
+    } catch {
+      throw new ApiError(response.status, response.url, "Invalid JSON response");
     }
   }
 
-  // Generic GET method for fetching raw data
+  /** GET a list. Throws ApiError / network errors; callers decide the fallback. */
   static async get<T>(url: string): Promise<T[]> {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/${url}`,
-        this.getRequestOptions("GET")
-      );
-      return this.handleResponse<T[]>(response);
-    } catch (error) {
-      console.error(`Error fetching data from ${url}:`, error);
-      return []; // Return an empty array in case of an error
-    }
+    const response = await fetch(`${API_BASE_URL}/${url}`, this.getRequestOptions("GET"));
+    return this.handleResponse<T[]>(response);
   }
 
-  // POST request to submit data
-  static async post<T>(url: string, body: unknown): Promise<T | void> {
-    try {
-
-
-      // ////console.log("Token in the placee:", token);
-      const response = await fetch(
-        `${API_BASE_URL}/${url}`,
-        this.getRequestOptions("POST", body)
-      );
-      return this.handleResponse<T>(response);
-    } catch (error) {
-      console.error(`Error posting data to ${url}:`, error);
-    }
+  /** POST JSON. Throws ApiError / network errors. */
+  static async post<T>(url: string, body?: unknown): Promise<T> {
+    const response = await fetch(`${API_BASE_URL}/${url}`, this.getRequestOptions("POST", body));
+    return this.handleResponse<T>(response);
   }
 
-  // Fetch a single item from the server
-  static async getSingle<T>(url: string): Promise<T | void> {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/${url}`,
-        this.getRequestOptions("GET")
-      );
-      return this.handleResponse<T>(response);
-    } catch (error) {
-      console.error(`Error fetching single item from ${url}:`, error);
-    }
+  /** GET a single item. Throws ApiError / network errors. */
+  static async getSingle<T>(url: string): Promise<T> {
+    const response = await fetch(`${API_BASE_URL}/${url}`, this.getRequestOptions("GET"));
+    return this.handleResponse<T>(response);
   }
 }

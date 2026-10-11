@@ -8,9 +8,10 @@ import { ApiService } from "./baseService";
 class UserService extends ApiService {
   private userRepository: UserRepository;
 
-  constructor(env: Env) {
+  // The repository is injectable so the identity rules can be unit tested without D1.
+  constructor(env: Env, userRepository: UserRepository = new UserRepository(env)) {
     super();
-    this.userRepository = new UserRepository(env);
+    this.userRepository = userRepository;
   }
 
 
@@ -80,28 +81,26 @@ class UserService extends ApiService {
         const loginCookieData = {
           username: user.username,
           id: user.user_id,
+          publicId: user.public_id,
           role: user.user_role,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
         };
 
+        // The backend identifies users by this public id (its profile.public_id),
+        // never by the D1 integer, which differs per environment.
         const token = await Auth.generateToken(
           {
-            user_id: user.user_id,
+            user_id: user.public_id,
             username: user.username,
             role: user.user_role,
           },
-          env.JWT_SECRET_KEY, // Your JWT secret key
-          { expiresIn: env.JWT_ACCESS_TOKEN_EXPIRE_MINUTES } // Set token expiration
+          env.JWT_SECRET_KEY,
+          { expiresIn: env.JWT_ACCESS_TOKEN_EXPIRE_MINUTES }
         );
 
-        ApiService.setToken(token);
-
-        await UserService.getSingle("profile");
-
-
-
-
+        // Login depends only on D1. The backend profile is ensured lazily by the
+        // dashboard (ProfileService.ensureProfile), so a sleeping backend can't block login.
         return {
           success: true,
           user: loginCookieData,
@@ -137,7 +136,7 @@ class UserService extends ApiService {
       // Generate a new token based on the user details
       const newToken = await Auth.generateToken(
         {
-          user_id: user.user_id,
+          user_id: user.public_id,
           username: user.username,
           role: user.user_role,
         },

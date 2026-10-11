@@ -28,13 +28,14 @@ class UserRepository {
   async addBasicUser(userData: userRegister): Promise<number | void> {
     const unixTimestamp = Math.floor(Date.now() / 1000); // Convert current time to Unix timestamp
     const query = `
-      INSERT INTO user (username, user_password, user_role, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?)`;
+      INSERT INTO user (public_id, username, user_password, user_role, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?)`;
 
     try {
       const results = await this.db
         .prepare(query)
         .bind(
+          crypto.randomUUID(), // stable public identity, shared with the backend
           userData.username,
           userData.password,
           "2",
@@ -53,13 +54,14 @@ class UserRepository {
   async addAdminUser(userData: userRegister): Promise<number | void> {
     const unixTimestamp = Math.floor(Date.now() / 1000); // Convert current time to Unix timestamp
     const query = `
-      INSERT INTO user (username, user_password, user_role, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?)`;
+      INSERT INTO user (public_id, username, user_password, user_role, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?)`;
 
     try {
       const results = await this.db
         .prepare(query)
         .bind(
+          crypto.randomUUID(),
           userData.username,
           userData.password,
           "1",

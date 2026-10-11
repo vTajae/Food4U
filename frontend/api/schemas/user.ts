@@ -20,6 +20,8 @@ export interface UserModel {
 export interface LoginCookieData {
   username: string;
   id: number;
+  /** Stable identity used in the backend JWT; never the integer id. */
+  publicId: string;
   role: string;
   createdAt: number;
   updatedAt: number;
@@ -46,6 +48,7 @@ type userRegister = {
 
 type User = {
   user_id: number; // SQLite uses INTEGER for auto-increment primary keys
+  public_id: string; // UUID assigned at registration (backend profile.public_id)
   username: string; // Assuming email should be unique
   user_password: string;
   user_role: string;
