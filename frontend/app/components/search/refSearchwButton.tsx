@@ -107,7 +107,7 @@ export const SearchBarWithButtons: React.FC<SearchBarWithButtonsProps> = ({
   const hasQuery = inputValue.trim().length > 0;
 
   return (
-    <div className="mx-auto w-full max-w-reading-max">
+    <div className="w-full max-w-reading-max">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
