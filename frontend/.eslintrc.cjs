@@ -71,6 +71,10 @@ module.exports = {
         "plugin:import/recommended",
         "plugin:import/typescript",
       ],
+      rules: {
+        // TypeScript types already validate props; the rule misreads typed forwardRef components.
+        "react/prop-types": "off",
+      },
     },
 
     // Node
