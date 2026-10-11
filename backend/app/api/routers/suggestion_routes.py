@@ -6,13 +6,26 @@ from fastapi import HTTPException, status
 from app.api.services.food4u.suggestion_service import SuggestionService
 from app.api.dependencies.auth_dep import get_current_user
 from app.api.dependencies.fdc_dep import get_fdc_service
-from app.api.dependencies.food4u_dep import get_profile_service, get_suggestion_service
+from app.api.dependencies.food4u_dep import get_profile_service
+from app.config.database import async_database_session
+from app.api.repo.profile_repo import ProfileRepository
+from app.api.repo.meal_repo import MealRepository
+from app.api.repo.ai_repo import AIRepository
 from app.api.services.fdc.fdc_service import FDC_Service
 from app.api.schemas.food4u.suggestion import BasicAPIResponse, Query4Food, SuggestionRequest
 from app.api.dependencies.spoon_dep import get_spoon_service
 from app.api.services.spoonacular.spoon_service import Spoon_Service
 from app.api.services.food4u.profile_service import ProfileService
 from app.api.schemas.foodDataCentral.search_result_food import SearchResultFood
+
+
+# Keep the AI factory local so shared profile dependencies do not import AI.
+async def get_suggestion_service() -> SuggestionService:
+    async with async_database_session.get_session():
+        profile_repo = ProfileRepository(async_database_session.get_session())
+        meal_repo = MealRepository(async_database_session.get_session())
+        ai_repo = AIRepository()
+        return SuggestionService(profile_repo, meal_repo, ai_repo)
 
 
 router = APIRouter()

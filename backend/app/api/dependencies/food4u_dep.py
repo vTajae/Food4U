@@ -8,9 +8,6 @@ from app.api.services.food4u.medical_service import MedicalService
 from app.api.services.food4u.preferences_service import PreferenceService
 from app.api.repo.goal_repo import GoalRepository
 from app.api.services.food4u.goal_service import GoalService
-from app.api.services.food4u.suggestion_service import SuggestionService
-from app.api.repo.ai_repo import AIRepository
-from app.api.repo.meal_repo import MealRepository
 
 
 # Dependency for UserService with ProfileRepository and AuthRepository
@@ -39,12 +36,3 @@ async def get_goals_service() -> GoalService:
     async with async_database_session.get_session() as db:
         user_repo = GoalRepository(db)
         return GoalService(user_repo)
-
-
-# Dependency for UserService with ProfileRepository and AuthRepository
-async def get_suggestion_service() -> SuggestionService:
-    async with async_database_session.get_session():
-        profile_repo = ProfileRepository(async_database_session.get_session())
-        meal_repo = MealRepository(async_database_session.get_session())
-        ai_repo = AIRepository()
-        return SuggestionService(profile_repo, meal_repo, ai_repo)
