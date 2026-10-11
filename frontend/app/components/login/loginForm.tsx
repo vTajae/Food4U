@@ -70,7 +70,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ actionUrl, initialActionType = "l
       <h1 className="mb-6 text-center font-display text-display-md text-ink">Login</h1>
 
       <Form {...form}>
+        {/* method/action make a submit before hydration POST to the route action
+            instead of a GET that would put the password in the URL. */}
         <form
+          method="post"
+          action={actionUrl}
           onSubmit={form.handleSubmit(onSubmit)}
           noValidate
           className="flex w-full flex-col gap-5 rounded-(--rounded-lg) border border-line bg-surface p-6"
