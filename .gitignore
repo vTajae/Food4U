@@ -65,3 +65,4 @@ backend/env
 
 # cockpit run state (local orchestration ledger)
 .cockpit/
+.neon
