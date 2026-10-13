@@ -116,3 +116,50 @@ Slice-001/002 browser and PyJWT results remain historical evidence in their rece
 | Change the password scheme, with rehash-on-login | Requires a separate scheme/security decision, legacy-hash verification during transition, and tests for safe rehash/update behavior. No replacement scheme or migration was implemented or benchmarked here. |
 
 **No option is selected or recommended by this spike.** It preserves the current application and data while giving the owner a bounded compatibility/performance record.
+
+## 7. Migration status (slices 005–008)
+
+This section updates the historical 001–003 snapshot above. The Rust web layer is
+now exercised locally against isolated D1/KV and owned loopback backend/NLM-shaped
+mocks; it is not a deployed migration or proof of the real profile service.
+
+| Slice / local commit | What it proved |
+|---|---|
+| 005 / `46a80001ab11ae5deb785c19522d7e9100907daf` | Pantry Label authentication UI, source-compatible credential validation, and desktop/mobile browser comparisons. |
+| 006 / `772652852cc7fb7ce26de4f72591ab22016ba0ad`, `07b79be3220e5ebc71a8487b743440b5b231b555` | JSON APIs, request-scoped bearer ownership, real 20-second fetch/body aborts, explicit upstream errors, and login session rotation. |
+| 007 / `cc5114a3c0db1e652fa506ad61d4c590dce12f3c` | Signed-in shell/Ask, dashboard refresh/ensure/onboarding branching, profile chips, and guarded updates that do not recreate an already-retired session. |
+| 008 / `b976a3be1f3831a85f7fefb5387ac7da4d855f17` | Five-step `/welcome`, source-schema validation, explicit review-preserving save failures, local mocked save/dashboard round trip, keyboard reference selection, and desktop/mobile comparisons. |
+
+Accepted deliberate deviations: ClinicalTables failures return HTTP 500 instead
+of the legacy 200-empty response; login rotates the session identifier; the backend
+token is a per-request argument rather than shared static state. Neither live
+Next.js Ask nor Rust invents a safety verdict: the caller passes no
+`verdict`/`checkedAgainst` props ([caller](../../frontend/components/ask/ask-screen.tsx),
+line 114). Rust's onboarding uses a same-origin JSON enhancement on `POST /welcome`
+to avoid fetching the dashboard twice; ordinary submissions still redirect.
+The unused source confirmation modal has no onboarding caller, so no new
+confirmation flow is inserted. Source-compatible price input has no mandatory
+numeric validation and its removable chip can display `undefined`; review uses
+the actual value. Corrupt stored drafts are preserved with an explicit warning,
+not silently overwritten. Mono typography still uses the documented fallback.
+
+Current Next.js defects remain untouched: the production backend URL is hard-coded
+in [baseService.ts](../../frontend/api/services/baseService.ts), line 2;
+`ApiService` stores the bearer in a static field (line 26), and
+[applyBackendToken](../../frontend/lib/auth.ts), lines 23–25, mutates that shared
+field. Login reuses the session returned by `getSession` and commits it
+([login action](../../frontend/app/(auth)/login/actions.ts), lines 54–57), while
+[commitSession](../../frontend/lib/session.ts), lines 65–67, only generates an ID
+when none exists: existing login sessions are not rotated. These are sourced
+implementation facts, not claims of a reproduced production exploit.
+
+The older open-validation and runtime-debug-gate notes above are historical:
+005–008 now test credential/onboarding validation, and standalone default release
+proof excludes all nine debug fixture routes even with `SPIKE_DEBUG=1`.
+Completion evidence is the unchanged contract's **36 passing leaf checks,
+0 failures, 6 skips** (Node also counts the passing parent: raw 37 passes),
+retained API/dashboard suites, new welcome tests/browser, and committed
+[welcome comparisons](screenshots/rust-008/). No pins, `frontend/`, `backend/`
+or `database/` were changed. No real backend/NLM, deploy, remote account login or
+push was used. The existing KV reread/put is not atomic CAS and does not prove
+cross-isolate/global revocation ordering.
