@@ -1,0 +1,19 @@
+{
+  "name": "food4u-rust-compatibility-spike",
+  "private": true,
+  "scripts": {
+    "postinstall": "node scripts/prepare-bins.mjs",
+    "test:http": "node --test tests/http.test.mjs",
+    "dev": "wrangler dev --local --ip 127.0.0.1 --port 8789",
+    "build": "topcoat-cloudflare build"
+  },
+  "devDependencies": {
+    "@topcoat-cloudflare/adapter": "0.2.0",
+    "wrangler": "4.142.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "workerd@1.20260926.1": true,
+    "@parcel/watcher@2.5.1": true
+  }
+}
