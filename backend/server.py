@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routers import user_routes, fdc_routes, spoon_routes, suggestion_routes
 from app.config.database import async_database_session
+from app.config.diet_seed import seed_diet_types
 from app.api.dependencies.user_dep import get_user_service
 
 
@@ -14,6 +15,7 @@ origins = ["https://food4u.pages.dev/"]
 async def lifespan(app: FastAPI):
     await async_database_session.init()  # Initialize DB session
     await async_database_session.create_all()  # Create tables
+    await seed_diet_types(async_database_session)
     yield  # Startup actions done, separate from shutdown
     await async_database_session.close()  # Close DB connection
 

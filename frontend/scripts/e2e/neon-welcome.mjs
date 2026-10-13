@@ -23,11 +23,19 @@ async function choose(page, heading, query, name) {
   await page.getByRole('combobox', { name: heading, exact: true }).click();
   await page.getByPlaceholder('Type to search', { exact: true }).fill(query);
   const option = name ? page.getByRole('option').filter({ hasText: name }).first() : page.getByRole('option').first();
-  await option.waitFor();
+  await option.waitFor({ timeout: 10000 });
   const label = (await option.innerText()).trim();
   await option.click();
   await page.keyboard.press('Escape');
   return label;
+}
+
+async function checkChips(page) {
+  const region = page.locator('p').filter({ hasText: 'Your profile:' });
+  await region.waitFor();
+  const chips = await region.locator('span').allTextContents();
+  assert.deepEqual(chips.filter(text => text !== 'Your profile:'), ['Vegetarian', 'Allergic rhinitis, unspecified']);
+  assert.ok(!chips.includes('Italian') && !chips.includes('12.50'));
 }
 
 try {
@@ -37,23 +45,28 @@ try {
     await harness.login(page, account);
     await page.waitForURL(url => url.pathname === '/welcome');
     observations.cuisine = await choose(page, 'What cuisines do you enjoy?', 'Italian', 'Italian');
-    for (let i = 0; i < 3; i++) await page.getByRole('button', { name: 'Continue', exact: true }).click();
-    observations.condition = await choose(page, 'Any allergies or foods you avoid?', 'allergy', 'Allergic rhinitis');
     await page.getByRole('button', { name: 'Continue', exact: true }).click();
+    observations.diet = await choose(page, 'Do you follow a particular diet?', 'Vegetarian', 'Vegetarian');
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+    observations.condition = await choose(page, 'Do you have a medical condition?', 'allergy', 'Allergic rhinitis, unspecified');
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+    await page.getByPlaceholder('Enter price', { exact: true }).fill('12.50');
     await page.getByRole('button', { name: 'Review', exact: true }).click();
     await page.getByRole('heading', { name: "Here's what we'll check against", exact: true }).waitFor();
-    await page.screenshot({ path: resolve(evidence, '002-welcome-review.png'), fullPage: true });
+    await page.screenshot({ path: resolve(evidence, '003-welcome-review.png'), fullPage: true });
     await page.getByRole('button', { name: 'Save profile', exact: true }).click();
     const outcome = await Promise.race([
       page.waitForURL(url => url.pathname === '/dashboard').then(() => 'PASS'),
       page.getByRole('alert').getByText("Couldn't save your profile. Please try again.", { exact: true }).waitFor().then(() => 'failed'),
     ]);
     observations.same_session = { path: new URL(page.url()).pathname, save: outcome };
-    await page.screenshot({ path: resolve(evidence, `002-same-session-${outcome}.png`), fullPage: true });
-    await writeFile(resolve(evidence, '002-ui-results.json'), JSON.stringify(observations, null, 2));
+    await page.screenshot({ path: resolve(evidence, `003-same-session-${outcome}.png`), fullPage: true });
+    await writeFile(resolve(evidence, '003-ui-results.json'), JSON.stringify(observations, null, 2));
     console.log('NEON_SAME_SESSION', JSON.stringify(observations));
     assert.equal(outcome, 'PASS', 'same-session onboarding must save without a second login');
     await page.getByRole('heading', { name: 'What should I eat?', exact: true }).waitFor();
+    await checkChips(page);
     observations.save = 'PASS';
   });
 
@@ -62,14 +75,19 @@ try {
     await harness.login(page, account);
     await page.waitForURL(url => url.pathname === '/dashboard');
     await page.getByRole('heading', { name: 'What should I eat?', exact: true }).waitFor();
-    assert.equal(await page.getByText('Your profile:', { exact: true }).count(), 0);
-    await page.screenshot({ path: resolve(evidence, '002-fresh-login-dashboard.png'), fullPage: true });
+    await checkChips(page);
+    await page.screenshot({ path: resolve(evidence, '003-fresh-login-dashboard.png'), fullPage: true });
     observations.fresh_login_read = 'PASS';
-    observations.chips = 'none (pre-existing defect, not acceptance criterion)';
+    observations.chips = ['Vegetarian', 'Allergic rhinitis, unspecified'];
   });
   observations.result = 'PASS';
-  await writeFile(resolve(evidence, '002-ui-results.json'), JSON.stringify(observations, null, 2));
+  await writeFile(resolve(evidence, '003-ui-results.json'), JSON.stringify(observations, null, 2));
   console.log('NEON_UI_E2E', JSON.stringify(observations));
+} catch (error) {
+  observations.result = 'FAIL';
+  observations.error = error.message;
+  await writeFile(resolve(evidence, '003-ui-results.json'), JSON.stringify(observations, null, 2));
+  throw error;
 } finally {
   await harness.close();
 }

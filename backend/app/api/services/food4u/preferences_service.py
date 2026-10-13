@@ -27,13 +27,14 @@ class PreferenceService:
             elif question_id == 55:  # Disliked cuisines
                 await self.repo.updateUserCuisinePreferences(profile_id, cuisine_names, "dislike")
 
-        # elif query_key == "diets" and question_id == 5555:  # Diet preferences
-        #     for suggestion in suggestions:
-        #         await self.repo.updateUserDiet(profile_id, suggestion.name)
+        elif query_key == "diets" and question_id == 5555:
+            diet_names = [suggestion.name for suggestion in suggestions if suggestion.name]
+            if diet_names:
+                await self.repo.updateUserDiet(profile_id, diet_names)
 
-        # elif query_key == "price" and question_id == 555:  # Price preferences
-        #     for suggestion in suggestions:
-        #         await self.repo.updateUserPricePreferences(profile_id, suggestion.value)
+        elif query_key == "price" and question_id == 555:
+            if suggestions and suggestions[0].value:
+                await self.repo.updateUserPricePreferences(profile_id, suggestions[0].value)
         else:
             return {"error": "Invalid query key"}
 

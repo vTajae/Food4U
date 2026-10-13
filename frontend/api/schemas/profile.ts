@@ -17,6 +17,13 @@ export interface ProfileDietSchema {
     diet_type: DietTypeSchema;
 }
 
+export interface ProfileMedicalHistorySchema {
+    icd_details?: {
+        code?: string | null;
+        description?: string | null;
+    } | null;
+}
+
 export interface ProfileSchema {
     id: number;
     age?: number | null;
@@ -26,6 +33,7 @@ export interface ProfileSchema {
     updated_at: Date;
     attributes: ProfileAttributeSchema[];
     diets: ProfileDietSchema[];
+    medical_history?: ProfileMedicalHistorySchema[];
 }
 
 

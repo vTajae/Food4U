@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import ProfileService from "~/api/services/profileService";
 import UserService from "~/api/services/userService";
 import { ApiError } from "~/api/services/baseService";
+import { profileChips, hasAnswers } from "~/lib/profileChips";
 import type { ProfileSchema } from "~/api/schemas/profile";
 import { AskScreen } from "~/components/ask/ask-screen";
 import { BackendUnavailable } from "~/components/shell/backend-unavailable";
@@ -11,21 +12,6 @@ import { applyBackendToken, requireSession } from "~/lib/auth";
 import { commitSession, type SessionData } from "~/lib/session";
 
 export const metadata: Metadata = { title: "Ask" };
-
-// Chips shown under the ask box: diets plus condition/allergy attributes.
-function profileChips(profile: ProfileSchema): string[] {
-  const chips: string[] = [];
-  for (const d of profile.diets ?? []) {
-    if (d.diet_type?.diet_name) chips.push(d.diet_type.diet_name);
-  }
-  for (const a of profile.attributes ?? []) {
-    const category = (a.attribute_category || "").toLowerCase();
-    if (/condition|allerg|restriction|icd/.test(category) && a.attribute_name) {
-      chips.push(a.attribute_name);
-    }
-  }
-  return Array.from(new Set(chips)).slice(0, 8);
-}
 
 type Loaded =
   | { kind: "profile"; profile: ProfileSchema }
@@ -90,8 +76,7 @@ export default async function DashboardPage() {
 
   // A profile with no answers yet means onboarding hasn't been done.
   const { profile } = loaded;
-  const hasAnswers = (profile.attributes?.length ?? 0) > 0 || (profile.diets?.length ?? 0) > 0;
-  if (!hasAnswers && session.data.welcome?.isComplete !== true) {
+  if (!hasAnswers(profile) && session.data.welcome?.isComplete !== true) {
     session.data.welcome = { isComplete: false };
     await commitSession(session);
     redirect("/welcome");
