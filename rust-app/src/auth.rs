@@ -258,7 +258,7 @@ async fn login(cx: &Cx, username: String, password: String) -> Result<String> {
         welcome: previous.as_ref().and_then(|s| s.welcome.clone()),
         flash: previous.and_then(|s| s.flash),
     };
-    write_session(cx, &session).await?;
+    rotate_session(cx, &session).await?;
     Ok(String::new())
 }
 
@@ -267,6 +267,28 @@ async fn write_session(cx: &Cx, session: &SessionData) -> Result<()> {
         Some(id) => id,
         None => uuid()?,
     };
+    persist_session(cx, session, &id).await?;
+    issue_session_cookie(cx, &id)
+}
+
+async fn rotate_session(cx: &Cx, session: &SessionData) -> Result<()> {
+    let previous = session_id(cx).await?;
+    let id = loop {
+        let candidate = uuid()?;
+        if previous.as_deref() != Some(candidate.as_str()) {
+            break candidate;
+        }
+    };
+    persist_session(cx, session, &id).await?;
+    if let Some(previous) = previous {
+        let kv = topcoat_cloudflare::env(cx).kv("cloudflare_KV")?;
+        SendFuture::new(kv.delete(&format!("session:{previous}"))).await?;
+    }
+    // Publish the replacement cookie only after the retired record is deleted.
+    issue_session_cookie(cx, &id)
+}
+
+async fn persist_session(cx: &Cx, session: &SessionData, id: &str) -> Result<()> {
     let kv = topcoat_cloudflare::env(cx).kv("cloudflare_KV")?;
     SendFuture::new(
         kv.put(&format!("session:{id}"), serde_json::to_string(session)?)?
@@ -274,11 +296,15 @@ async fn write_session(cx: &Cx, session: &SessionData) -> Result<()> {
             .execute(),
     )
     .await?;
+    Ok(())
+}
+
+fn issue_session_cookie(cx: &Cx, id: &str) -> Result<()> {
     let secret = topcoat_cloudflare::env(cx)
         .secret("USER_SESSION_SECRET")?
         .to_string();
     cookies(cx).add(
-        Cookie::build(("__session", format!("{id}.{}", sign(&secret, &id)?)))
+        Cookie::build(("__session", format!("{id}.{}", sign(&secret, id)?)))
             .http_only(true)
             .same_site(SameSite::Lax)
             .secure(true)

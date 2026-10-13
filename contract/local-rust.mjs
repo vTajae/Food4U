@@ -14,7 +14,7 @@ assert.ok(!flags.has('--api-tests') || flags.has('--fixtures'), '--api-tests req
 const releaseProof = flags.has('--release-proof');
 assert.equal(flags.has('--release'), releaseProof, 'Use --release --release-proof together');
 assert.ok(!releaseProof || flags.size === 2, 'Release proof cannot be combined with fixtures/checks/contract/visual');
-const prefix = releaseProof ? '006-rust-release' : '006-rust';
+const prefix = releaseProof ? '006-rust-release' : flags.has('--api-tests') ? '006-rust-api' : '006-rust';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const mounted = root.match(/^\/mnt\/([a-z])\/(.*)$/);
 assert.ok(mounted, 'Repository must be on a Windows drive mounted in WSL');
@@ -167,8 +167,8 @@ try {
     console.log(proof.trim());
   }
   if (flags.has('--checks')) {
-    const checks = await run(process.execPath, ['--test', '--test-concurrency=1', 'tests/http.test.mjs', 'tests/auth.test.mjs', 'tests/auth-validation.test.mjs'], app, `${prefix}-checks.log`, { SPIKE_URL: 'http://127.0.0.1:8789' });
-    assert.equal(checks.code, 0, 'HTTP/auth/auth-validation checks');
+    const checks = await run(process.execPath, ['--test', '--test-concurrency=1', 'tests/http.test.mjs', 'tests/auth.test.mjs', 'tests/auth-validation.test.mjs', 'tests/session-rotation.test.mjs'], app, `${prefix}-checks.log`, { SPIKE_URL: 'http://127.0.0.1:8789' });
+    assert.equal(checks.code, 0, 'HTTP/auth/validation/session-rotation checks');
   }
   if (flags.has('--contract')) {
     const suite = await windowsRun(['--test', '--test-reporter=spec', 'contract/'], `${prefix}-contract.log`);

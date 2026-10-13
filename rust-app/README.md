@@ -35,7 +35,7 @@ reset databases. A new empty isolated database can be initialized from
 its local user table, so never reapply it to retained state or another app.
 
 The `--checks` files run serially to avoid shared KV snapshot races:
-HTTP3, original auth13 and server-validation2 checks. The unchanged contract
+HTTP3, original auth13, server-validation2 and session-rotation3 checks. The unchanged contract
 uses Windows Node/Chrome and the frontend's installed Playwright. Expected
 result: **34 scoped pass,2 out-of-scope leaf failures,6 skips**; Node reports3
 failures including the failed parent and exits1. The helper exits0 only when
@@ -64,7 +64,13 @@ uses POST, never GET, to prevent passwords appearing in URLs when JS fails.
 Registration uses UUIDv4, role2, integer Unix seconds and bcrypt cost10.
 Auth retains the existing D1 fields, signed `__session` cookie, KV SessionData,
 and HS256 JWT with stable public_id/30-minute expiry. Login preserves welcome
-and flash state. `/api/auth/logout` deletes KV and expires the cookie; `/logout`
+and flash state, generates a new UUID session ID on every successful login,
+persists the replacement, deletes the old KV key, then issues the new cookie.
+Failed logins leave the old data/cookie untouched; retired cookies cannot
+authenticate local protected pages. KV operations are not a transaction: failures
+propagate without issuing the replacement cookie, and an unpublished record can
+remain until TTL expiry. This is not proof of global production KV consistency.
+`/api/auth/logout` deletes KV and expires the cookie; `/logout`
 remains an alias. Real dashboard/welcome flows are deferred.
 
 ## Request-scoped backend seam
