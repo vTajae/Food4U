@@ -85,8 +85,10 @@ entrypoint; it declares no dependencies.
 | API validation | Authenticated clinicals enum/query/required-field 400s; authenticated suggestion unknown-action 400; no backend required. Refs has no 400 branch |
 | Backend outage | Dashboard's specific alert/heading/retry link; welcome review/save failure's exact alert and retained page |
 
-Observed page redirects and POST logout are **307**. The suite does not pin
-framework-specific login-action transport; it pins the user's destination.
+Observed Next.js page redirects and POST logout are **307**. The contract
+accepts **302, 303 or 307**, never cached permanent **301/308**, while still
+pinning the Location path. It does not pin framework-specific login-action
+transport; it pins the user's destination.
 
 Fresh slice-004 run: Next.js **37 passed, 0 failed, 6 skipped** (including the
 parent test), frontend unit tests **4/4**, Render requests **0**. The unchanged

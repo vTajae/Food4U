@@ -63,8 +63,8 @@ export async function createHarness() {
         await Promise.all([source, destination].map(server => new Promise(ok => server.close(ok))));
       }
     },
-    assertRedirect(response, status, path) {
-      assert.equal(response.status(), status, `redirect status for ${response.url()}`);
+    assertRedirect(response, _legacyStatus, path) {
+      assert.ok([302, 303, 307].includes(response.status()), `temporary redirect status for ${response.url()}: ${response.status()}`);
       assert.equal(new URL(response.headers().location, base).pathname, path);
     },
     async withContext(callback) {
