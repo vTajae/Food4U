@@ -10,7 +10,7 @@ _2026-10-13 · branch `rust-topcoat-spike` · local-only compatibility evidence,
 | 002 / `f45210d` | Login preserves the existing bcrypt, cookie, KV-session and JWT formats | Auth 13/13; real browser login/logout and credential errors; backend-installed PyJWT accepts a fresh Rust JWT; independently rerun by OMC |
 | 003 / `ecf3de9` (benchmark code) | Optimized release Wasm and bcrypt-ts measured sequentially in local workerd | 30 samples each, excluded warmups, fresh-instance samples and loaded-Wasm hash equality; driver exits 0 |
 
-Detailed receipts: [001](../../.cockpit/20261012-rust/plans/001-executor.md), [002](../../.cockpit/20261012-rust/plans/002-executor.md), [003](../../.cockpit/20261012-rust/plans/003-executor.md). Browser evidence: [counter](screenshots/rust-spike/001-counter.png), [login](screenshots/rust-spike/002-login.png). The cockpit receipts and raw `.evidence/` files are local handoff artifacts, not portable test fixtures.
+Receipts for slices 001–003 are local, gitignored cockpit artifacts, not repository links; the implementation commit hashes are retained above. Browser evidence: [counter](screenshots/rust-spike/001-counter.png), [login](screenshots/rust-spike/002-login.png). Raw `.evidence/` files are likewise local handoff artifacts, not portable test fixtures.
 
 Framework/toolchain pins remain Topcoat **0.9.0**, topcoat-cloudflare **0.2.0**, worker/worker-build **0.8.7**, Rust **1.98.1**, Wrangler **4.142.0**, compatibility date **2026-09-27**. The existing `frontend/`, `backend/` and `database/` remain intact; the spike uses isolated local D1/KV, dummy binding IDs and fake secrets. No production migration, deploy or push is part of this evidence.
 
