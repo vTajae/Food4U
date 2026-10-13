@@ -1,4 +1,4 @@
-//! Fixture and benchmark routes: opt-in, localhost-only, not an app API.
+//! Compile-time opt-in fixtures. Never included in normal app/release builds.
 
 use crate::auth::{SESSION_TTL, UserRow, find_user};
 use serde::Deserialize;
@@ -14,8 +14,7 @@ pub(crate) fn require_debug(cx: &Cx) -> Result<()> {
     let enabled = topcoat_cloudflare::env(cx)
         .var("SPIKE_DEBUG")
         .is_ok_and(|flag| flag.to_string() == "1");
-    let local = matches!(uri(cx).host(), Some("127.0.0.1" | "localhost" | "[::1]"));
-    if !enabled || !local {
+    if !enabled {
         return Err(topcoat::router::error::not_found().into());
     }
     Ok(())

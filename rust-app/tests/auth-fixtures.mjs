@@ -24,7 +24,7 @@ export async function newFixture() {
   return {
     password,
     row: {
-      username: `ts-${randomUUID()}`,
+      username: `ts-${randomUUID()}@example.test`,
       public_id: randomUUID(),
       user_password: await hash(password, 10),
       user_role: '2',

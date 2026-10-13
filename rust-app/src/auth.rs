@@ -1,20 +1,25 @@
-//! Wire-compatible authentication for the local compatibility spike.
+//! D1 credentials and wire-compatible KV authentication.
 
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use hmac::{Hmac, Mac};
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
+#[cfg(feature = "debug-fixtures")]
+use topcoat::router::content::{Form, Json};
 use topcoat::{
     Result,
-    asset::asset,
     context::Cx,
     cookie::{Cookie, Cookies, SameSite, cookies, time::Duration},
     router::{
-        content::{Form, Json},
         error::{SeeOther, see_other},
-        page, route,
+        route,
     },
-    runtime::{Event, procedure, signal},
+    runtime::procedure,
+};
+#[cfg(feature = "debug-fixtures")]
+use topcoat::{
+    asset::asset,
+    router::page,
     view::{View, view},
 };
 use worker::send::SendFuture;
@@ -118,12 +123,95 @@ async fn read_session(cx: &Cx) -> Result<Option<SessionData>> {
     Ok(data.map(|json| serde_json::from_str(&json)).transpose()?)
 }
 
+pub(crate) async fn is_authenticated(cx: &Cx) -> Result<bool> {
+    Ok(read_session(cx)
+        .await?
+        .is_some_and(|session| session.auth.is_some()))
+}
+
+// Equivalent to Zod 3.25.76's email regex, without adding a regex dependency.
+fn valid_email(email: &str) -> bool {
+    let Some((local, domain)) = email.split_once('@') else {
+        return false;
+    };
+    let local_end = |b: u8| b.is_ascii_alphanumeric() || b"_+-".contains(&b);
+    if local.starts_with('.')
+        || email.contains("..")
+        || !local.bytes().all(|b| local_end(b) || b"'.".contains(&b))
+        || !local.bytes().last().is_some_and(local_end)
+    {
+        return false;
+    }
+    let Some((labels, tld)) = domain.rsplit_once('.') else {
+        return false;
+    };
+    tld.len() >= 2
+        && tld.bytes().all(|b| b.is_ascii_alphabetic())
+        && labels.split('.').all(|label| {
+            label
+                .bytes()
+                .next()
+                .is_some_and(|b| b.is_ascii_alphanumeric())
+                && label
+                    .bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || b == b'-')
+        })
+}
+
+fn js_trim(value: &str) -> &str {
+    value.trim_matches(|c| {
+        matches!(c,
+        '\u{0009}'..='\u{000d}' | '\u{0020}' | '\u{00a0}' | '\u{1680}'
+        | '\u{2000}'..='\u{200a}' | '\u{2028}' | '\u{2029}' | '\u{202f}'
+        | '\u{205f}' | '\u{3000}' | '\u{feff}')
+    })
+}
+
+fn validate_credentials<'a>(
+    username: &'a str,
+    password: &'a str,
+) -> std::result::Result<(&'a str, &'a str), &'static str> {
+    if !valid_email(username) {
+        return Err("Enter a valid email address.");
+    }
+    // Zod applies checks before trim; JS String.length counts UTF-16 code units.
+    if password.encode_utf16().count() < 6 {
+        return Err("Use at least 6 characters.");
+    }
+    Ok((js_trim(username), js_trim(password)))
+}
+
+#[procedure("/api/register")]
+async fn register_account(cx: &Cx, username: String, password: String) -> Result<String> {
+    let (username, password) = match validate_credentials(&username, &password) {
+        Ok(credentials) => credentials,
+        Err(message) => return Ok(message.to_owned()),
+    };
+    if find_user(cx, username).await?.is_some() {
+        return Ok("User already exists.".to_owned());
+    }
+    insert_user(cx, username, password).await?;
+    let mut session = read_session(cx).await?.unwrap_or(SessionData {
+        auth: None,
+        token: None,
+        welcome: None,
+        flash: None,
+    });
+    session.welcome = Some(serde_json::json!({"isComplete": false}));
+    write_session(cx, &session).await?;
+    Ok(String::new())
+}
+
 #[procedure("/api/login")]
 async fn login(cx: &Cx, username: String, password: String) -> Result<String> {
-    let Some(user) = find_user(cx, &username).await? else {
+    let (username, password) = match validate_credentials(&username, &password) {
+        Ok(credentials) => credentials,
+        Err(message) => return Ok(message.to_owned()),
+    };
+    let Some(user) = find_user(cx, username).await? else {
         return Ok("User does not exist.".to_owned());
     };
-    if !bcrypt::verify(&password, &user.user_password)
+    if !bcrypt::verify(password, &user.user_password)
         .map_err(|e| topcoat::Error::msg(e.to_string()))?
     {
         return Ok("Incorrect password.".to_owned());
@@ -143,6 +231,7 @@ async fn login(cx: &Cx, username: String, password: String) -> Result<String> {
         URL_SAFE_NO_PAD.encode(serde_json::to_vec(&claims)?)
     );
     let token = format!("{unsigned}.{}", sign(&secret, &unsigned)?);
+    let previous = read_session(cx).await?;
     let session = SessionData {
         auth: Some(SessionAuth {
             username: user.username,
@@ -153,13 +242,21 @@ async fn login(cx: &Cx, username: String, password: String) -> Result<String> {
             updated_at: user.updated_at,
         }),
         token: Some(token),
-        welcome: None,
-        flash: None,
+        welcome: previous.as_ref().and_then(|s| s.welcome.clone()),
+        flash: previous.and_then(|s| s.flash),
     };
-    let id = uuid()?;
+    write_session(cx, &session).await?;
+    Ok(String::new())
+}
+
+async fn write_session(cx: &Cx, session: &SessionData) -> Result<()> {
+    let id = match session_id(cx).await? {
+        Some(id) => id,
+        None => uuid()?,
+    };
     let kv = topcoat_cloudflare::env(cx).kv("cloudflare_KV")?;
     SendFuture::new(
-        kv.put(&format!("session:{id}"), serde_json::to_string(&session)?)?
+        kv.put(&format!("session:{id}"), serde_json::to_string(session)?)?
             .expiration_ttl(SESSION_TTL)
             .execute(),
     )
@@ -176,44 +273,10 @@ async fn login(cx: &Cx, username: String, password: String) -> Result<String> {
             .max_age(Duration::seconds(SESSION_TTL as i64))
             .build(),
     );
-    Ok(String::new())
+    Ok(())
 }
 
-#[page("/login")]
-async fn login_page(cx: &Cx) -> Result<impl View> {
-    let username = signal(cx, String::new);
-    let password = signal(cx, String::new);
-    let error = signal(cx, String::new);
-    Ok(view! {
-        <!DOCTYPE html><html lang="en"><head>
-            <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>"Local Food4U login"</title>
-            <link rel="stylesheet" href=(asset!("../assets/spike.css"))>
-            <link rel="icon" href="data:,">
-            topcoat::runtime::script()
-        </head><body><main>
-            <h1>"Local Food4U login"</h1><p>"Compatibility spike — fake local data only."</p>
-            <form @submit=$(async |e: Event| {
-                e.prevent_default();
-                let message = login(username.get(), password.get()).await;
-                error.set(message);
-                if error.get().is_empty() { raw!("window.location.assign('/me')"); }
-            })>
-                <p><label for="username">"Username"</label>
-                    <input id="username" name="username" type="text" required=""
-                        autocomplete="username" :value=$(username.get())
-                        @input=$(|e: Event| username.set(e.target.value))></p>
-                <p><label for="password">"Password"</label>
-                    <input id="password" name="password" type="password" required=""
-                        autocomplete="current-password" :value=$(password.get())
-                        @input=$(|e: Event| password.set(e.target.value))></p>
-                <button type="submit">"Log in"</button>
-                <p role="alert" aria-live="polite">$(error.get())</p>
-            </form>
-        </main></body></html>
-    })
-}
-
+#[cfg(feature = "debug-fixtures")]
 #[page("/me")]
 async fn me(cx: &Cx) -> Result<impl View> {
     let Some(session) = read_session(cx).await? else {
@@ -237,6 +300,15 @@ async fn me(cx: &Cx) -> Result<impl View> {
 
 #[route(POST "/logout")]
 async fn logout(cx: &Cx) -> Result<SeeOther> {
+    destroy_session(cx).await
+}
+
+#[route(POST "/api/auth/logout")]
+async fn public_logout(cx: &Cx) -> Result<SeeOther> {
+    destroy_session(cx).await
+}
+
+async fn destroy_session(cx: &Cx) -> Result<SeeOther> {
     if let Some(id) = session_id(cx).await? {
         let kv = topcoat_cloudflare::env(cx).kv("cloudflare_KV")?;
         SendFuture::new(kv.delete(&format!("session:{id}"))).await?;
@@ -252,24 +324,30 @@ async fn logout(cx: &Cx) -> Result<SeeOther> {
     Ok(see_other("/login"))
 }
 
+#[cfg(feature = "debug-fixtures")]
 #[derive(Deserialize)]
 struct Credentials {
     username: String,
     password: String,
 }
 
+#[cfg(feature = "debug-fixtures")]
 #[route(POST "/register")]
 async fn register(cx: &Cx, Form(form): Form<Credentials>) -> Result<Json<serde_json::Value>> {
     crate::auth_probe::require_debug(cx)?;
-    let password =
-        bcrypt::hash(&form.password, 10).map_err(|e| topcoat::Error::msg(e.to_string()))?;
+    let id = insert_user(cx, &form.username, &form.password).await?;
+    Ok(Json(
+        serde_json::json!({"registered": true, "public_id": id}),
+    ))
+}
+
+async fn insert_user(cx: &Cx, username: &str, password: &str) -> Result<String> {
+    let password = bcrypt::hash(password, 10).map_err(|e| topcoat::Error::msg(e.to_string()))?;
     let id = uuid()?;
     let now = (js_sys::Date::now() / 1000.0) as i64;
     let db = topcoat_cloudflare::env(cx).d1("cloudflare_db")?;
     let stmt = db.prepare("INSERT INTO user (public_id, username, user_password, user_role, createdAt, updatedAt) VALUES (?, ?, ?, '2', ?, ?)")
-        .bind(&[id.clone().into(), form.username.into(), password.into(), (now as f64).into(), (now as f64).into()])?;
+        .bind(&[id.clone().into(), username.into(), password.into(), (now as f64).into(), (now as f64).into()])?;
     SendFuture::new(stmt.run()).await?;
-    Ok(Json(
-        serde_json::json!({"registered": true, "public_id": id}),
-    ))
+    Ok(id)
 }

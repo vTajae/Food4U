@@ -1,123 +1,105 @@
-# Food4U Topcoat compatibility spike
+# Food4U Rust / Topcoat app — auth vertical slice
 
-This is slice 001, **not** a replacement for the existing application. It has
-one SSR page, a bundled CSS asset, and a browser signal counter. It does not
-connect to accounts, profiles, D1, KV, CockroachDB, or external providers.
+The Rust app now serves Food4U's public authentication and privacy surface.
+Dashboard and welcome are protected **not-yet-migrated placeholders**. The three
+profile/reference/suggestion APIs and backend-outage flows are not implemented;
+this is not a complete application replacement. No backend is called.
 
-## Pinned environment
+## Pinned local environment
 
-- WSL Ubuntu-24.04, user `apples`; Node 22+ (verified with 24.15.0).
-- Rust 1.98.1 with `wasm32-unknown-unknown`, Clippy, and rustfmt.
-- Topcoat 0.9.0, topcoat-cloudflare 0.2.0, worker/worker-build 0.8.7.
-- npm adapter 0.2.0, Wrangler 4.142.0; compatibility date 2026-09-27.
+- WSL Ubuntu-24.04 (`apples`), Linux Node22+ (verified24.15.0).
+- Rust1.98.1, wasm32-unknown-unknown, rustfmt/Clippy.
+- Topcoat0.9.0, topcoat-cloudflare0.2.0, worker/worker-build0.8.7.
+- npm adapter0.2.0, Wrangler4.142.0, compatibility date2026-09-27.
 
-Run npm, Cargo, and Wrangler **only from WSL**, not Windows: dependencies
-contain Linux binaries. On `/mnt/g`, npm executable symlinks fail with EPERM.
-The project disables bin links and creates regular file wrappers at postinstall
-for the two pinned CLIs; the packages themselves are unchanged.
+Run npm/Cargo/Wrangler **in WSL only**: dependencies contain Linux binaries.
+On `/mnt/g`, npm bin links fail with EPERM; the existing postinstall creates
+regular wrappers for the pinned CLIs without modifying packages.
 
 ```sh
-cd /mnt/g/WebDev/Food4U/Food4U/rust-app
+cd /mnt/g/WebDev/Food4U/Food4U
 export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
 export CARGO_TARGET_DIR="$HOME/.cargo/food4u-rust-targets/slice001"
-npm ci
+# Dependencies already installed; for a fresh checkout: (cd rust-app && npm ci)
+node contract/local-rust.mjs --fixtures --checks --contract --visual
+```
+
+This command owns and stops its local server on8789 (inspector9238). It uses
+ignored temporary configs, dummy D1/KV bindings and the **fake example keys**,
+never production credentials. Existing isolated `rust-app/.wrangler/state`
+must already contain the slice002 local user schema. It does not initialize or
+reset databases. A new empty isolated database can be initialized from
+`frontend/database/basic.sql` using Wrangler **--local** only: that SQL drops
+its local user table, so never reapply it to retained state or another app.
+
+The `--checks` files run serially to avoid shared KV snapshot races:
+HTTP3, original auth13 and server-validation2 checks. The unchanged contract
+uses Windows Node/Chrome and the frontend's installed Playwright. Expected
+result: **20 scoped pass,16 out-of-scope leaf failures,6 skips**; Node reports17
+failures including the failed parent and exits1. The helper exits0 only when
+those exact gaps, all scoped passes and `ONRENDER_REQUESTS_OBSERVED=0` are proven.
+It rejects Wrangler's stale-build fallback instead of testing old artifacts.
+
+`--visual` captures six pages (1440x900 and390x844, mobile DPR2) and actual
+baseline-left/Rust-right PNG comparisons in `docs/sprint/screenshots/rust-005/`.
+It checks tab keyboard/focus behavior, input error associations, raw-password
+validation and disabled/blocked-JavaScript safety. A deny-only proxy blocks
+external requests, including redirects; fonts are served locally. Evidence
+is under ignored `contract/.evidence/005-*` and `rust-app/.evidence/005-visual.json`.
+Use `node contract/local-rust.mjs --fixtures` for a persistent local fixture
+server; Ctrl+C stops it. Without `--fixtures`, dev has no debug routes.
+
+## Auth and fixtures
+
+Public login/register are Topcoat JSON-array procedures:
+`POST /api/login` and `/api/register`, body `[username,password]`. They return
+an empty JSON string on success or the existing validation/credential message.
+Client and server check raw email and six UTF16 password units **before trim**;
+raw values cross the request seam so server validation applies the same schema.
+The SSR submit is disabled until enhancement initializes, and the native form
+uses POST, never GET, to prevent passwords appearing in URLs when JS fails.
+
+Registration uses UUIDv4, role2, integer Unix seconds and bcrypt cost10.
+Auth retains the existing D1 fields, signed `__session` cookie, KV SessionData,
+and HS256 JWT with stable public_id/30-minute expiry. Login preserves welcome
+and flash state. `/api/auth/logout` deletes KV and expires the cookie; `/logout`
+remains an alias. Real dashboard/welcome flows are deferred.
+
+`/_spike/*`, test `POST /register` and legacy `/me` are compiled only with
+Cargo feature `debug-fixtures`, **off by default**. Fixtures additionally need
+`SPIKE_DEBUG=1`; no spoofable Host-header security check remains.
+`scripts/worker-build-fixtures.sh` uses the adapter's supported WORKER_BUILD_BIN
+override, validates the real worker-build0.8.7 and adds the actual Cargo feature
+only for `--dev`. It refuses standalone release builds. No adapter patch or
+fake cfg/RUSTFLAGS is used.
+
+## Default release and static gates
+
+Stop any dev server before building release. From the repo root in WSL:
+
+```sh
+node contract/local-rust.mjs --release --release-proof
+cd rust-app
 cargo fmt --check
 cargo clippy --target wasm32-unknown-unknown -- -D warnings
-npx wrangler dev --local --ip 127.0.0.1 --port 8789
+cargo clippy --target wasm32-unknown-unknown --features debug-fixtures -- -D warnings
 ```
 
-The target directory is a WSL-local cache, not source. The adapter obtains its
-path from Cargo metadata and uses it for the Wasm artifact and native builder.
+Release proof clears build overrides, runs standalone
+`npx --no-install topcoat-cloudflare build`, verifies optimized release metadata
+and Wasm hash, checks debug strings absent, and serves those exact bytes with
+**no build hook**. Even with `SPIKE_DEBUG=1`, all seven fixture method/routes
+must404 while public login/validation remain live. Logs/results use the separate
+`005-rust-release-*` prefix. This proves a local release artifact, not deployment
+or production performance. No login, deploy, --remote or push is part of this task.
 
-In another WSL shell, run:
+## Earlier spike evidence
 
-```sh
-cd /mnt/g/WebDev/Food4U/Food4U/rust-app
-export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
-SPIKE_URL=http://127.0.0.1:8789 npm run test:http
-```
+Slices001–003 established adapter compatibility and cross-language auth.
+Historical counter/browser scripts and002 screenshots remain as earlier evidence;
+the counter page is no longer served. Original auth tests still require fixtures.
+Local elapsed bcrypt timing is not deployed billable CPU and is not a Rust speed
+claim. Exact framework pins remain unchanged; advisories are not silently upgraded.
 
-`tests/browser.mjs` uses the existing frontend's Playwright dependency and a
-real headless Chrome executable. It verifies click and keyboard changes and
-reload reset, rejects browser errors, and saves the required counter screenshot.
-To use installed Windows Chrome from a WSL shell:
-
-```sh
-"/mnt/c/Program Files/nodejs/node.exe" \
-  G:/WebDev/Food4U/Food4U/rust-app/tests/browser.mjs
-```
-
-This browser is Windows Chrome exercising **WSL's local workerd**, not a Linux
-browser or deployed Cloudflare Worker.
-
-For command-to-ready timing, use `node scripts/dev-timed.mjs` in place of the
-dev command. It records the first ready event and raw output under ignored
-`.evidence/`. Run `npx topcoat-cloudflare build` after stopping dev for a release
-build; this does not deploy anything. Preserve the exact dependency pins even
-when the audit reports advisories; report them rather than silently upgrading.
-
-## Upstream references
-
-- [Adapter installation](https://github.com/kdcokenny/topcoat-cloudflare/blob/main/packages/adapter/README.md)
-- [Pinned compatibility](https://github.com/kdcokenny/topcoat-cloudflare/blob/main/docs/compatibility.md)
-- [UI app APIs](https://github.com/kdcokenny/topcoat-cloudflare/blob/main/examples/ui/src/app.rs)
-- [Adapter fixture counter](https://github.com/kdcokenny/topcoat-cloudflare/blob/main/tests/fixture/src/lib.rs)
-
-No Cloudflare account login, deployment, remote bindings, or real secrets have
-been used. See the cockpit receipts for measured results and remaining limitations.
-
-## Slice 002: local auth compatibility
-
-The spike now also serves `/login`, `/me`, and `/logout`. It is still **not** the
-Food4U application replacement. D1/KV bindings use dummy IDs and their isolated
-local `.wrangler` state. Copy `.dev.vars.example` to `.dev.vars` for the fake
-local keys; never use those keys outside this experiment.
-
-Initialize only the **new local spike database** (this SQL drops the local
-`user` table; it does not target the existing frontend database):
-
-```sh
-npx wrangler d1 execute cloudflare_db --local --file=../frontend/database/basic.sql
-```
-
-`basic.sql` already includes `public_id`. Do not also apply the legacy
-`0001_user_public_id.sql` migration to that fresh schema: it would add the same
-column again. No existing database or production migration is part of this slice.
-
-Login is a Topcoat JSON-array procedure, `POST /api/login` with
-`[username,password]`; the real form calls it through Topcoat's browser runtime.
-It returns an empty string on success or the exact existing credential error.
-It uses the existing D1 row fields, bcrypt cost 10, the existing HMAC cookie/KV
-format, and HS256 JWTs with the stable `public_id` and 30-minute expiry. No mutable
-current-user/token state is shared across requests.
-
-The `/register` path and `/_spike/*` fixture/measurement routes require both
-`SPIKE_DEBUG=1` and a localhost request URL; they are unavailable otherwise. They
-exist only to prove cross-language compatibility with fake local data, not as
-production registration/admin APIs. Topcoat's default origin policy stays enabled.
-
-With workerd running on port 8789, run these **sequentially** from WSL:
-
-```sh
-npm run test:http
-npm run test:auth
-"/mnt/c/Program Files/nodejs/node.exe" \
-  G:/WebDev/Food4U/Food4U/rust-app/tests/auth-browser.mjs
-```
-
-The auth tests use the existing frontend's bcrypt-ts and JWT packages, real local
-D1/KV, and independent WebCrypto session signing. The browser test uses a real
-form, verifies visible credential errors, login, logout, and saves `002-login.png`.
-Tests seed fake users; successful session keys are cleaned up. The HTTP suite
-emits a `PYJWT_FIXTURE` JSON line; save it to `.evidence/002-pyjwt-fixture.json`,
-then run the backend verifier from Windows:
-
-```powershell
-backend/.venv/Scripts/python.exe rust-app/tests/check-jwt.py rust-app/.evidence/002-pyjwt-fixture.json
-```
-
-The HTTP suite also records 20 cost-10 verification samples for local Wasm and
-bcrypt-ts under Node. These are **local elapsed-time estimates**, not deployed
-billable CPU measurements. Compare them with the Free 10 ms/request and Paid
-default 30,000 ms/request CPU budgets; do not infer that Rust is faster or that
-the Free plan can support this auth path. See the slice 002 receipt for results.
+Fonts and redistribution notices: [assets/fonts/README.md](assets/fonts/README.md).
+See the cockpit receipts for validation results and known unmigrated flows.

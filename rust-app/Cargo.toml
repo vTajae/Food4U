@@ -8,6 +8,10 @@ publish = false
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[features]
+default = []
+debug-fixtures = []
+
 [dependencies]
 topcoat = { version = "=0.9.0", default-features = false, features = ["router", "view", "runtime", "asset", "discover", "cookie"] }
 topcoat-cloudflare = "=0.2.0"
