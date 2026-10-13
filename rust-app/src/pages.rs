@@ -34,11 +34,6 @@ async fn placeholder(cx: &Cx, title: &'static str) -> Result<impl View> {
     })
 }
 
-#[page("/dashboard")]
-async fn dashboard(cx: &Cx) -> Result<impl View> {
-    placeholder(cx, "Dashboard").await
-}
-
 #[page("/welcome")]
 async fn welcome(cx: &Cx) -> Result<impl View> {
     placeholder(cx, "Welcome").await

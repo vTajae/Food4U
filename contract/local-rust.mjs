@@ -8,13 +8,16 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 assert.equal(process.platform, 'linux', 'Use WSL Linux Node');
 const flags = new Set(process.argv.slice(2));
-for (const flag of flags) assert.ok(['--fixtures', '--checks', '--contract', '--visual', '--api-tests', '--release', '--release-proof'].includes(flag), `Unknown option ${flag}`);
+for (const flag of flags) assert.ok(['--fixtures', '--checks', '--contract', '--visual', '--api-tests', '--dashboard-tests', '--dashboard-browser', '--dashboard-visual', '--release', '--release-proof'].includes(flag), `Unknown option ${flag}`);
 assert.ok(!flags.has('--checks') || flags.has('--fixtures'), '--checks requires --fixtures');
 assert.ok(!flags.has('--api-tests') || flags.has('--fixtures'), '--api-tests requires --fixtures');
+const dashboardFlags = ['--dashboard-tests', '--dashboard-browser', '--dashboard-visual'];
+const dashboardRun = dashboardFlags.some(flag => flags.has(flag));
+assert.ok(!dashboardRun || flags.has('--fixtures'), 'Dashboard proofs require --fixtures');
 const releaseProof = flags.has('--release-proof');
 assert.equal(flags.has('--release'), releaseProof, 'Use --release --release-proof together');
 assert.ok(!releaseProof || flags.size === 2, 'Release proof cannot be combined with fixtures/checks/contract/visual');
-const prefix = releaseProof ? '006-rust-release' : flags.has('--api-tests') ? '006-rust-api' : '006-rust';
+const prefix = releaseProof ? '007-rust-release' : dashboardRun ? '007-rust-dashboard' : flags.has('--api-tests') ? '007-rust-api' : flags.has('--visual') ? '007-rust-auth-visual' : '007-rust';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const mounted = root.match(/^\/mnt\/([a-z])\/(.*)$/);
 assert.ok(mounted, 'Repository must be on a Windows drive mounted in WSL');
@@ -56,11 +59,12 @@ async function run(command, args, cwd, filename, extraEnv = {}) {
 }
 async function windowsRun(args, filename) {
   const variables = { BASE_URL: 'http://127.0.0.1:8789', BASE: 'http://127.0.0.1:8789', CONTRACT_TIMEOUT_MS: '4000', NO_COLOR: '1' };
+  if (dashboardRun) variables.FOOD4U_MOCK_CONTROL_URL = env.FOOD4U_MOCK_CONTROL_URL;
+  if (flags.has('--visual')) variables.FOOD4U_AUTH_VISUAL_DIR = 'rust-app/.evidence/007-auth-visual';
   const program = `const {spawn}=require('node:child_process');const c=spawn(process.execPath,${JSON.stringify(args)},{cwd:${JSON.stringify(windowsRoot)},env:{...process.env,...${JSON.stringify(variables)}},stdio:'inherit',windowsHide:true});c.on('error',e=>{throw e});c.on('close',code=>process.exitCode=code);`;
   return run('/mnt/c/Program Files/nodejs/node.exe', ['-e', program], root, filename);
 }
 const expectedFailures = new Set([
-  'dashboard backend outage is an explicit alert, not a missing profile',
   'welcome backend save failure is an explicit alert and preserves review',
 ]);
 try {
@@ -97,12 +101,12 @@ try {
   }
   config.vars.SPIKE_DEBUG = flags.has('--fixtures') || releaseProof ? '1' : '0';
   for (const [key, override] of [['API_BASE_URL', 'FOOD4U_MOCK_API_BASE_URL'], ['CLINICAL_TABLES_BASE_URL', 'FOOD4U_MOCK_CLINICAL_TABLES_BASE_URL']]) {
-    if (flags.has('--api-tests')) assert.ok(env[override], `${override} must point at the owned local mock`);
+    if (flags.has('--api-tests') || dashboardRun) assert.ok(env[override], `${override} must point at the owned local mock`);
     const url = new URL(env[override] || 'http://127.0.0.1:9');
     assert.ok(url.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(url.hostname) && !url.username && !url.password && !url.search && !url.hash, `${key} test runs are loopback-only`);
     config.vars[key] = url.href;
   }
-  const configPath = resolve(app, `.evidence/006-${releaseProof ? 'release' : 'dev'}.wrangler.json`);
+  const configPath = resolve(app, `.evidence/007-${releaseProof ? 'release' : 'dev'}.wrangler.json`);
   await writeFile(configPath, JSON.stringify(config, null, 2));
   assert.ok(!cancelled, 'Run cancelled');
   child = spawn(process.execPath, [resolve(app, 'node_modules/wrangler/bin/wrangler.js'), 'dev', '--config', configPath,
@@ -178,18 +182,21 @@ try {
     const count = label => Number(text.match(new RegExp(`\\u2139 ${label} (\\d+)`))?.[1]);
     result.contract = { raw_exit: suite.code, expected_out_of_scope_failures: failures, in_scope_pass: count('pass'), skipped: count('skipped') };
     assert.equal(suite.code, 1, 'Unmigrated routes must remain failing in the unchanged contract');
-    assert.deepEqual(new Set(failures), expectedFailures, 'Only the two deferred screen checks may fail');
-    assert.equal(count('pass'), 34, 'All 34 in-scope leaf checks must pass');
+    assert.deepEqual(new Set(failures), expectedFailures, 'Only the deferred welcome screen check may fail');
+    assert.equal(count('pass'), 35, 'All 35 in-scope leaf checks must pass');
     assert.equal(count('skipped'), 6);
     assert.equal(count('tests'), 43);
-    assert.equal(count('fail'), 3, 'Two leaf failures plus their parent');
+    assert.equal(count('fail'), 2, 'Welcome leaf failure plus its parent');
     assert.equal(count('cancelled'), 0);
     assert.match(text, /ONRENDER_REQUESTS_OBSERVED=0(?:\r?\n|$)/);
     assert.ok(!/ONRENDER_REQUESTS_OBSERVED=[1-9]/.test(text));
   }
   if (flags.has('--api-tests')) assert.equal((await run(process.execPath, ['--test', '--test-concurrency=1', 'tests/api.test.mjs'], app, `${prefix}-api.log`, { SPIKE_URL: 'http://127.0.0.1:8789' })).code, 0, 'API/mock/concurrency checks');
+  if (flags.has('--dashboard-tests')) assert.equal((await run(process.execPath, ['--test', '--test-concurrency=1', 'tests/dashboard.test.mjs'], app, `${prefix}-state.log`, { SPIKE_URL: 'http://127.0.0.1:8789' })).code, 0, 'Dashboard state-machine checks');
+  if (flags.has('--dashboard-browser')) assert.equal((await windowsRun(['rust-app/tests/dashboard-browser.mjs'], `${prefix}-browser.log`)).code, 0, 'Dashboard browser checks');
+  if (flags.has('--dashboard-visual')) assert.equal((await windowsRun(['rust-app/tests/dashboard-visual.mjs'], `${prefix}-visual.log`)).code, 0, 'Dashboard visual capture');
   if (flags.has('--visual')) assert.equal((await windowsRun(['rust-app/tests/auth-visual.mjs'], `${prefix}-visual.log`)).code, 0, 'Visual capture');
-  if (!releaseProof && ![...flags].some(flag => ['--checks', '--contract', '--visual', '--api-tests'].includes(flag))) {
+  if (!releaseProof && ![...flags].some(flag => ['--checks', '--contract', '--visual', '--api-tests', ...dashboardFlags].includes(flag))) {
     console.log('LOCAL_RUST_READY; press Ctrl+C to stop this owned server');
     await closed;
     assert.ok(cancelled, 'Dev server exited unexpectedly');

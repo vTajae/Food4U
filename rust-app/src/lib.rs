@@ -1,4 +1,4 @@
-//! Food4U auth web layer. Backend-backed screens are not migrated yet.
+//! Food4U authentication, JSON APIs and signed-in Ask web layer.
 
 mod api;
 mod auth;
@@ -6,6 +6,8 @@ mod auth;
 mod auth_probe;
 mod auth_ui;
 mod backend;
+mod dashboard;
+mod dashboard_ui;
 mod pages;
 
 use topcoat::{

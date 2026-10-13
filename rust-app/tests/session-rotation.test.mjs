@@ -78,7 +78,8 @@ test('successful login rotates registration and authenticated session IDs, prese
       assert.equal(await session(idOf(previousCookie)), null, 'Rotation must delete the old session:<id> KV key');
       await assertReplayRejected(previousCookie);
       const protectedPage = await dashboard(cookie);
-      assert.equal(protectedPage.status, 200, 'Replacement cookie authenticates the protected page');
+      assert.equal(protectedPage.status, 303, 'Replacement cookie authenticates the protected page and resumes onboarding');
+      assert.equal(new URL(protectedPage.headers.get('location'), base).pathname, '/welcome');
       await protectedPage.text();
       previousCookie = cookie;
     }

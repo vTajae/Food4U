@@ -10,9 +10,9 @@ import { localBase } from '../../contract/harness.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const base = localBase(process.env.BASE_URL || process.env.BASE || 'http://127.0.0.1:8789');
-const output = resolve(root, 'docs/sprint/screenshots/rust-005');
+const output = resolve(root, process.env.FOOD4U_AUTH_VISUAL_DIR || 'docs/sprint/screenshots/rust-005');
 const baseline = resolve(root, 'docs/sprint/screenshots/nextjs/after');
-const evidence = resolve(root, 'rust-app/.evidence/005-visual.json');
+const evidence = resolve(root, 'rust-app/.evidence/007-auth-visual.json');
 await mkdir(output, { recursive: true });
 await mkdir(resolve(root, 'rust-app/.evidence'), { recursive: true });
 const report = { status: 'starting', base, shots: [], comparisons: [], checks: [], pageErrors: [], consoleErrors: [], blockedRequests: [], onrender: 0 };
@@ -149,7 +149,9 @@ async function authRegressions() {
     await page.getByLabel('Email', { exact: true }).fill(email);
     await page.getByLabel('Password', { exact: true }).fill(rawPassword);
     await page.getByRole('button', { name: 'Log in', exact: true }).click();
-    await page.waitForURL(url => url.pathname === '/dashboard');
+    // Registration preserves incomplete welcome; the migrated dashboard now
+    // resumes onboarding after the successful credential seam.
+    await page.waitForURL(url => url.pathname === '/welcome');
     signedIn = true;
     check('raw six-unit password: login client/server seam succeeds', true);
   } finally {

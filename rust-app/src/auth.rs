@@ -40,11 +40,11 @@ pub(crate) struct UserRow {
     pub updated_at: i64,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
-struct SessionAuth {
-    username: String,
-    id: i64,
+pub(crate) struct SessionAuth {
+    pub username: String,
+    pub id: i64,
     public_id: String,
     role: String,
     created_at: i64,
@@ -52,13 +52,13 @@ struct SessionAuth {
 }
 
 #[derive(Deserialize, Serialize)]
-struct SessionData {
+pub(crate) struct SessionData {
     #[serde(skip_serializing_if = "Option::is_none")]
-    auth: Option<SessionAuth>,
+    pub auth: Option<SessionAuth>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    token: Option<String>,
+    pub token: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    welcome: Option<serde_json::Value>,
+    pub welcome: Option<serde_json::Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
     flash: Option<serde_json::Value>,
 }
@@ -114,7 +114,7 @@ async fn session_id(cx: &Cx) -> Result<Option<String>> {
     Ok(mac.verify_slice(&signature).is_ok().then(|| id.to_owned()))
 }
 
-async fn read_session(cx: &Cx) -> Result<Option<SessionData>> {
+pub(crate) async fn read_session(cx: &Cx) -> Result<Option<SessionData>> {
     let Some(id) = session_id(cx).await? else {
         return Ok(None);
     };
@@ -229,21 +229,7 @@ async fn login(cx: &Cx, username: String, password: String) -> Result<String> {
     {
         return Ok("Incorrect password.".to_owned());
     }
-    let secret = topcoat_cloudflare::env(cx)
-        .secret("JWT_SECRET_KEY")?
-        .to_string();
-    let header = URL_SAFE_NO_PAD.encode(br#"{"alg":"HS256","typ":"JWT"}"#);
-    let claims = serde_json::json!({
-        "user_id": user.public_id,
-        "username": user.username,
-        "role": user.user_role,
-        "exp": (js_sys::Date::now() / 1000.0) as u64 + 1800,
-    });
-    let unsigned = format!(
-        "{header}.{}",
-        URL_SAFE_NO_PAD.encode(serde_json::to_vec(&claims)?)
-    );
-    let token = format!("{unsigned}.{}", sign(&secret, &unsigned)?);
+    let token = mint_backend_token(cx, &user)?;
     let previous = read_session(cx).await?;
     let session = SessionData {
         auth: Some(SessionAuth {
@@ -260,6 +246,58 @@ async fn login(cx: &Cx, username: String, password: String) -> Result<String> {
     };
     rotate_session(cx, &session).await?;
     Ok(String::new())
+}
+
+// Login and refresh share the stable D1 identity claims and 30-minute lifetime.
+fn mint_backend_token(cx: &Cx, user: &UserRow) -> Result<String> {
+    let secret = topcoat_cloudflare::env(cx)
+        .secret("JWT_SECRET_KEY")?
+        .to_string();
+    let header = URL_SAFE_NO_PAD.encode(br#"{"alg":"HS256","typ":"JWT"}"#);
+    let claims = serde_json::json!({
+        "user_id": user.public_id,
+        "username": user.username,
+        "role": user.user_role,
+        "exp": (js_sys::Date::now() / 1000.0) as u64 + 1800,
+    });
+    let unsigned = format!(
+        "{header}.{}",
+        URL_SAFE_NO_PAD.encode(serde_json::to_vec(&claims)?)
+    );
+    Ok(format!("{unsigned}.{}", sign(&secret, &unsigned)?))
+}
+
+pub(crate) async fn refresh_backend_token(cx: &Cx, session: &mut SessionData) -> Result<bool> {
+    let Some(auth) = &session.auth else {
+        return Ok(false);
+    };
+    let db = topcoat_cloudflare::env(cx).d1("cloudflare_db")?;
+    let statement = db
+        .prepare("SELECT * FROM user WHERE user_id = ?")
+        .bind(&[(auth.id as f64).into()])?;
+    let Some(user): Option<UserRow> = SendFuture::new(statement.first(None)).await? else {
+        return Ok(false);
+    };
+    session.token = Some(mint_backend_token(cx, &user)?);
+    update_authenticated_session(cx, session).await
+}
+
+// Dashboard work can await an upstream while logout or login rotation retires
+// its UUID. Update only a still-live matching identity, never create a session
+// or republish this request's old cookie. KV reread + put is NOT an atomic CAS;
+// this prevents proven local stale completions, not global revocation races.
+pub(crate) async fn update_authenticated_session(cx: &Cx, session: &SessionData) -> Result<bool> {
+    let Some(id) = session_id(cx).await? else {
+        return Ok(false);
+    };
+    let Some(current) = read_session(cx).await? else {
+        return Ok(false);
+    };
+    if session.auth.is_none() || current.auth != session.auth {
+        return Ok(false);
+    }
+    persist_session(cx, session, &id).await?;
+    Ok(true)
 }
 
 async fn write_session(cx: &Cx, session: &SessionData) -> Result<()> {
@@ -347,11 +385,18 @@ async fn public_logout(cx: &Cx) -> Result<SeeOther> {
     destroy_session(cx).await
 }
 
-async fn destroy_session(cx: &Cx) -> Result<SeeOther> {
+// Terminal dashboard refresh failures retire only the request's UUID. A late
+// response must not expire a newer login cookie published by another request.
+pub(crate) async fn retire_session(cx: &Cx) -> Result<()> {
     if let Some(id) = session_id(cx).await? {
         let kv = topcoat_cloudflare::env(cx).kv("cloudflare_KV")?;
         SendFuture::new(kv.delete(&format!("session:{id}"))).await?;
     }
+    Ok(())
+}
+
+async fn destroy_session(cx: &Cx) -> Result<SeeOther> {
+    retire_session(cx).await?;
     cookies(cx).remove(
         Cookie::build(("__session", ""))
             .path("/")
