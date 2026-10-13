@@ -79,4 +79,4 @@ try {
   assert.equal(code,0,'Dashboard child suite passes'); assert.deepEqual(violations,[]); assert.equal(pending.length,0);
   assert.ok(observed.length > 0); console.log(`DASHBOARD_MOCK_PASS observed=${observed.length} violations=0 pending=0`);
 } catch(error) { console.error(error); process.exitCode=1; }
-finally { await mkdir(`${root}/contract/.evidence`,{recursive:true}); await writeFile(`${root}/contract/.evidence/007-dashboard-mock.json`,JSON.stringify(report(),null,2)); server.closeAllConnections(); await new Promise(ok=>server.close(ok)); }
+finally { await mkdir(`${root}/contract/.evidence`,{recursive:true}); await writeFile(`${root}/contract/.evidence/${process.env.FOOD4U_EVIDENCE_PREFIX || '007'}-dashboard-mock.json`,JSON.stringify(report(),null,2)); server.closeAllConnections(); await new Promise(ok=>server.close(ok)); }

@@ -9,6 +9,8 @@ mod backend;
 mod dashboard;
 mod dashboard_ui;
 mod pages;
+mod welcome;
+mod welcome_ui;
 
 use topcoat::{
     asset::{AssetConfig, RouterBuilderAssetExt},

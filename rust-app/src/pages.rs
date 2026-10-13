@@ -17,28 +17,6 @@ async fn home(cx: &Cx) -> Result<SeeOther> {
     }))
 }
 
-async fn placeholder(cx: &Cx, title: &'static str) -> Result<impl View> {
-    if !crate::auth::is_authenticated(cx).await? {
-        return Err(see_other("/login").into());
-    }
-    Ok(view! {
-        cx =>
-        crate::auth_ui::document(title: title,
-            <main class="page-content">
-                crate::auth_ui::brand()
-                <h1>(title)</h1>
-                <p>"This screen is not migrated yet."</p>
-                <form method="post" action="/api/auth/logout"><button type="submit">"Log out"</button></form>
-            </main>
-        )
-    })
-}
-
-#[page("/welcome")]
-async fn welcome(cx: &Cx) -> Result<impl View> {
-    placeholder(cx, "Welcome").await
-}
-
 #[page("/privacy")]
 async fn privacy() -> Result<impl View> {
     Ok(view! {

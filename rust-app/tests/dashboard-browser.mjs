@@ -84,7 +84,7 @@ export async function launchProof(kind) {
     finally {
       await browser.close(); await close(deny);
       await mkdir(resolve(root, 'rust-app/.evidence'), { recursive: true });
-      await writeFile(resolve(root, `rust-app/.evidence/007-${kind}.json`), JSON.stringify(report, null, 2));
+      await writeFile(resolve(root, `rust-app/.evidence/${process.env.FOOD4U_EVIDENCE_PREFIX || (kind.startsWith('welcome-') ? '008' : '007')}-${kind}.json`), JSON.stringify(report, null, 2));
       console.log(JSON.stringify(report, null, 2));
       console.log(`ONRENDER_REQUESTS_OBSERVED=${report.onrender}`);
     }

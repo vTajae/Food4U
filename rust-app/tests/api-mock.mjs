@@ -73,6 +73,6 @@ try {
 } catch (error) { console.error(error); process.exitCode = 1; }
 finally {
   await mkdir(`${root}/contract/.evidence`, { recursive: true });
-  await writeFile(`${root}/contract/.evidence/007-api-mock.json`, JSON.stringify(report(), null, 2));
+  await writeFile(`${root}/contract/.evidence/${process.env.FOOD4U_EVIDENCE_PREFIX || '007'}-api-mock.json`, JSON.stringify(report(), null, 2));
   server.closeAllConnections(); await new Promise(ok => server.close(ok));
 }

@@ -28,7 +28,9 @@ pub(crate) async fn document(
             </style>
             <link rel="stylesheet" href=(asset!("../assets/auth.css"))>
             <link rel="stylesheet" href=(asset!("../assets/dashboard.css"))>
+            <link rel="stylesheet" href=(asset!("../assets/welcome.css"))>
             <script src=(asset!("../assets/dashboard.js"))></script>
+            <script src=(asset!("../assets/welcome.js")) defer=""></script>
             topcoat::runtime::script()
             <script src=(asset!("../assets/auth.js")) defer=""></script>
         </head><body>(child)</body></html>

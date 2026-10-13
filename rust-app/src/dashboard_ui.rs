@@ -16,6 +16,7 @@ async fn icon(path: &'static str) -> Result<impl View> {
 pub(crate) async fn app_shell(
     cx: &Cx,
     username: String,
+    #[default] profile_active: bool,
     #[default] child: Child<'_>,
 ) -> Result<impl View> {
     let initial = username
@@ -30,7 +31,7 @@ pub(crate) async fn app_shell(
                 <a class="brand" href="/dashboard">
                     <svg aria-hidden="true" viewBox="0 0 32 32" fill="none"><path d="M4 11.5 13.2 4.9a3 3 0 0 1 3.5 0l9.9 7.1a3 3 0 0 1 1.2 2.4v9.6a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-12.5Z" fill="var(--color-primary)"></path><circle cx="16" cy="12" r="2.2" fill="var(--color-on-primary)"></circle><path d="M9.5 19h13M9.5 22.5h8" stroke="var(--color-on-primary)" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="2.5 2.5"></path></svg><span>"Food4U"</span>
                 </a>
-                <nav class="desktop-nav" aria-label="Primary"><a href="/dashboard" aria-current="page">"Ask"</a><a href="/welcome">"Profile"</a></nav>
+                <nav class="desktop-nav" aria-label="Primary"><a href="/dashboard" aria-current=(if profile_active { None } else { Some("page") })>"Ask"</a><a href="/welcome" aria-current=(if profile_active { Some("page") } else { None })>"Profile"</a></nav>
                 <div class="account">
                     <button id="account-trigger" class="secondary-button account-trigger" type="button" aria-label="Account menu" aria-haspopup="menu" aria-expanded="false" aria-controls="account-menu"><span aria-hidden="true">(initial)</span></button>
                     <div id="account-menu" role="menu" aria-label="Account menu" hidden="">
@@ -45,7 +46,7 @@ pub(crate) async fn app_shell(
             </div></header>
             <main class="shell-width app-main">(child)</main>
             <footer class="app-footer"><div class="shell-width footer-inner"><p>"Food4U suggests food, not treatment. Check diet changes with your care team, especially during a flare."</p><nav aria-label="Legal"><a href="/privacy">"Privacy"</a><a href="/privacy#health-data">"How we use your health data"</a><a href="mailto:support@food4u.app">"Support"</a></nav></div></footer>
-            <nav class="mobile-nav" aria-label="Primary"><a href="/dashboard" aria-current="page">icon(path: "M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9H13a8.5 8.5 0 0 1 8 8v.5ZM10 8a2 2 0 0 1 4 0c0 2-2 2-2 3m0 3h.01")"Ask"</a><a href="/welcome">icon(path: "M20 21v-2a8 8 0 0 0-16 0v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8")"Profile"</a></nav>
+            <nav class="mobile-nav" aria-label="Primary"><a href="/dashboard" aria-current=(if profile_active { None } else { Some("page") })>icon(path: "M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9H13a8.5 8.5 0 0 1 8 8v.5ZM10 8a2 2 0 0 1 4 0c0 2-2 2-2 3m0 3h.01")"Ask"</a><a href="/welcome" aria-current=(if profile_active { Some("page") } else { None })>icon(path: "M20 21v-2a8 8 0 0 0-16 0v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8")"Profile"</a></nav>
         </div>
     })
 }

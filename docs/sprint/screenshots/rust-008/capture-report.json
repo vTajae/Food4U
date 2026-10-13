@@ -1,0 +1,126 @@
+{
+  "kind": "welcome-visual",
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "redirect navigation denied",
+      "pass": true
+    },
+    {
+      "name": "redirect fetch denied",
+      "pass": true
+    },
+    {
+      "name": "desktop 10-welcome-step: no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "desktop 11-welcome-review: no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "mobile 10-welcome-step: no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "mobile 11-welcome-review: no horizontal overflow",
+      "pass": true
+    }
+  ],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "networkFailures": [],
+  "blockedRequests": [],
+  "expectedHttpErrors": [],
+  "onrender": 0,
+  "browser": "155.0.8059.39",
+  "shots": [
+    {
+      "file": "rust-10-welcome-step-desktop.png",
+      "name": "10-welcome-step",
+      "viewport": "desktop",
+      "reference": "10-welcome-step",
+      "metrics": {
+        "width": 1440,
+        "height": 900,
+        "dpr": 1,
+        "scrollWidth": 1440,
+        "url": "/welcome"
+      }
+    },
+    {
+      "file": "rust-11-welcome-review-desktop.png",
+      "name": "11-welcome-review",
+      "viewport": "desktop",
+      "reference": "11-welcome-review",
+      "metrics": {
+        "width": 1440,
+        "height": 900,
+        "dpr": 1,
+        "scrollWidth": 1440,
+        "url": "/welcome"
+      }
+    },
+    {
+      "file": "rust-10-welcome-step-mobile.png",
+      "name": "10-welcome-step",
+      "viewport": "mobile",
+      "reference": "10-welcome-step",
+      "metrics": {
+        "width": 390,
+        "height": 844,
+        "dpr": 2,
+        "scrollWidth": 390,
+        "url": "/welcome"
+      }
+    },
+    {
+      "file": "rust-11-welcome-review-mobile.png",
+      "name": "11-welcome-review",
+      "viewport": "mobile",
+      "reference": "11-welcome-review",
+      "metrics": {
+        "width": 390,
+        "height": 844,
+        "dpr": 2,
+        "scrollWidth": 390,
+        "url": "/welcome"
+      }
+    }
+  ],
+  "comparisons": [
+    {
+      "file": "compare-10-welcome-step-desktop.png",
+      "baseline": "next-10-welcome-step-desktop.png",
+      "rust": "rust-10-welcome-step-desktop.png",
+      "width": 2880,
+      "height": 932
+    },
+    {
+      "file": "compare-11-welcome-review-desktop.png",
+      "baseline": "next-11-welcome-review-desktop.png",
+      "rust": "rust-11-welcome-review-desktop.png",
+      "width": 2880,
+      "height": 932
+    },
+    {
+      "file": "compare-10-welcome-step-mobile.png",
+      "baseline": "next-10-welcome-step-mobile.png",
+      "rust": "rust-10-welcome-step-mobile.png",
+      "width": 1560,
+      "height": 1720
+    },
+    {
+      "file": "compare-11-welcome-review-mobile.png",
+      "baseline": "next-11-welcome-review-mobile.png",
+      "rust": "rust-11-welcome-review-mobile.png",
+      "width": 1560,
+      "height": 2278
+    }
+  ],
+  "fixtureDifferences": [
+    "Legacy screenshots used Q avatar. Rust uses genuine D1 fixture login with T avatar.",
+    "Both states use real /api/refs ClinicalTables-shaped loopback data for Lactose intolerance E73.9 and Peanut allergy with empty code, then actual keyboard selections. No real NLM requests.",
+    "Mono font fallback remains the accepted existing typography difference."
+  ]
+}
