@@ -4,6 +4,7 @@
   "scripts": {
     "postinstall": "node scripts/prepare-bins.mjs",
     "test:http": "node --test tests/http.test.mjs",
+    "test:auth": "node --test tests/auth.test.mjs",
     "dev": "wrangler dev --local --ip 127.0.0.1 --port 8789",
     "build": "topcoat-cloudflare build"
   },

@@ -1,6 +1,19 @@
 {
   "name": "food4u-rust-spike",
   "send_metrics": false,
+  "d1_databases": [
+    {
+      "binding": "cloudflare_db",
+      "database_name": "food4u-rust-spike-local",
+      "database_id": "00000000-0000-0000-0000-000000000002"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "cloudflare_KV",
+      "id": "00000000000000000000000000000002"
+    }
+  ],
   "main": ".topcoat-cloudflare/dist/entry.ts",
   "build": {
     "command": "npx --no-install topcoat-cloudflare build",

@@ -1,9 +1,13 @@
 //! Isolated compatibility check, not the Food4U application replacement.
 
+mod auth;
+mod auth_probe;
+
 use topcoat::{
     Result,
     asset::{AssetConfig, RouterBuilderAssetExt, asset},
     context::Cx,
+    cookie::RouterBuilderCookieExt,
     router::{Router, RouterBuilderDiscoverExt, page},
     runtime::{RouterBuilderRuntimeExt, signal},
     view::{View, view},
@@ -16,6 +20,7 @@ fn router(assets: AssetConfig) -> Router {
         .discover()
         .assets(assets)
         .runtime()
+        .cookies()
         .build()
 }
 
