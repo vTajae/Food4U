@@ -116,9 +116,15 @@ async fn submit(cx: &Cx, body: Body) -> Result<Json<Value>> {
     else {
         return Ok(Json(json!({"ok":false,"message":INVALID})));
     };
-    if backend::post(cx, "welcome", session.token.as_deref(), &payload)
-        .await
-        .is_err()
+    if let Err(error) = backend::post(cx, "welcome", session.token.as_deref(), &payload).await
+        && (error.status != Some(403)
+            || error.detail.as_deref() != Some("User not found")
+            || backend::post(cx, "profile", session.token.as_deref(), &Value::Null)
+                .await
+                .is_err()
+            || backend::post(cx, "welcome", session.token.as_deref(), &payload)
+                .await
+                .is_err())
     {
         return Ok(Json(json!({"ok":false,"message":FAILED})));
     }

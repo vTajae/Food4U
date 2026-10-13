@@ -76,3 +76,46 @@ test('enhanced unauthenticated malformed submit returns login redirect metadata 
 test('network disconnect is the same explicit save failure, never completed',async()=>{
   const u=await user();await expect(u,{disconnect:true});failure(await request(u,'/welcome',submission));assert.deepEqual((await session(u.id)).welcome,{isComplete:false});
 });
+
+const ensure = (u, rest = {}) => expect(u, { path: '/backend/profile', body: null, response: { id: 7, public_id: u.row.public_id }, ...rest });
+async function sequence(u, before, paths) {
+  const report = await command('report');
+  assert.deepEqual(report.observed.slice(before).map(call => call.path), paths);
+  assert.ok(report.observed.slice(before).every(call => call.user === u.row.public_id && !call.refreshed));
+}
+
+test('missing profile ensures once then retries welcome with the original request bearer', async () => {
+  const u = await user(); const before = (await command('report')).observed.length;
+  await expect(u, { status: 403, response: { detail: 'User not found' } });
+  await ensure(u); await expect(u);
+  redirect(await request(u, '/welcome', submission), '/dashboard');
+  assert.deepEqual((await session(u.id)).welcome, { isComplete: true });
+  await sequence(u, before, ['/backend/welcome', '/backend/profile', '/backend/welcome']);
+});
+
+test('expired welcome token fails without ensure or token refresh', async () => {
+  const u = await user(); const before = (await command('report')).observed.length;
+  await expect(u, { status: 403, response: { detail: 'Token has expired' } });
+  failure(await request(u, '/welcome', submission));
+  assert.deepEqual((await session(u.id)).welcome, { isComplete: false });
+  assert.equal((await session(u.id)).token, u.data.token);
+  await sequence(u, before, ['/backend/welcome']);
+});
+
+test('failed ensure preserves incomplete welcome and does not retry save', async () => {
+  const u = await user(); const before = (await command('report')).observed.length;
+  await expect(u, { status: 403, response: { detail: 'User not found' } });
+  await ensure(u, { status: 503, response: { detail: 'Ensure unavailable' } });
+  failure(await request(u, '/welcome', submission));
+  assert.deepEqual((await session(u.id)).welcome, { isComplete: false });
+  await sequence(u, before, ['/backend/welcome', '/backend/profile']);
+});
+
+test('missing profile on welcome retry fails after exactly three backend calls', async () => {
+  const u = await user(); const before = (await command('report')).observed.length;
+  await expect(u, { status: 403, response: { detail: 'User not found' } });
+  await ensure(u); await expect(u, { status: 403, response: { detail: 'User not found' } });
+  failure(await request(u, '/welcome', submission));
+  assert.deepEqual((await session(u.id)).welcome, { isComplete: false });
+  await sequence(u, before, ['/backend/welcome', '/backend/profile', '/backend/welcome']);
+});

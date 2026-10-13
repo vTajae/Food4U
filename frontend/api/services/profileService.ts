@@ -1,6 +1,6 @@
 import { ProfileSchema } from "../../api/schemas/profile";
 import { WelcomeFormData } from "../schemas/welcome";
-import { ApiService } from "./baseService";
+import { ApiError, ApiService } from "./baseService";
 
 interface basicAPI {
   status: boolean;
@@ -27,6 +27,22 @@ class ProfileService extends ApiService {
 
   static async createWelcomeProfile(welcomeProfile: WelcomeFormData): Promise<basicAPI> {
     return this.post<basicAPI>("welcome", welcomeProfile);
+  }
+
+  /** Save onboarding, lazily ensuring only an explicitly missing backend profile. */
+  static async submitWelcomeProfile(welcomeProfile: WelcomeFormData): Promise<basicAPI> {
+    // Snapshot before the first await: another request can replace the shared token.
+    const token = this.getToken();
+    const headers = { Authorization: token ? `Bearer ${token}` : "" };
+    try {
+      return await this.post<basicAPI>("welcome", welcomeProfile, headers);
+    } catch (error) {
+      if (!(error instanceof ApiError) || error.status !== 403 || error.detail !== "User not found") {
+        throw error;
+      }
+    }
+    await this.post<EnsuredProfile>("profile", undefined, headers);
+    return this.post<basicAPI>("welcome", welcomeProfile, headers);
   }
 
   static async getAllData(): Promise<ProfileSchema> {

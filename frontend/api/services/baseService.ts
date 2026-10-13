@@ -66,7 +66,7 @@ export class ApiService {
 
   private static addAuthorizationHeader(headers: HeadersInit): HeadersInit {
     if (this.token) {
-      return { ...headers, Authorization: `Bearer ${this.token}` };
+      return { Authorization: `Bearer ${this.token}`, ...headers };
     }
     return headers;
   }
@@ -100,8 +100,8 @@ export class ApiService {
   }
 
   /** POST JSON. Throws ApiError / network errors. */
-  static async post<T>(url: string, body?: unknown): Promise<T> {
-    const response = await fetch(`${API_BASE_URL}/${url}`, this.getRequestOptions("POST", body));
+  static async post<T>(url: string, body?: unknown, customHeaders?: HeadersInit): Promise<T> {
+    const response = await fetch(`${API_BASE_URL}/${url}`, this.getRequestOptions("POST", body, customHeaders));
     return this.handleResponse<T>(response);
   }
 
