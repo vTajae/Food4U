@@ -1,9 +1,11 @@
 //! Food4U auth web layer. Backend-backed screens are not migrated yet.
 
+mod api;
 mod auth;
 #[cfg(feature = "debug-fixtures")]
 mod auth_probe;
 mod auth_ui;
+mod backend;
 mod pages;
 
 use topcoat::{

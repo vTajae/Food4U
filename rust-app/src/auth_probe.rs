@@ -115,3 +115,29 @@ async fn bcrypt_probe(cx: &Cx, Json(input): Json<BcryptProbe>) -> Result<Json<Va
     let elapsed = js_sys::Date::now() - start;
     Ok(Json(json!({"valid": valid, "elapsed_ms": elapsed})))
 }
+
+#[route(GET "/_spike/backend-error")]
+async fn backend_error(cx: &Cx) -> Result<(topcoat::router::StatusCode, Json<Value>)> {
+    require_debug(cx)?;
+    let Some(authenticated) = crate::auth::api_session(cx).await? else {
+        return Ok((
+            topcoat::router::StatusCode::UNAUTHORIZED,
+            Json(json!({"message":"Please log in."})),
+        ));
+    };
+    let case = query(cx, "case")?;
+    if !matches!(
+        case.as_str(),
+        "403" | "500" | "nonjson" | "timeout" | "body-timeout"
+    ) {
+        return Err(topcoat::router::error::not_found().into());
+    }
+    let value =
+        match crate::backend::get(cx, &format!("probe/{case}"), authenticated.token.as_deref())
+            .await
+        {
+            Ok(_) => json!({"kind":"success","status":200,"detail":null}),
+            Err(error) => json!({"kind":error.kind,"status":error.status,"detail":error.detail}),
+        };
+    Ok((topcoat::router::StatusCode::OK, Json(value)))
+}

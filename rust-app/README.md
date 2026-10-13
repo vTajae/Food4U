@@ -1,9 +1,9 @@
-# Food4U Rust / Topcoat app — auth vertical slice
+# Food4U Rust / Topcoat app — auth and JSON API slices
 
-The Rust app now serves Food4U's public authentication and privacy surface.
-Dashboard and welcome are protected **not-yet-migrated placeholders**. The three
-profile/reference/suggestion APIs and backend-outage flows are not implemented;
-this is not a complete application replacement. No backend is called.
+The Rust app serves Food4U's public authentication, privacy and JSON API surfaces.
+Dashboard and welcome remain protected **not-yet-migrated placeholders**; this
+is not a complete application replacement. Backend and ClinicalTables calls are
+verified against local mocks, never production services.
 
 ## Pinned local environment
 
@@ -22,6 +22,8 @@ export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
 export CARGO_TARGET_DIR="$HOME/.cargo/food4u-rust-targets/slice001"
 # Dependencies already installed; for a fresh checkout: (cd rust-app && npm ci)
 node contract/local-rust.mjs --fixtures --checks --contract --visual
+# Full API, token isolation and deadline proof with an owned loopback mock:
+node rust-app/tests/api-mock.mjs
 ```
 
 This command owns and stops its local server on8789 (inspector9238). It uses
@@ -35,7 +37,7 @@ its local user table, so never reapply it to retained state or another app.
 The `--checks` files run serially to avoid shared KV snapshot races:
 HTTP3, original auth13 and server-validation2 checks. The unchanged contract
 uses Windows Node/Chrome and the frontend's installed Playwright. Expected
-result: **20 scoped pass,16 out-of-scope leaf failures,6 skips**; Node reports17
+result: **34 scoped pass,2 out-of-scope leaf failures,6 skips**; Node reports3
 failures including the failed parent and exits1. The helper exits0 only when
 those exact gaps, all scoped passes and `ONRENDER_REQUESTS_OBSERVED=0` are proven.
 It rejects Wrangler's stale-build fallback instead of testing old artifacts.
@@ -45,7 +47,7 @@ baseline-left/Rust-right PNG comparisons in `docs/sprint/screenshots/rust-005/`.
 It checks tab keyboard/focus behavior, input error associations, raw-password
 validation and disabled/blocked-JavaScript safety. A deny-only proxy blocks
 external requests, including redirects; fonts are served locally. Evidence
-is under ignored `contract/.evidence/005-*` and `rust-app/.evidence/005-visual.json`.
+is under ignored `contract/.evidence/006-*` and `rust-app/.evidence/005-visual.json`.
 Use `node contract/local-rust.mjs --fixtures` for a persistent local fixture
 server; Ctrl+C stops it. Without `--fixtures`, dev has no debug routes.
 
@@ -64,6 +66,36 @@ Auth retains the existing D1 fields, signed `__session` cookie, KV SessionData,
 and HS256 JWT with stable public_id/30-minute expiry. Login preserves welcome
 and flash state. `/api/auth/logout` deletes KV and expires the cookie; `/logout`
 remains an alias. Real dashboard/welcome flows are deferred.
+
+## Request-scoped backend seam
+
+`src/backend.rs` loads `API_BASE_URL` and `CLINICAL_TABLES_BASE_URL` from env.
+Every backend call receives the current request's optional token explicitly;
+ClinicalTables calls never receive that bearer. No token is stored in global,
+static or thread-local state. Redirects are manual to prevent credential forwarding.
+A real 20-second abortable deadline covers both headers and the full response body.
+Typed errors expose kind, known HTTP status and optional backend string `detail`;
+malformed JSON and transport/timeouts remain distinct. Sanitized diagnostics log
+only kind/status, never tokens, request bodies, URLs or health queries.
+
+`/api/refs`, `/api/clinicals` and `/api/suggestion` preserve the frontend's status,
+validation, mapping and intentional diet/suggestion fallback envelopes. The newer
+slice006 brief explicitly requires ClinicalTables failures to return route-specific
+500s instead of the old service's swallowed-null empty response. Reference data is
+embedded directly from unchanged `frontend/lib/refs/allergies.json` at build time.
+Workers' native form parser handles URL-encoded and multipart input after the
+required authentication check; no new dependency or multipart parser is added.
+
+The runner forces both upstream URLs to loopback (normally unreachable port9).
+`tests/api-mock.mjs` owns an ephemeral127.0.0.1 mock, starts the ordinary helper,
+and verifies exact paths/methods/bodies/query parameters. Two JWT identities are
+independently checked before48 interleaved backend requests (24 each). Seventeen
+API checks cover the installed Zod corpus, form/File semantics, success/error
+mapping, redirect canary, typed errors and actual20-second header/body stalls.
+Expired mock connections must be aborted. Mock evidence is
+`contract/.evidence/006-api-mock.json`; `--api-tests` is only valid with owned local
+mock URLs. Default Wrangler vars may name public ClinicalTables, but **tests always
+override both services to loopback**. Fake `.dev.vars.example` uses port9 too.
 
 `/_spike/*`, test `POST /register` and legacy `/me` are compiled only with
 Cargo feature `debug-fixtures`, **off by default**. Fixtures additionally need
@@ -88,9 +120,9 @@ cargo clippy --target wasm32-unknown-unknown --features debug-fixtures -- -D war
 Release proof clears build overrides, runs standalone
 `npx --no-install topcoat-cloudflare build`, verifies optimized release metadata
 and Wasm hash, checks debug strings absent, and serves those exact bytes with
-**no build hook**. Even with `SPIKE_DEBUG=1`, all seven fixture method/routes
+**no build hook**. Even with `SPIKE_DEBUG=1`, all nine fixture method/routes
 must404 while public login/validation remain live. Logs/results use the separate
-`005-rust-release-*` prefix. This proves a local release artifact, not deployment
+`006-rust-release-*` prefix. This proves a local release artifact, not deployment
 or production performance. No login, deploy, --remote or push is part of this task.
 
 ## Earlier spike evidence

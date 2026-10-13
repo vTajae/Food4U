@@ -129,6 +129,19 @@ pub(crate) async fn is_authenticated(cx: &Cx) -> Result<bool> {
         .is_some_and(|session| session.auth.is_some()))
 }
 
+pub(crate) struct ApiSession {
+    pub token: Option<String>,
+}
+
+pub(crate) async fn api_session(cx: &Cx) -> Result<Option<ApiSession>> {
+    Ok(read_session(cx)
+        .await?
+        .filter(|session| session.auth.is_some())
+        .map(|session| ApiSession {
+            token: session.token,
+        }))
+}
+
 // Equivalent to Zod 3.25.76's email regex, without adding a regex dependency.
 fn valid_email(email: &str) -> bool {
     let Some((local, domain)) = email.split_once('@') else {
@@ -158,7 +171,7 @@ fn valid_email(email: &str) -> bool {
         })
 }
 
-fn js_trim(value: &str) -> &str {
+pub(crate) fn js_trim(value: &str) -> &str {
     value.trim_matches(|c| {
         matches!(c,
         '\u{0009}'..='\u{000d}' | '\u{0020}' | '\u{00a0}' | '\u{1680}'

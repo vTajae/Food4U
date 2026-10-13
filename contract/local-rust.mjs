@@ -8,12 +8,13 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 assert.equal(process.platform, 'linux', 'Use WSL Linux Node');
 const flags = new Set(process.argv.slice(2));
-for (const flag of flags) assert.ok(['--fixtures', '--checks', '--contract', '--visual', '--release', '--release-proof'].includes(flag), `Unknown option ${flag}`);
+for (const flag of flags) assert.ok(['--fixtures', '--checks', '--contract', '--visual', '--api-tests', '--release', '--release-proof'].includes(flag), `Unknown option ${flag}`);
 assert.ok(!flags.has('--checks') || flags.has('--fixtures'), '--checks requires --fixtures');
+assert.ok(!flags.has('--api-tests') || flags.has('--fixtures'), '--api-tests requires --fixtures');
 const releaseProof = flags.has('--release-proof');
 assert.equal(flags.has('--release'), releaseProof, 'Use --release --release-proof together');
 assert.ok(!releaseProof || flags.size === 2, 'Release proof cannot be combined with fixtures/checks/contract/visual');
-const prefix = releaseProof ? '005-rust-release' : '005-rust';
+const prefix = releaseProof ? '006-rust-release' : '006-rust';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const mounted = root.match(/^\/mnt\/([a-z])\/(.*)$/);
 assert.ok(mounted, 'Repository must be on a Windows drive mounted in WSL');
@@ -61,14 +62,6 @@ async function windowsRun(args, filename) {
 const expectedFailures = new Set([
   'dashboard backend outage is an explicit alert, not a missing profile',
   'welcome backend save failure is an explicit alert and preserves review',
-  'anonymous refs checks missing query/type before authentication',
-  'anonymous clinicals checks authentication before validation',
-  'suggestion checks required parameters before authentication',
-  ...['missing action/key', 'invalid action/key', 'query over 100 characters',
-    'search missing query', 'search whitespace query', 'autocomplete missing query', 'autocomplete whitespace query',
-    'consider missing description/code 1', 'consider missing description/code 2', 'consider missing description/code 3']
-    .map(label => `authenticated clinicals rejects ${label} without a backend`),
-  'authenticated suggestion rejects unknown action without a backend',
 ]);
 try {
   for (const port of [8789, 9238]) {
@@ -103,7 +96,13 @@ try {
     config.vars[key] = value;
   }
   config.vars.SPIKE_DEBUG = flags.has('--fixtures') || releaseProof ? '1' : '0';
-  const configPath = resolve(app, `.evidence/005-${releaseProof ? 'release' : 'dev'}.wrangler.json`);
+  for (const [key, override] of [['API_BASE_URL', 'FOOD4U_MOCK_API_BASE_URL'], ['CLINICAL_TABLES_BASE_URL', 'FOOD4U_MOCK_CLINICAL_TABLES_BASE_URL']]) {
+    if (flags.has('--api-tests')) assert.ok(env[override], `${override} must point at the owned local mock`);
+    const url = new URL(env[override] || 'http://127.0.0.1:9');
+    assert.ok(url.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(url.hostname) && !url.username && !url.password && !url.search && !url.hash, `${key} test runs are loopback-only`);
+    config.vars[key] = url.href;
+  }
+  const configPath = resolve(app, `.evidence/006-${releaseProof ? 'release' : 'dev'}.wrangler.json`);
   await writeFile(configPath, JSON.stringify(config, null, 2));
   assert.ok(!cancelled, 'Run cancelled');
   child = spawn(process.execPath, [resolve(app, 'node_modules/wrangler/bin/wrangler.js'), 'dev', '--config', configPath,
@@ -142,6 +141,8 @@ try {
       ['GET', '/_spike/sessions'],
       ['POST', '/_spike/bcrypt', { password: 'release-proof', hash }],
       ['POST', '/register', new URLSearchParams({ username: `release-${probeId}@example.test`, password: 'release-proof' })],
+      ['GET', '/_spike/backend-error?case=403'],
+      ['GET', '/me'],
     ];
     const login = await fetch(`${base}/login`, { redirect: 'manual', signal: AbortSignal.timeout(10000) });
     assert.equal(login.status, 200, 'Release login page remains live');
@@ -161,33 +162,34 @@ try {
     }
     const servedFile = await readFile(resolve(app, '.topcoat-cloudflare/dist/worker/index_bg.wasm'));
     assert.equal(createHash('sha256').update(servedFile).digest('hex'), result.release.wasm_sha256, 'Release Wasm unchanged while serving');
-    const proof = `RELEASE_PROOF_PASS: login 200; public registration validation live; all 7 fixture method/routes 404 with SPIKE_DEBUG=1; debug strings absent; release Wasm SHA256 ${result.release.wasm_sha256}\n`;
+    const proof = `RELEASE_PROOF_PASS: login 200; public registration validation live; all ${routes.length} fixture method/routes 404 with SPIKE_DEBUG=1; debug strings absent; release Wasm SHA256 ${result.release.wasm_sha256}\n`;
     await writeFile(resolve(evidence, `${prefix}-proof.log`), `RUN_ID=${result.run_id}\n${proof}`);
     console.log(proof.trim());
   }
   if (flags.has('--checks')) {
-    const checks = await run(process.execPath, ['--test', '--test-concurrency=1', 'tests/http.test.mjs', 'tests/auth.test.mjs', 'tests/auth-validation.test.mjs'], app, '005-rust-checks.log', { SPIKE_URL: 'http://127.0.0.1:8789' });
+    const checks = await run(process.execPath, ['--test', '--test-concurrency=1', 'tests/http.test.mjs', 'tests/auth.test.mjs', 'tests/auth-validation.test.mjs'], app, `${prefix}-checks.log`, { SPIKE_URL: 'http://127.0.0.1:8789' });
     assert.equal(checks.code, 0, 'HTTP/auth/auth-validation checks');
   }
   if (flags.has('--contract')) {
-    const suite = await windowsRun(['--test', '--test-reporter=spec', 'contract/'], '005-rust-contract.log');
+    const suite = await windowsRun(['--test', '--test-reporter=spec', 'contract/'], `${prefix}-contract.log`);
     const text = suite.output.replace(/\u001b\[[0-9;]*m/g, '');
     const failures = [...new Set([...text.matchAll(/^\s*\u2716 (.+?) \([\d.]+m?s\)\s*$/gm)].map(match => match[1]))]
       .filter(name => name !== 'Food4U observable web contract');
     const count = label => Number(text.match(new RegExp(`\\u2139 ${label} (\\d+)`))?.[1]);
     result.contract = { raw_exit: suite.code, expected_out_of_scope_failures: failures, in_scope_pass: count('pass'), skipped: count('skipped') };
     assert.equal(suite.code, 1, 'Unmigrated routes must remain failing in the unchanged contract');
-    assert.deepEqual(new Set(failures), expectedFailures, 'Only the exact 16 documented out-of-scope leaf checks may fail');
-    assert.equal(count('pass'), 20, 'All 20 in-scope leaf checks must pass');
+    assert.deepEqual(new Set(failures), expectedFailures, 'Only the two deferred screen checks may fail');
+    assert.equal(count('pass'), 34, 'All 34 in-scope leaf checks must pass');
     assert.equal(count('skipped'), 6);
     assert.equal(count('tests'), 43);
-    assert.equal(count('fail'), 17, '16 leaf failures plus their parent');
+    assert.equal(count('fail'), 3, 'Two leaf failures plus their parent');
     assert.equal(count('cancelled'), 0);
     assert.match(text, /ONRENDER_REQUESTS_OBSERVED=0(?:\r?\n|$)/);
     assert.ok(!/ONRENDER_REQUESTS_OBSERVED=[1-9]/.test(text));
   }
-  if (flags.has('--visual')) assert.equal((await windowsRun(['rust-app/tests/auth-visual.mjs'], '005-rust-visual.log')).code, 0, 'Visual capture');
-  if (!releaseProof && ![...flags].some(flag => ['--checks', '--contract', '--visual'].includes(flag))) {
+  if (flags.has('--api-tests')) assert.equal((await run(process.execPath, ['--test', '--test-concurrency=1', 'tests/api.test.mjs'], app, `${prefix}-api.log`, { SPIKE_URL: 'http://127.0.0.1:8789' })).code, 0, 'API/mock/concurrency checks');
+  if (flags.has('--visual')) assert.equal((await windowsRun(['rust-app/tests/auth-visual.mjs'], `${prefix}-visual.log`)).code, 0, 'Visual capture');
+  if (!releaseProof && ![...flags].some(flag => ['--checks', '--contract', '--visual', '--api-tests'].includes(flag))) {
     console.log('LOCAL_RUST_READY; press Ctrl+C to stop this owned server');
     await closed;
     assert.ok(cancelled, 'Dev server exited unexpectedly');

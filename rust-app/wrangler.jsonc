@@ -1,6 +1,10 @@
 {
   "name": "food4u-rust-spike",
   "send_metrics": false,
+  "vars": {
+    "API_BASE_URL": "http://127.0.0.1:9",
+    "CLINICAL_TABLES_BASE_URL": "https://clinicaltables.nlm.nih.gov/api/"
+  },
   "d1_databases": [
     {
       "binding": "cloudflare_db",
