@@ -25,6 +25,7 @@ Read in order.
 | 9 | [`sprint/sprint1-nextjs-report.md`](sprint/sprint1-nextjs-report.md) | The port to Next.js 16 on vinext + Cloudflare Workers, with the redesign of every screen (items 4–5 pulled forward) |
 | 10 | [`sprint/data-flow-report.md`](sprint/data-flow-report.md) | Diagnosis of the frontend ↔ backend identity flow: the D1↔CockroachDB id collision, proven with feedback loops, and the fix |
 | 11 | [`sprint/data-flow-plan.md`](sprint/data-flow-plan.md) | What remains (migrations, deploys, dead paths), written as a cockpit objective for OMC → OMX |
+| 12 | [`sprint/rust-spike-report.md`](sprint/rust-spike-report.md) | Local Rust/Topcoat compatibility, password-verification measurements, known risks and the owner's password-CPU decision |
 
 Screenshots for each report are under [`sprint/screenshots/`](sprint/screenshots/).
 
