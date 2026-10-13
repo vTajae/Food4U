@@ -6,6 +6,7 @@
   },
   "scripts": {
     "build": "npm run build:frontend",
+    "build:frontend": "cd frontend && npm run build",
     "build-it-up": "npx concurrently \"npm run setup:frontend\" \"npm run setup:backend\"",
     "start-it-up": "npx concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "dev:frontend": "cd frontend && npm run dev",

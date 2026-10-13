@@ -1,5 +1,7 @@
-// Base URL should be configured from environment or configuration files
-const API_BASE_URL = "https://food4u-nrpy.onrender.com";
+import { env } from "cloudflare:workers";
+
+// Deployed binding comes from wrangler.jsonc; .dev.vars can override locally.
+const API_BASE_URL = env.API_BASE_URL;
 // The backend sleeps on Render's free tier; a request must fail fast enough
 // for the UI to show its "unavailable" state instead of hanging the page.
 const REQUEST_TIMEOUT_MS = 20_000;
