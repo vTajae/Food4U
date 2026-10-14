@@ -66,3 +66,12 @@ def test_empty_submission_removes_existing_diet():
     asyncio.run(repo.updateUserDiet(7, []))
     repo.link_profile_to_diet.assert_not_awaited()
     repo.unlink_profile_from_diet.assert_awaited_once_with(7, "Vegetarian")
+
+
+def test_empty_submission_unlinks_every_current_diet():
+    repo = repository(["Vegetarian", "Vegan"])
+    asyncio.run(repo.updateUserDiet(7, []))
+    repo.link_profile_to_diet.assert_not_awaited()
+    assert repo.unlink_profile_from_diet.await_count == 2
+    repo.unlink_profile_from_diet.assert_any_await(7, "Vegetarian")
+    repo.unlink_profile_from_diet.assert_any_await(7, "Vegan")

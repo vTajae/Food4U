@@ -29,8 +29,7 @@ class PreferenceService:
 
         elif query_key == "diets" and question_id == 5555:
             diet_names = [suggestion.name for suggestion in suggestions if suggestion.name]
-            if diet_names:
-                await self.repo.updateUserDiet(profile_id, diet_names)
+            await self.repo.updateUserDiet(profile_id, diet_names)
 
         elif query_key == "price" and question_id == 555:
             if suggestions and suggestions[0].value:

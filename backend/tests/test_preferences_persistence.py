@@ -34,11 +34,10 @@ def test_price_preserves_first_value_as_entered():
 
 
 @pytest.mark.parametrize("key,question,answers", [
-    ("diets", 5555, []), ("diets", 5555, [Suggestion(), Suggestion(name="")]),
     ("price", 555, []), ("price", 555, [Suggestion(value="")]),
     ("price", 555, [Suggestion(), Suggestion(value="12.50")]),
 ])
-def test_empty_answers_are_noop(key, question, answers):
+def test_empty_price_answers_are_noop(key, question, answers):
     fake = repo()
     assert asyncio.run(PreferenceService(fake).post_preferences(7, question, key, answers)) is None
     fake.updateUserDiet.assert_not_awaited()
@@ -61,3 +60,12 @@ def test_invalid_dispatch_remains_rejected(key, question):
     assert asyncio.run(PreferenceService(fake).post_preferences(7, question, key, [Suggestion(name="Vegan", value="12.50")])) == {"error": "Invalid query key"}
     fake.updateUserDiet.assert_not_awaited()
     fake.updateUserPricePreferences.assert_not_awaited()
+
+
+@pytest.mark.parametrize("answers", [[], [Suggestion(), Suggestion(name="")]])
+def test_empty_diet_answer_clears_saved_diets(answers):
+    fake = repo()
+    assert asyncio.run(PreferenceService(fake).post_preferences(7, 5555, "diets", answers)) is None
+    fake.updateUserDiet.assert_awaited_once_with(7, [])
+    fake.updateUserPricePreferences.assert_not_awaited()
+    fake.updateUserCuisinePreferences.assert_not_awaited()
