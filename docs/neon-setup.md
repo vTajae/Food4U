@@ -87,6 +87,11 @@ frozen contract **37/0/6**.
   preloaded by a distribution `.pth` before app import; mandated `.venv` tests pass.
 
 ## Production and owner gates
+For the current, owner-operated paired deployment, verification, and rollback
+procedure, use [`render-neon-cutover.md`](render-neon-cutover.md). The findings
+and gates below record the historical slice-001 state, not current deployment
+acceptance; slices 002–004 repaired the onboarding/session findings locally.
+
 Production backend started once for schema-only `create_all`, with **zero HTTP
 requests**. Read-only checks listed 13 tables: `allergen`, `diet_type`, `icd_codes`,
 `intolerance`, `meal`, `meal_component`, `meal_diet_type`, `meal_type`,

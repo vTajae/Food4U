@@ -37,6 +37,7 @@ Screenshots for each report are under [`sprint/screenshots/`](sprint/screenshots
 
 ## Running things
 - Neon Postgres integration and local proof: [`neon-setup.md`](neon-setup.md).
+- Owner-operated Render/Neon cutover, frontend deploy order, and paired rollback: [`render-neon-cutover.md`](render-neon-cutover.md).
 - Frontend: `frontend/README.md` (dev, build, deploy, D1/KV). Tests: `npm test`; e2e loop: `npm run e2e:login` against a running dev server.
 - Backend: `backend/README.md`. Identity tests: `backend/.venv/Scripts/python -m pytest backend/tests` (create the venv with `fastapi pydantic asyncpg SQLAlchemy PyJWT pytest httpx python-dotenv greenlet`).
 - Loops used in the diagnosis: `backend/scripts/loop-profile.sh`, `frontend/scripts/e2e/login-loop.mjs`.
