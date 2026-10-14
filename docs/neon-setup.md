@@ -10,8 +10,9 @@ Only one child branch was created on the existing free-tier project.
   `channel_binding` are stripped. TLS uses system CAs, hostname verification/SNI,
   and optional additional `CAT_FILE` trust. Verified TLS is enforced; this does
   **not** claim SCRAM channel-binding enforcement.
-- Absent process `DATABASE_URL`, backend loads repo-root `.env.local`. Process
-  values win; nothing was copied to `backend/.env`.
+- Backend reads `DATABASE_URL` from the process or `backend/.env` (process values
+  win). It never reads repo-root `.env.local`. Missing/empty URLs fail at startup
+  before creating an engine or connecting; importing the module needs no URL.
 - Frontend `ApiService` reads Worker `API_BASE_URL`; deployed `wrangler.jsonc`
   configuration and static-token behavior are unchanged. Contract safety tooling
   now recognizes the env-binding declaration.
@@ -46,6 +47,28 @@ Sources: [Neon pooling](https://neon.com/docs/connect/connection-pooling),
 [SQLAlchemy asyncpg](https://docs.sqlalchemy.org/en/20/dialects/postgresql.html#asyncpg).
 
 ## Local run and E2E
+
+Local runs require an explicitly selected, free short-lived child branch. CLI
+8.4.2 `branches create --help` and `connection-string --help` verified these flags.
+From the repo root in PowerShell (credentials remain in this shell, not files):
+
+```powershell
+$name = "food4u-local-" + [guid]::NewGuid().ToString("N").Substring(0, 8)
+$expires = [DateTime]::UtcNow.AddHours(1).ToString("yyyy-MM-ddTHH:mm:ssZ")
+neon branches create --project-id patient-cherry-72346680 --name $name --parent production --expires-at $expires --no-secrets
+$env:DATABASE_URL = (neon connection-string $name --project-id patient-cherry-72346680 --pooled).Trim()
+# Run the backend with the existing JWT/AI configuration for this shell.
+# Stop the backend first, then remove only this disposable child branch:
+neon branches delete $name --project-id patient-cherry-72346680
+Remove-Item Env:DATABASE_URL
+```
+
+For Bash, assign the pooled URL with
+`export DATABASE_URL="$(neon connection-string "$name" --project-id patient-cherry-72346680 --pooled)"`
+after the same child creation; `unset DATABASE_URL` after stopping/deleting it.
+Do not print credentials, copy the production URL, or use the root `.env.local`
+as backend configuration. npm backend launch scripts require this process URL.
+
 Preserve `.venv` (Python 3.14; no-DB tests). Windows full-server proof used a separate
 `.venv311`, created with `py -V:Astral/CPython3.11.15 -m venv backend/.venv311`.
 Full `requirements.txt` install failed: pinned `nvidia-nccl-cu12` has no Windows

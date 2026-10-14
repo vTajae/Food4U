@@ -27,16 +27,24 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 async def main():
     url = os.environ["DATABASE_URL"]
-    host = os.environ["NEON_TEST_POOLER_HOST"]
-    production = dotenv_values(Path(__file__).resolve().parents[2] / ".env.local")["DATABASE_URL"]
-    assert make_url(url).host == host and "-pooler" in host
-    production_host = make_url(production).host.replace("-pooler", "")
-    assert host.endswith(".neon.tech") and host.replace("-pooler", "") != production_host
+    host = os.environ["NEON_TEST_POOLER_HOST"].lower()
+    production = dotenv_values(Path(__file__).resolve().parents[2] / ".env.local").get("DATABASE_URL")
+    if not production or not make_url(production).host:
+        raise SystemExit("repo .env.local must identify production for the deny guard")
+    production_host = make_url(production).host.lower().replace("-pooler", "")
+    if host.replace("-pooler", "") == production_host:
+        raise SystemExit("production is prohibited")
+    if (make_url(url).host or "").lower() != host or "-pooler" not in host:
+        raise SystemExit("DATABASE_URL must match the explicit pooled test host")
+    if not host.endswith(".neon.tech"):
+        raise SystemExit("explicit Neon test branch host required")
     direct = urlsplit(os.environ["DATABASE_URL_UNPOOLED"])
-    assert direct.hostname == os.environ["NEON_READ_HOST"]
-    assert "-pooler" not in direct.hostname
-    assert direct.hostname == host.replace("-pooler", "")
-    assert direct.hostname != production_host
+    if direct.hostname == production_host:
+        raise SystemExit("production is prohibited")
+    if direct.hostname != os.environ["NEON_READ_HOST"] or "-pooler" in (direct.hostname or ""):
+        raise SystemExit("explicit direct test branch host required")
+    if direct.hostname != host.replace("-pooler", ""):
+        raise SystemExit("direct and pooled test hosts must match")
     expected = os.environ["NEON_LEAK_EXPECT"]
     assert expected in ("red", "green")
 

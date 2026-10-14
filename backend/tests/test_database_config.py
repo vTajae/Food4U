@@ -45,23 +45,69 @@ def test_plain_asyncpg_url_keeps_database_and_query():
     asyncio.run(database.close())
 
 
-@pytest.mark.parametrize("override", [False, True])
-def test_root_env_fallback_preserves_process_database_url(override):
-    root = Path(__file__).resolve().parents[2]
-    if not (root / ".env.local").exists():
-        pytest.skip("local Neon env file is not present")
+def database_import(tmp_path, database_url=None, initialize=False, backend_url=None):
+    # A synthetic repo-root env proves the rule without reading owner secrets.
+    backend = tmp_path / "backend"
+    config = backend / "app" / "config"
+    config.mkdir(parents=True)
+    source = Path(__file__).resolve().parents[1] / "app" / "config" / "database.py"
+    (config / "database.py").write_bytes(source.read_bytes())
+    (tmp_path / ".env.local").write_text("DATABASE_URL=postgresql://u:p@production.neon.tech/db\n")
+    (backend / ".env").write_text("DATABASE_URL=" + backend_url if backend_url else "")
     env = os.environ.copy()
     env.pop("DATABASE_URL", None)
-    if override:
-        env["DATABASE_URL"] = "postgresql+asyncpg://u:p@localhost/test"
+    env.pop("TEST_BACKEND_URL", None)
+    if backend_url:
+        env["TEST_BACKEND_URL"] = backend_url
+    if database_url is not None:
+        env["DATABASE_URL"] = database_url
     code = """
-from pathlib import Path
-from dotenv import dotenv_values
+import asyncio
+from unittest.mock import patch
 import os
-expected = os.environ.get('DATABASE_URL') or dotenv_values(Path.cwd().parent / '.env.local')['DATABASE_URL']
-from app.config.database import DATABASE_URL
-assert DATABASE_URL == expected, 'database env precedence mismatch'
+expected = os.environ.get("DATABASE_URL") or os.environ.get("TEST_BACKEND_URL")
+from app.config import database
+assert database.DATABASE_URL == expected, 'repo-root fallback is prohibited'
 """
-    result = subprocess.run([sys.executable, "-c", code], cwd=root / "backend", env=env,
-                            capture_output=True, text=True, timeout=30)
-    assert result.returncode == 0, "database env precedence subprocess failed"
+    if initialize:
+        code = code[:code.index("assert database.DATABASE_URL")]
+        code += """
+with patch.object(database, 'create_async_engine') as engine:
+    try:
+        asyncio.run(database.async_database_session.init())
+    except RuntimeError as error:
+        assert 'DATABASE_URL is not set' in str(error)
+        assert 'short-lived Neon child branch' in str(error)
+    else:
+        raise AssertionError('missing DATABASE_URL must fail fast')
+    engine.assert_not_called()
+assert database.async_database_session.engine is None
+"""
+    return subprocess.run([sys.executable, "-c", code], cwd=backend, env=env,
+                          capture_output=True, text=True, timeout=30)
+
+
+def test_repo_root_env_is_not_a_database_default(tmp_path):
+    result = database_import(tmp_path)
+    assert result.returncode == 0, result.stderr
+
+
+def test_missing_database_url_fails_before_engine_or_connection(tmp_path):
+    result = database_import(tmp_path, initialize=True)
+    assert result.returncode == 0, result.stderr
+
+
+def test_process_database_url_is_used_as_is(tmp_path):
+    result = database_import(tmp_path, "postgresql+asyncpg://u:p@localhost/test")
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize("process_url", [None, "postgresql+asyncpg://u:p@localhost/process"])
+def test_backend_env_is_scoped_and_process_values_win(tmp_path, process_url):
+    result = database_import(tmp_path, process_url, backend_url="postgresql://u:p@localhost/backend")
+    assert result.returncode == 0, result.stderr
+
+
+def test_empty_database_url_also_fails_before_engine(tmp_path):
+    result = database_import(tmp_path, "", initialize=True)
+    assert result.returncode == 0, result.stderr

@@ -12,8 +12,8 @@ async def main():
     # asyncpg's native DSN understands sslmode, but not channel_binding.
     from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
     parts = urlsplit(url)
-    assert parts.hostname == os.environ["NEON_READ_HOST"]
-    assert "-pooler" not in parts.hostname
+    if not parts.hostname or parts.hostname != os.environ["NEON_READ_HOST"] or "-pooler" in parts.hostname:
+        raise SystemExit("explicit direct read-back host required")
     query = [(key, value) for key, value in parse_qsl(parts.query) if key not in ("sslmode", "channel_binding")]
     url = urlunsplit(parts._replace(query=urlencode(query)))
     assert os.environ["NEON_PUBLIC_ID_PREFIX"] and os.environ["NEON_READ_HOST"]

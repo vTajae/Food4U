@@ -7,9 +7,8 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.engine import make_url
 from fastapi.concurrency import asynccontextmanager
 
-if "DATABASE_URL" not in os.environ:
-    load_dotenv(Path(__file__).resolve().parents[3] / ".env.local")
-load_dotenv()
+# Local configuration is backend-scoped; repo-root Neon credentials are never defaults.
+load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 CAT_FILE = os.getenv("CAT_FILE")
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -29,6 +28,11 @@ class AsyncDatabaseSession:
         self.session_factory = None
 
     async def init(self):
+        if not self.db_url:
+            raise RuntimeError(
+                "DATABASE_URL is not set. For local runs, point it at a short-lived "
+                "Neon child branch (see docs/neon-setup.md)."
+            )
         url = make_url(self.db_url)
         # libpq URL options are not asyncpg connect keywords. Always require
         # verified TLS, including hostname/SNI, rather than weakening it.

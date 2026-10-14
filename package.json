@@ -11,11 +11,11 @@
     "start-it-up": "npx concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "dev:frontend": "cd frontend && npm run dev",
     "setup:backend": "cd backend && . env/bin/activate && pip3 install -r requirements.txt && pip install --upgrade pip",
-    "dev:backend": "cd backend && . env/bin/activate && pip3 install -r requirements.txt && pip install --upgrade pip && fastapi dev server.py",
+    "dev:backend": "node -e \"if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is not set; select a short-lived Neon child branch (docs/neon-setup.md)')\" && cd backend && . env/bin/activate && pip3 install -r requirements.txt && pip install --upgrade pip && fastapi dev server.py",
     "lint": "cd frontend && npm run lint",
     "start": "concurrently \"npm run start:frontend\" \"npm run start:backend\"",
     "start:frontend": "cd frontend && npm run start",
-    "start:backend": "cd backend && fastapi dev server.py",
+    "start:backend": "node -e \"if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is not set; select a short-lived Neon child branch (docs/neon-setup.md)')\" && cd backend && fastapi dev server.py",
     "typecheck": "cd frontend && npm run typecheck"
   }
 }

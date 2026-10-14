@@ -22,12 +22,19 @@ from app.config.database import AsyncDatabaseSession
 
 async def main():
     url = os.environ["DATABASE_URL"]
-    host = os.environ["NEON_TEST_POOLER_HOST"]
-    assert make_url(url).host == host and "-pooler" in host
-    assert host.endswith(".neon.tech"), "explicit Neon test branch host required"
+    host = os.environ["NEON_TEST_POOLER_HOST"].lower()
     production = dotenv_values(Path(__file__).resolve().parents[2] / ".env.local").get("DATABASE_URL")
-    assert production, "repo .env.local must identify production for the deny guard"
-    assert host != make_url(production).host, "production is prohibited"
+    if not production:
+        raise SystemExit("repo .env.local must identify production for the deny guard")
+    production_host = (make_url(production).host or "").lower()
+    if not production_host:
+        raise SystemExit("production host is missing")
+    if host.replace("-pooler", "") == production_host.replace("-pooler", ""):
+        raise SystemExit("production is prohibited")
+    if (make_url(url).host or "").lower() != host or "-pooler" not in host:
+        raise SystemExit("DATABASE_URL must match the explicit pooled test host")
+    if not host.endswith(".neon.tech"):
+        raise SystemExit("explicit Neon test branch host required")
     database = AsyncDatabaseSession(url)
     await database.init()
     checkouts = 0
