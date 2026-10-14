@@ -7,7 +7,8 @@ from app.api.services.food4u.suggestion_service import SuggestionService
 from app.api.dependencies.auth_dep import get_current_user
 from app.api.dependencies.fdc_dep import get_fdc_service
 from app.api.dependencies.food4u_dep import get_profile_service
-from app.config.database import async_database_session
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.api.dependencies.user_dep import get_db_session
 from app.api.repo.profile_repo import ProfileRepository
 from app.api.repo.meal_repo import MealRepository
 from app.api.repo.ai_repo import AIRepository
@@ -20,12 +21,11 @@ from app.api.schemas.foodDataCentral.search_result_food import SearchResultFood
 
 
 # Keep the AI factory local so shared profile dependencies do not import AI.
-async def get_suggestion_service() -> SuggestionService:
-    async with async_database_session.get_session():
-        profile_repo = ProfileRepository(async_database_session.get_session())
-        meal_repo = MealRepository(async_database_session.get_session())
-        ai_repo = AIRepository()
-        return SuggestionService(profile_repo, meal_repo, ai_repo)
+def get_suggestion_service(db: AsyncSession = Depends(get_db_session)) -> SuggestionService:
+    profile_repo = ProfileRepository(db)
+    meal_repo = MealRepository(db)
+    ai_repo = AIRepository()
+    return SuggestionService(profile_repo, meal_repo, ai_repo)
 
 
 router = APIRouter()
