@@ -4,7 +4,6 @@ import RefService from "~/api/services/refService";
 import type { Suggestion } from "~/api/schemas/refs";
 import AutoCompleteData from "~/lib/refs/allergies.json";
 import { getSession } from "~/lib/session";
-import { applyBackendToken } from "~/lib/auth";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -19,7 +18,7 @@ export async function GET(request: Request) {
   if (!session.data.auth) {
     return Response.json({ suggestions: [], message: "Please log in." }, { status: 401 });
   }
-  applyBackendToken(session.data);
+  const backend = new RefService(session.data.token);
 
   if (type === "icd10cm" || type === "conditions") {
     try {
@@ -36,7 +35,7 @@ export async function GET(request: Request) {
 
   // Other types: bundled autocomplete data plus the backend's diet list.
   const autocompleteData = AutoCompleteData.autocomplete as Record<string, (Suggestion | string)[]>;
-  const diets = await RefService.getAllDiets();
+  const diets = await backend.getAllDiets();
 
   const allSuggestions: Record<string, Suggestion[]> = {};
   for (const [key, values] of Object.entries(autocompleteData)) {

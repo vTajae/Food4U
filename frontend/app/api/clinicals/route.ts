@@ -1,9 +1,8 @@
 // POST /api/clinicals  (was app/routes/_auth.api.clinicals.tsx)
 import { z } from "zod";
 import { ClinicalService } from "~/api/services/clinicalService";
-import UserService from "~/api/services/userService";
+import { ApiService } from "~/api/services/baseService";
 import { getSession } from "~/lib/session";
-import { applyBackendToken } from "~/lib/auth";
 
 const clinicalSubmissionSchema = z.object({
   query: z.string().trim().max(100, "Search query is too long").optional().nullable(),
@@ -34,7 +33,7 @@ export async function POST(request: Request) {
     if (!session.data.auth) {
       return Response.json({ message: "Please log in." }, { status: 401 });
     }
-    applyBackendToken(session.data);
+    const backend = new ApiService(session.data.token);
 
     const validationResult = validateSubmission(await request.formData());
     if (!validationResult.success) {
@@ -71,7 +70,7 @@ export async function POST(request: Request) {
           );
         }
         try {
-          const response = await UserService.post("user/medical", { icd10cm: code, description });
+          const response = await backend.post("user/medical", { icd10cm: code, description });
           if (!response) {
             return Response.json(
               { message: "An error occurred while posting the medical code." },

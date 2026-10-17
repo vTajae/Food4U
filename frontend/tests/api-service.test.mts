@@ -3,6 +3,7 @@ import { test } from "node:test";
 import { env } from "cloudflare:workers";
 
 const { ApiService } = await import("../api/services/baseService.ts");
+const api = new ApiService();
 
 test("all backend methods use the Worker API_BASE_URL binding", async () => {
   const original = globalThis.fetch;
@@ -12,9 +13,9 @@ test("all backend methods use the Worker API_BASE_URL binding", async () => {
     return Response.json([]);
   }) as typeof fetch;
   try {
-    await ApiService.get("refs");
-    await ApiService.post("welcome", { submission: [] });
-    await ApiService.getSingle("user/profile");
+    await api.get("refs");
+    await api.post("welcome", { submission: [] });
+    await api.getSingle("user/profile");
     assert.deepEqual(requests, [
       "http://127.0.0.1:8765/refs",
       "http://127.0.0.1:8765/welcome",
@@ -42,9 +43,9 @@ test("invalid backend configuration rejects every method before fetch", async ()
         ? "API_BASE_URL is not configured"
         : "API_BASE_URL is not an absolute http(s) URL";
       for (const call of [
-        () => ApiService.get("refs"),
-        () => ApiService.post("welcome", { submission: [] }),
-        () => ApiService.getSingle("user/profile"),
+        () => api.get("refs"),
+        () => api.post("welcome", { submission: [] }),
+        () => api.getSingle("user/profile"),
       ]) {
         await assert.rejects(call, { name: "Error", message });
       }
@@ -66,11 +67,11 @@ test("backend binding is read per call and trailing slashes are removed", async 
   }) as typeof fetch;
   try {
     env.API_BASE_URL = "https://backend.example.test/api///";
-    await ApiService.get("refs?queryKey=diets");
-    await ApiService.post("welcome", { submission: [] });
-    await ApiService.getSingle("user/profile");
+    await api.get("refs?queryKey=diets");
+    await api.post("welcome", { submission: [] });
+    await api.getSingle("user/profile");
     env.API_BASE_URL = "http://other.example.test";
-    await ApiService.get("refs");
+    await api.get("refs");
     assert.deepEqual(requests, [
       "https://backend.example.test/api/refs?queryKey=diets",
       "https://backend.example.test/api/welcome",
