@@ -13,4 +13,4 @@ class AIConfig:
 
     # Ollama model and request timeout settings
     LLM_MODEL = os.getenv("LLM_MODEL")
-    REQUEST_TIMEOUT = float(os.getenv("REQUEST_TIMEOUT"))
+    REQUEST_TIMEOUT = float(os.getenv("REQUEST_TIMEOUT", "30"))

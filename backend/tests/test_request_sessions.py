@@ -49,8 +49,17 @@ def sessions(monkeypatch):
 
 @pytest.fixture
 def suggestion_factory(monkeypatch):
-    # No AI credentials, packages, initialization, or external calls are needed
-    # to test the real suggestion dependency's two SQL repositories.
+    # Stub optional AI configuration/I/O, not the real dependency or either SQL
+    # repository. These tests target session lifetime, not config validation.
+    for name in ("GOOGLE_GEMINI_API_KEY", "QDRANT_URL", "QDRANT_API_KEY",
+                 "GOOGLE_DRIVE_FOLDER_ID", "GOOGLE_SERVICE_ACCOUNT_JSON_BASE64"):
+        monkeypatch.setenv(name, "session-test-only")
+    config = ModuleType("app.config.gemini_config")
+    config.GeminiConfig = SimpleNamespace(
+        GOOGLE_SERVICE_ACCOUNT_JSON={}, QDRANT_URL="http://localhost",
+        get_drive_credentials=lambda: object(),
+    )
+    monkeypatch.setitem(sys.modules, config.__name__, config)
     ai = ModuleType("app.api.repo.ai_repo")
     ai.AIRepository = lambda: object()
     monkeypatch.setitem(sys.modules, ai.__name__, ai)
