@@ -1,31 +1,23 @@
 "use client";
 
-// SearchBarWithButtons.tsx
-// Multi-select combobox (shadcn Command + Popover) over /api/refs suggestions.
-import React, { useEffect, useId, useRef, useState } from "react";
-import debounce from "lodash.debounce";
-import { DebouncedFunc } from "lodash";
-import { Check, ChevronsUpDown } from "lucide-react";
+// Searchable checkbox picker over browsable /api/refs lists and clinical search.
+import React, { useEffect, useId, useState } from "react";
+import { ChevronsUpDown, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Suggestion } from "../../api/schemas/refs";
 import { Button } from "~/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "~/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { cn } from "~/lib/utils";
+import { conditionsByCode, plainLabel } from "~/lib/refs/conditions";
 
 interface SearchBarWithButtonsProps {
   onSuggestionSelect: (selectedSuggestions: Suggestion[]) => void;
   queryKey: string;
   placeholderText?: string;
+  searchPlaceholder?: string;
   selectedSuggestions: Suggestion[];
-  labelledBy?: string; // id of the visible question that names this field
+  labelledBy?: string;
+  describedBy?: string;
 }
 
 export type RefBarFetchType = {
@@ -35,159 +27,166 @@ export type RefBarFetchType = {
 };
 
 const suggestionKey = (s: Suggestion) => `${s.name}-${s.code || ""}`;
+const labelFor = (s: Suggestion) => plainLabel(s.code, s.name);
+
+async function loadSuggestions(queryKey: string, query: string, signal: AbortSignal) {
+  const response = await fetch(
+    `/api/refs?query=${encodeURIComponent(query)}&type=${encodeURIComponent(queryKey)}`,
+    { signal },
+  );
+  const data = await response.json() as RefBarFetchType;
+  if (!response.ok) throw new Error("Couldn't load options.");
+  return data.suggestions ?? [];
+}
 
 export const SearchBarWithButtons: React.FC<SearchBarWithButtonsProps> = ({
   onSuggestionSelect,
   queryKey,
-  placeholderText = "Search...",
+  placeholderText = "Select options",
+  searchPlaceholder = "Search options",
   selectedSuggestions,
   labelledBy,
+  describedBy,
 }) => {
   const [open, setOpen] = useState(false);
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [inputValue, setInputValue] = useState<string>("");
-  const [isLoading, setIsLoading] = useState(false);
-  const listId = useId();
-  const requestSeq = useRef(0);
+  const [browseSuggestions, setBrowseSuggestions] = useState<Suggestion[]>([]);
+  const [search, setSearch] = useState<{ query: string; items: Suggestion[] }>({ query: "", items: [] });
+  const [inputValue, setInputValue] = useState("");
+  const [browseLoading, setBrowseLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [browseError, setBrowseError] = useState(false);
+  const [searchError, setSearchError] = useState(false);
+  const groupId = useId();
+  const query = inputValue.trim();
+  const isMedical = queryKey === "icd10cm" || queryKey === "conditions";
+  const remoteSearch = isMedical && query.length > 0;
 
-  // Use a ref to store the debounced function with correct typing
-  const fetchSuggestionsRef = useRef<DebouncedFunc<(query: string) => void>>(undefined);
-
-  // Initialize the debounced function
+  // Browse immediately on open. Cuisines/diets then filter this complete list
+  // locally, so typing never wakes the backend again for each keystroke.
   useEffect(() => {
-    fetchSuggestionsRef.current = debounce((query: string) => {
-      if (!query) {
-        setSuggestions([]);
-        return;
-      }
-      const seq = ++requestSeq.current;
-      setIsLoading(true);
-      fetch(
-        `/api/refs?query=${encodeURIComponent(query)}&type=${encodeURIComponent(queryKey)}`
-      )
-        .then((res) => res.json() as Promise<RefBarFetchType>)
-        .then((data) => {
-          if (seq !== requestSeq.current) return; // a newer search superseded this one
-          if (data.suggestions) {
-            setSuggestions(data.suggestions);
-          } else {
-            setSuggestions([]);
-            if (data.message) toast.error(data.message, { id: `refs-${queryKey}` });
-          }
-        })
+    if (!open) return;
+    const controller = new AbortController();
+    let active = true;
+    setBrowseLoading(true);
+    setBrowseError(false);
+    loadSuggestions(queryKey, "", controller.signal)
+      .then(items => { if (active) setBrowseSuggestions(items); })
+      .catch(() => {
+        if (!active) return;
+        setBrowseError(true);
+        toast.error("Couldn't load options. Close and reopen the list to try again.", { id: `refs-${queryKey}` });
+      })
+      .finally(() => { if (active) setBrowseLoading(false); });
+    return () => { active = false; controller.abort(); };
+  }, [open, queryKey]);
+
+  // Cancel both pending debounce and in-flight work on every edit/close. An old
+  // response cannot replace the browse list after the user clears the search.
+  useEffect(() => {
+    if (!open || !remoteSearch) return;
+    const controller = new AbortController();
+    let active = true;
+    setSearchLoading(true);
+    setSearchError(false);
+    const timer = setTimeout(() => {
+      loadSuggestions(queryKey, query, controller.signal)
+        .then(items => { if (active) setSearch({ query, items }); })
         .catch(() => {
-          if (seq === requestSeq.current) toast.error("Couldn't load suggestions.");
+          if (active) setSearchError(true);
         })
-        .finally(() => {
-          if (seq === requestSeq.current) setIsLoading(false);
-        });
+        .finally(() => { if (active) setSearchLoading(false); });
     }, 300);
+    return () => { active = false; clearTimeout(timer); controller.abort(); };
+  }, [open, queryKey, query, remoteSearch]);
 
-    // Cleanup function to cancel debounced calls on unmount or queryKey change
-    return () => {
-      fetchSuggestionsRef.current?.cancel();
-    };
-  }, [queryKey]);
-
-  // Effect to call the debounced function whenever inputValue changes
-  useEffect(() => {
-    const inputvalue = inputValue.trim();
-    fetchSuggestionsRef.current?.(inputvalue);
-  }, [inputValue]);
-
-  const isSelected = (suggestion: Suggestion) =>
-    selectedSuggestions.some(
-      (s) => s.name === suggestion.name && s.code === suggestion.code
-    );
-
+  const isSelected = (suggestion: Suggestion) => selectedSuggestions.some(
+    s => s.name === suggestion.name && s.code === suggestion.code,
+  );
   const handleToggle = (suggestion: Suggestion) => {
-    const updatedSelected = isSelected(suggestion)
-      ? selectedSuggestions.filter(
-          (s) => !(s.name === suggestion.name && s.code === suggestion.code)
-        )
-      : [...selectedSuggestions, suggestion];
-
-    // Notify parent component
-    onSuggestionSelect(updatedSelected);
+    onSuggestionSelect(isSelected(suggestion)
+      ? selectedSuggestions.filter(s => !(s.name === suggestion.name && s.code === suggestion.code))
+      : [...selectedSuggestions, suggestion]);
   };
 
-  const hasQuery = inputValue.trim().length > 0;
+  const suggestions = remoteSearch
+    ? (search.query === query ? search.items : [])
+    : browseSuggestions.filter(s => labelFor(s).toLowerCase().includes(query.toLowerCase()));
+  const isLoading = remoteSearch ? searchLoading : browseLoading;
+  const failed = remoteSearch ? searchError : browseError;
+  const heading = remoteSearch ? "Search results" : {
+    cuisines: "Cuisines",
+    diets: "Diets",
+    icd10cm: "Common conditions",
+    conditions: "Common food allergies and intolerances",
+  }[queryKey] ?? "Options";
+  const selectedNames = selectedSuggestions.map(labelFor).filter(Boolean);
 
   return (
-    <div className="w-full max-w-reading-max">
-      <Popover open={open} onOpenChange={setOpen}>
+    <div className="w-full min-w-0 max-w-reading-max">
+      <Popover open={open} onOpenChange={value => { setOpen(value); if (value) setInputValue(""); }}>
         <PopoverTrigger asChild>
           <Button
             type="button"
             variant="secondary"
             role="combobox"
+            aria-haspopup="dialog"
             aria-expanded={open}
-            aria-controls={listId}
             aria-labelledby={labelledBy}
-            className="w-full justify-between px-3.5 text-body-md font-normal text-ink"
+            aria-describedby={describedBy}
+            className="w-full min-w-0 justify-between px-3.5 text-body-md font-normal text-ink"
           >
-            <span className={cn(selectedSuggestions.length === 0 && "text-ink-muted")}>
-              {selectedSuggestions.length > 0
-                ? `${selectedSuggestions.length} selected`
-                : placeholderText}
+            <span className={cn("min-w-0 flex-1 truncate text-left", selectedNames.length === 0 && "text-ink-muted")}>
+              {selectedNames.length > 0 ? selectedNames.slice(0, 2).join(", ") : placeholderText}
             </span>
-            <ChevronsUpDown aria-hidden="true" className="text-ink-muted" />
+            {selectedNames.length > 2 && <span className="shrink-0 text-body-sm">+{selectedNames.length - 2} more</span>}
+            <ChevronsUpDown aria-hidden="true" className="shrink-0 text-ink-muted" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent
-          align="start"
-          className="w-(--radix-popover-trigger-width) min-w-72 p-0"
-        >
-          {/* Server-side search, so cmdk's own filtering is off. */}
-          <Command shouldFilter={false}>
-            <CommandInput
+        <PopoverContent align="start" aria-label={placeholderText} className="w-(--radix-popover-trigger-width) max-w-[calc(100vw-2rem)] p-0">
+          <div className="flex h-12 items-center gap-2 border-b border-line px-3">
+            <Search aria-hidden="true" className="size-5 shrink-0 text-ink-muted" />
+            <input
+              type="search"
               value={inputValue}
-              onValueChange={setInputValue}
-              placeholder={placeholderText}
-              aria-label={placeholderText}
+              onChange={event => setInputValue(event.target.value)}
+              placeholder={searchPlaceholder}
+              aria-label={searchPlaceholder}
+              className="h-12 min-w-0 w-full bg-transparent text-body-md text-ink outline-hidden placeholder:text-ink-muted"
             />
-            <CommandList id={listId} aria-busy={isLoading}>
-              {isLoading && (
-                <div role="status" className="px-3 py-4 text-body-sm text-ink-muted">
-                  Loading...
-                </div>
-              )}
-              {!isLoading && hasQuery && (
-                <CommandEmpty>No matches. Try a different word.</CommandEmpty>
-              )}
+          </div>
+          {/* Native checkboxes expose answer state independently of focus. The
+              Popover owns dialog ids/focus; Tab/Space retain native behavior. */}
+          <div aria-busy={isLoading} className="max-h-[300px] overflow-x-hidden overflow-y-auto p-1">
+              {isLoading && <div role="status" className="px-3 py-4 text-body-sm text-ink-muted">Loading options...</div>}
+              {!isLoading && failed && <p role="alert" className="px-3 py-4 text-body-sm text-ink-muted">Couldn&apos;t load options. Close and reopen the list to try again.</p>}
+              {!isLoading && !failed && suggestions.length === 0 && <p role="status" className="px-3 py-4 text-body-sm text-ink-muted">{query ? "No matches. Try a different word." : "No options available right now. Try again shortly."}</p>}
               {suggestions.length > 0 && (
-                <CommandGroup>
-                  {suggestions.map((suggestion) => {
+                <fieldset className="min-w-0">
+                  <legend className="px-2 py-1.5 font-data text-data-caps uppercase text-ink-muted">{heading}</legend>
+                  {suggestions.map((suggestion, index) => {
                     const selected = isSelected(suggestion);
+                    const learn = isMedical && !query && suggestion.code ? conditionsByCode[suggestion.code]?.learn : undefined;
+                    const learnId = `${groupId}-learn-${index}`;
                     return (
-                      <CommandItem
-                        key={suggestionKey(suggestion)}
-                        value={suggestionKey(suggestion)}
-                        onSelect={() => handleToggle(suggestion)}
-                        data-checked={selected}
-                      >
-                        <span
-                          aria-hidden="true"
-                          className={cn(
-                            "flex size-5 shrink-0 items-center justify-center rounded-(--rounded-sm) border border-line-strong",
-                            selected && "border-primary bg-primary text-on-primary"
-                          )}
-                        >
-                          {selected && <Check className="size-4 text-on-primary" />}
+                      <label key={suggestionKey(suggestion)} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-(--rounded-sm) px-2 py-2 text-body-md hover:bg-primary-soft focus-within:bg-primary-soft">
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={() => handleToggle(suggestion)}
+                          aria-label={labelFor(suggestion)}
+                          aria-describedby={learn ? learnId : undefined}
+                          className="size-5 shrink-0 cursor-pointer accent-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                        />
+                        <span className="min-w-0 whitespace-normal">
+                          <span className="block">{labelFor(suggestion)}</span>
+                          {learn && <span id={learnId} className="mt-0.5 block text-body-sm text-ink-muted">{learn}</span>}
                         </span>
-                        <span>
-                          {suggestion.name}{" "}
-                          {suggestion.code ? `: ${suggestion.code}` : ""}
-                          {/* cmdk owns aria-selected (the highlighted row), so announce the checked state as text. */}
-                          {selected && <span className="sr-only"> (selected)</span>}
-                        </span>
-                      </CommandItem>
+                      </label>
                     );
                   })}
-                </CommandGroup>
+                </fieldset>
               )}
-            </CommandList>
-          </Command>
+          </div>
         </PopoverContent>
       </Popover>
     </div>

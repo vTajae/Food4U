@@ -1,4 +1,5 @@
 import type { ProfileSchema } from "../api/schemas/profile";
+import { plainLabel } from "./refs/conditions";
 
 // Meal constraints, ordered diets, medical history, then legacy attributes.
 export function profileChips(profile: ProfileSchema): string[] {
@@ -7,13 +8,14 @@ export function profileChips(profile: ProfileSchema): string[] {
     if (d.diet_type?.diet_name) chips.push(d.diet_type.diet_name);
   }
   for (const history of profile.medical_history ?? []) {
-    const label = history.icd_details?.description || history.icd_details?.code;
+    const label = plainLabel(history.icd_details?.code, history.icd_details?.description);
     if (label) chips.push(label);
   }
   for (const a of profile.attributes ?? []) {
     const category = (a.attribute_category || "").toLowerCase();
     if (/condition|allerg|restriction|icd/.test(category) && a.attribute_name) {
-      chips.push(a.attribute_name);
+      const label = plainLabel(undefined, a.attribute_name);
+      if (label) chips.push(label);
     }
   }
   return Array.from(new Set(chips)).slice(0, 8);

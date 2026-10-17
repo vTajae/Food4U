@@ -9,7 +9,7 @@ const profile = (data: Partial<ProfileSchema> = {}): ProfileSchema => ({
 const attribute = (category: string, name: string) => ({ id: 1, attribute_category: category,
   attribute_name: name, attribute_value: "like", created_at: new Date(), updated_at: new Date() });
 
-test("chips order diets, medical descriptions/code fallback, legacy matches; dedupe and cap at eight", () => {
+test("chips order diets, plain medical labels, legacy matches; dedupe and cap at eight", () => {
   const data = profile({
     diets: ["Vegetarian", "Vegan", "Vegetarian", ""].map(diet_name => ({ diet_type: { diet_name } })),
     medical_history: [
@@ -21,15 +21,15 @@ test("chips order diets, medical descriptions/code fallback, legacy matches; ded
     attributes: [attribute("cuisine", "Italian"), attribute("budget", "12.50"),
       attribute("CONDITION", "I10"), attribute("allergen", "Peanut"),
       attribute("food restriction", "Sodium"), attribute("ICD10CM", "Legacy code"),
-      attribute("preconditions", "Ninth"), attribute("condition", "")],
+      attribute("preconditions", "Ninth"), attribute("condition", "Capped ninth chip"), attribute("condition", "")],
   });
-  assert.deepEqual(profileChips(data), ["Vegetarian", "Vegan", "Allergic rhinitis, unspecified", "I10", "E11", "Peanut", "Sodium", "Legacy code"]);
+  assert.deepEqual(profileChips(data), ["Vegetarian", "Vegan", "Seasonal allergies (hay fever)", "High blood pressure (hypertension)", "Peanut", "Sodium", "Legacy code", "Ninth"]);
 });
 
 test("legacy attribute matching is retained while cuisine and budget are not chips", () => {
   assert.deepEqual(profileChips(profile({ attributes: [attribute("cuisine", "Italian"), attribute("budget", "12.50"),
     attribute("preconditions", "Arthritis"), attribute("allergy", "Peanut"), attribute("restriction", "Salt"), attribute("icd", "I10")] })),
-    ["Arthritis", "Peanut", "Salt", "I10"]);
+    ["Arthritis", "Peanut", "Salt", "High blood pressure (hypertension)"]);
 });
 
 test("medical-only answers count as completed onboarding", () => {
@@ -38,4 +38,14 @@ test("medical-only answers count as completed onboarding", () => {
   assert.equal(hasAnswers(profile({ diets: [{ diet_type: { diet_name: "Vegan" } }] })), true);
   assert.equal(hasAnswers(profile({ attributes: [attribute("budget", "12.50")] })), true);
   assert.deepEqual(profileChips(profile()), []);
+});
+
+test("unknown code-only medical and legacy entries are omitted, never used as labels", () => {
+  const chips = profileChips(profile({
+    medical_history: [{ icd_details: { code: "X99.9" } }, { icd_details: { code: "X99.9", description: "X99.9" } },
+      { icd_details: { code: "X99.9", description: "Example condition, unspecified" } }],
+    attributes: [attribute("condition", "E11"), attribute("icd", "Z91.0110"), attribute("allergy", "Z91.010")],
+  }));
+  assert.deepEqual(chips, ["Example condition", "Milk allergy", "Peanut allergy"]);
+  assert.doesNotMatch(chips.join(" "), /\b[A-Z]\d\d(?:\.\w+)?\b/);
 });

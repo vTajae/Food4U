@@ -7,6 +7,7 @@ import { Badge } from "~/components/ui/badge";
 import { Input } from "~/components/ui/input";
 import { useFormContext } from "./context";
 import type { Suggestion } from "../../api/schemas/refs";
+import { plainLabel } from "~/lib/refs/conditions";
 
 interface QuestionProps {
   questionId: number;
@@ -21,6 +22,13 @@ const QuestionComponent: React.FC<QuestionProps> = ({
 }) => {
   const { state, setAnswer } = useFormContext();
   const headingId = useId();
+  const hintId = useId();
+  const pickerCopy: Record<string, { select: string; search: string }> = {
+    cuisines: { select: "Select cuisines", search: "Search cuisines, e.g. Italian, Thai" },
+    diets: { select: "Select diets", search: "Search diets, e.g. vegetarian, vegan" },
+    icd10cm: { select: "Select conditions", search: "Search conditions, e.g. diabetes, celiac" },
+    conditions: { select: "Select allergies or intolerances", search: "Search allergies or intolerances, e.g. peanut, lactose" },
+  };
 
   // Initialize the state as an array of Suggestion[]
   const [selectedAnswers, setSelectedAnswers] = useState<Suggestion[]>([]);
@@ -57,12 +65,16 @@ const QuestionComponent: React.FC<QuestionProps> = ({
       <h3 id={headingId} className="text-body-lg font-bold text-ink">
         {questionText}
       </h3>
+      <p id={hintId} className="text-body-sm text-ink-muted">
+        {queryKey === "price" ? "e.g. 12.50" : "Choose all that apply."}
+      </p>
 
       {queryKey === "price" ? (
         <Input
           type="text"
           inputMode="decimal"
           aria-labelledby={headingId}
+          aria-describedby={hintId}
           placeholder="Enter price"
           value={selectedAnswers[0]?.value || ""}
           onChange={handleInputChange}
@@ -71,10 +83,12 @@ const QuestionComponent: React.FC<QuestionProps> = ({
         <SearchBarWithButtons
           key={questionId}
           onSuggestionSelect={handleSuggestionSelect}
-          placeholderText="Type to search"
+          placeholderText={pickerCopy[queryKey]?.select ?? "Select options"}
+          searchPlaceholder={pickerCopy[queryKey]?.search ?? "Search options"}
           queryKey={queryKey}
           selectedSuggestions={selectedAnswers as Suggestion[]}
           labelledBy={headingId}
+          describedBy={hintId}
         />
       )}
 
@@ -82,7 +96,7 @@ const QuestionComponent: React.FC<QuestionProps> = ({
         <ul aria-label="Your answers" className="flex flex-wrap gap-2">
           {/* Selected answers as removable constraint chips */}
           {selectedAnswers.map((item) => {
-            const label = `${item.name}${item.code ? ` (${item.code})` : ""}`;
+            const label = plainLabel(item.code, item.name ?? item.value);
             return (
               <li key={`${item.name}-${item.code || ""}`}>
                 <Badge className="pr-0">
