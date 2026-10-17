@@ -108,6 +108,28 @@ def test_request_timeout_default():
 
 
 @requires_google
+def test_real_ai_modules_import_without_provider_network():
+    # No SDK stubs: the runtime requirements must supply the entire lazy path.
+    run_isolated(f"""
+        import os
+        import sys
+        from importlib.metadata import distributions
+        for name in {AI_REQUIRED!r}:
+            os.environ[name] = 'configured-test-only'
+        os.environ['QDRANT_URL'] = 'http://127.0.0.1:9'
+        os.environ['GOOGLE_SERVICE_ACCOUNT_JSON_BASE64'] = 'e30='
+        from app.api.repo.ai_repo import AIRepository
+        from app.api.services.food4u.suggestion_service import SuggestionService
+        assert AIRepository and SuggestionService
+        forbidden = ('torch', 'transformers', 'sentence_transformers', 'triton')
+        assert not any(name.split('.')[0] in forbidden for name in sys.modules)
+        installed = {{d.metadata['Name'].lower().replace('_', '-') for d in distributions()}}
+        assert not any(name in ('torch', 'transformers', 'sentence-transformers', 'triton')
+                       or name.startswith('nvidia-') for name in installed)
+    """)
+
+
+@requires_google
 @pytest.mark.parametrize("name,value", [
     ("REQUEST_TIMEOUT", "not-a-number-canary"),
     ("REQUEST_TIMEOUT", "nan"),
