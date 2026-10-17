@@ -37,6 +37,8 @@ app.add_middleware(
 
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
+    if request.url.path == "/health":
+        return await call_next(request)
     async with async_database_session.get_session() as db:
         user_service = await get_user_service(db)
         allowed = await user_service.rate_limiter(request)
@@ -48,6 +50,11 @@ async def rate_limit_middleware(request: Request, call_next):
             headers={"Retry-After": str(RATE_LIMIT_WINDOW)},
         )
     return await call_next(request)
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
 
 
 # Registering all routes

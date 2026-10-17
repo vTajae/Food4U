@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AuthForm } from "~/components/login/auth-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { wakeBackend } from "~/lib/wake-backend";
 
 // Login / Register as Radix Tabs (arrow keys switch; only the active form is mounted).
-export function AuthTabs() {
-  const [tab, setTab] = useState<"login" | "register">("login");
+export function AuthTabs({ initialTab = "login" }: { initialTab?: "login" | "register" }) {
+  const [tab, setTab] = useState<"login" | "register">(initialTab);
+
+  useEffect(() => { void wakeBackend(); }, []);
 
   return (
     <Tabs value={tab} onValueChange={(v) => setTab(v === "register" ? "register" : "login")}>

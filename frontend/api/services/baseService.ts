@@ -38,7 +38,10 @@ export class ApiError extends Error {
 export class ApiService {
   // Construct inside the request from its session. Never share authenticated
   // clients between requests; refreshing creates a new client for that request.
-  constructor(private readonly token: string | null = null) {}
+  constructor(
+    private readonly token: string | null = null,
+    private readonly timeoutMs: number = REQUEST_TIMEOUT_MS,
+  ) {}
 
   private readonly defaultHeaders: HeadersInit = {
     "Content-Type": "application/json",
@@ -57,7 +60,7 @@ export class ApiService {
     const options: RequestInit = {
       method,
       headers,
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      signal: AbortSignal.timeout(this.timeoutMs),
     };
     if (body !== undefined) {
       options.body = JSON.stringify(body);

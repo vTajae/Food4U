@@ -1,8 +1,8 @@
 # Deploy and verify Food4U
 
 Run from the repository root unless a step says otherwise. This is an operator
-runbook, not authorization to deploy: slice 015 adds and exercises checks but
-does **not** push or deploy. Keep the existing Render service, Neon production
+runbook, not authorization to deploy: slices 015 and 016 add and exercise checks
+but do **not** push or deploy. Keep the existing Render service, Neon production
 branch, Worker, bindings, secrets, and free plans. Stop on any failed step.
 
 Prerequisites: reviewed changes and passing local gates, installed root/frontend
@@ -17,9 +17,12 @@ passwords, tokens, or database URLs in command output or evidence.
 
 1. **Merge** the reviewed branch into `sprint1-nextjs` through the normal owner
    workflow. Record the full **merge SHA** available to Render, not the feature
-   branch SHA. Keep automatic deployments disabled while coordinating the steps.
-2. **Deploy the backend at that merge SHA**, then verify the deployed SHA and
-   startup logs. Substitute the recorded value for `<sha>`:
+   branch SHA. Render **autoDeploy is ON** for `sprint1-nextjs`, with rootDir
+   `./backend` (OMC-verified configuration, 2026-10-17). A merge touching
+   `backend/` deploys the backend automatically; do not trigger a duplicate deploy.
+2. **Wait for the automatic backend deployment**, then verify the deployed SHA
+   and startup logs. Use the following manual command **only for an intentional
+   redeploy or reviewed rollback**, substituting the recorded value for `<sha>`:
 
    ```text
    render deploys create srv-crb5dm2j1k6c73cn8f40 --commit <sha> --wait --confirm
@@ -84,9 +87,11 @@ passwords, tokens, or database URLs in command output or evidence.
    npm run check:live
    ```
 
-   Require exit zero and a passing `LIVE_CHECK {...}` result. Production frontend
-   and backend URLs are the defaults; use `--frontend` / `--backend` only when
-   deliberately checking a different paired deployment. The check creates a
+   Require exit zero and a passing `LIVE_CHECK {...}` result. The only production
+   frontend URL is `https://food4u-frontend.qias-webdev.workers.dev`; keep that
+   default Worker URL. Production frontend and backend URLs are the defaults;
+   use `--frontend` / `--backend` only for a deliberately isolated local check.
+   The check creates a
    `livecheck-<stamp>@food4u.test` account, exercises onboarding and fresh-login
    persistence, and keeps its password in memory. Retain the reported username.
    The preserved live-check output can have `public_id: null`; resolve the exact
@@ -125,6 +130,32 @@ Accept the deployment only after the live check and cleanup succeed. Save the
 SHAs, Worker version, sanitized check results, and cleanup counts. Final zero
 counts for **all** production profiles/users are an expectation only for an
 otherwise empty production database; never delete real users to obtain zero.
+
+## Backend wake check and free-plan limits
+
+For a fast, lightweight wake check instead of a database-backed route:
+
+```text
+curl -m 90 https://food4u-qxcn.onrender.com/health
+```
+
+Expect HTTP 200 and `{"status":"ok"}`. The endpoint and the exact `/health`
+rate-limit middleware bypass open no database session. This is process health,
+not database readiness. Cold startup still runs initialization, `create_all`,
+and diet seeding: that startup sequence touches Neon once per cold start, as
+accepted in slice 016 Addendum 1. Subsequent health requests do not touch Neon.
+
+Render Free sleeps after 15 minutes without inbound traffic; the next request
+can take about a minute to start it. The 90-second curl budget allows that cold
+start, rather than promising an immediate response.
+[Render free-service limits](https://render.com/docs/free#spinning-down-on-idle).
+
+**No cron keep-warm is implemented.** A scheduled health ping is an owner-only
+option: keeping this service running consumes the same 750 free instance hours
+per workspace/calendar month shared with `iseem-back`. Sleeping services consume
+none; exhausting the allowance suspends all free web services until next month.
+Review both services' usage before approving any keep-warm schedule.
+[Render instance-hour allowance](https://render.com/docs/free#free-instance-hours).
 
 ## Failure and rollback
 

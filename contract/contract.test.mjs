@@ -114,7 +114,7 @@ test('Food4U observable web contract', async t => {
         await login(page, account);
         const alert = page.getByRole('alert');
         await alert.getByRole('heading', { name: "The food service isn't responding", exact: true }).waitFor();
-        await alert.getByText('Your account is fine. The suggestion service may be waking up; this usually takes under a minute.', { exact: true }).waitFor();
+        await alert.getByText('The server is waking up. This can take up to a minute on first visit. Please try again shortly.', { exact: true }).waitFor();
         assert.equal(await alert.getByRole('link', { name: 'Try again', exact: true }).getAttribute('href'), '/dashboard');
       });
     });
@@ -130,7 +130,7 @@ test('Food4U observable web contract', async t => {
       await page.getByRole('button', { name: 'Review', exact: true }).click();
       await page.getByRole('heading', { name: "Here's what we'll check against", exact: true }).waitFor();
       await page.getByRole('button', { name: 'Save profile', exact: true }).click();
-      await page.getByRole('alert').getByText("Couldn't save your profile. Please try again.", { exact: true }).waitFor();
+      await page.getByRole('alert').getByText('The server is waking up. This can take up to a minute on first visit. Please try again shortly.', { exact: true }).waitFor();
       assert.equal(new URL(page.url()).pathname, '/welcome');
     }));
     await runPagesAndApi(t, harness);
