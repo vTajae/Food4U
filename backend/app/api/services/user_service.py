@@ -8,7 +8,7 @@ from app.api.repo.profile_repo import ProfileRepository
 
 # Rate limiting configuration
 RATE_LIMIT = 5  # Allow 5 requests
-RATE_LIMIT_WINDOW = 1  # Window of 60 seconds
+RATE_LIMIT_WINDOW = 1  # Window in seconds
 
 
 class UserService:
@@ -35,8 +35,15 @@ class UserService:
     async def get_profile_by_id(self, user_id: int) -> Profile:
         return await self.user_repo.get_profile_by_id(user_id)
 
-    async def rate_limiter(self, request: Request):
-        identifier = request.client.host  # Use user ID if available
+    async def rate_limiter(self, request: Request) -> bool:
+        # Local import avoids the auth dependency -> UserService import cycle.
+        from app.api.dependencies.auth_dep import verified_public_id
+
+        try:
+            identifier = f"user:{verified_public_id(request)}"
+        except HTTPException:
+            # Invalid/missing bearers share the host budget, never claimed IDs.
+            identifier = f"ip:{request.client.host if request.client else 'unknown'}"
         current_time = datetime.now(timezone.utc)
 
         # Calculate window boundary
@@ -50,5 +57,4 @@ class UserService:
         last_request = response.last_request
         
         # Check if the request is within the allowed window
-        if last_request > window_start and request_count > RATE_LIMIT:
-            raise HTTPException(status_code=429, detail="Too many requests")
+        return not (last_request > window_start and request_count > RATE_LIMIT)

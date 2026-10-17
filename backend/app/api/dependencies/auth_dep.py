@@ -43,7 +43,8 @@ def bearer_token(request: Request) -> str:
     return parts[1]
 
 
-async def get_current_user(request: Request, user_service: UserService = Depends(get_user_service)):
+def verified_public_id(request: Request) -> str:
+    """Verify the bearer and normalize its identity without opening a DB session."""
     token = bearer_token(request)
     try:
         payload = decode(token, USER_JWT_SECRET_KEY, algorithms=[USER_JWT_ALGORITHM])
@@ -55,7 +56,11 @@ async def get_current_user(request: Request, user_service: UserService = Depends
     public_id = public_id_from_claims(payload)
     if public_id is None:
         raise HTTPException(status_code=403, detail="User ID not found in token")
+    return public_id
 
+
+async def get_current_user(request: Request, user_service: UserService = Depends(get_user_service)):
+    public_id = verified_public_id(request)
     user = await user_service.get_profile_by_public_id(public_id)
     if not user:
         raise HTTPException(status_code=403, detail="User not found")
