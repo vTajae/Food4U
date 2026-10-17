@@ -3,14 +3,12 @@
 import Auth from "../../lib/auth-service";
 import {  userLogin, userRegister } from "../schemas/user";
 import UserRepository from "../repo/userRepository";
-import { ApiService } from "./baseService";
 
-class UserService extends ApiService {
+class UserService {
   private userRepository: UserRepository;
 
   // The repository is injectable so the identity rules can be unit tested without D1.
   constructor(env: Env, userRepository: UserRepository = new UserRepository(env)) {
-    super();
     this.userRepository = userRepository;
   }
 
@@ -104,7 +102,7 @@ class UserService extends ApiService {
         return {
           success: true,
           user: loginCookieData,
-          token, // stored in the KV session and re-applied per request
+          token, // stored in the KV session for request-local backend clients
           message: "User logged in successfully.",
         };
       } else {
@@ -123,9 +121,6 @@ class UserService extends ApiService {
 
   async refreshUser(env: Env, id: number) {
     try {
-      // Clear the existing token from the headers
-      ApiService.clearToken();
-
       // Assuming the user is already authenticated and the user data is accessible
       const user = await this.userRepository.findUserById(id);
 
@@ -143,9 +138,6 @@ class UserService extends ApiService {
         env.JWT_SECRET_KEY, // JWT secret key
         { expiresIn: env.JWT_ACCESS_TOKEN_EXPIRE_MINUTES } // Token expiration
       );
-
-      // Set the new token in the headers
-      ApiService.setToken(newToken);
 
       return { success: true, token: newToken, message: "Token refreshed successfully." };
     } catch (error) {

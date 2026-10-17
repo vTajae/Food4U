@@ -5,7 +5,6 @@ import { env } from "cloudflare:workers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import UserService from "~/api/services/userService";
-import { ApiService } from "~/api/services/baseService";
 import { commitSession, getSession } from "~/lib/session";
 
 const credentials = z.object({
@@ -47,7 +46,6 @@ export async function authenticate(
 
   const result = await userService.loginUser({ username, password }, env);
   if (!result.success || !result.user) {
-    ApiService.clearToken();
     return { status: "error", message: result.message || "Invalid email or password." };
   }
 

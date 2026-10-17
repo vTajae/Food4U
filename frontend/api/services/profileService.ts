@@ -21,31 +21,28 @@ class ProfileService extends ApiService {
    * Call this once after login (best effort) and whenever the backend reports
    * "User not found".
    */
-  static async ensureProfile(): Promise<EnsuredProfile> {
+  async ensureProfile(): Promise<EnsuredProfile> {
     return this.post<EnsuredProfile>("profile");
   }
 
-  static async createWelcomeProfile(welcomeProfile: WelcomeFormData): Promise<basicAPI> {
+  async createWelcomeProfile(welcomeProfile: WelcomeFormData): Promise<basicAPI> {
     return this.post<basicAPI>("welcome", welcomeProfile);
   }
 
   /** Save onboarding, lazily ensuring only an explicitly missing backend profile. */
-  static async submitWelcomeProfile(welcomeProfile: WelcomeFormData): Promise<basicAPI> {
-    // Snapshot before the first await: another request can replace the shared token.
-    const token = this.getToken();
-    const headers = { Authorization: token ? `Bearer ${token}` : "" };
+  async submitWelcomeProfile(welcomeProfile: WelcomeFormData): Promise<basicAPI> {
     try {
-      return await this.post<basicAPI>("welcome", welcomeProfile, headers);
+      return await this.post<basicAPI>("welcome", welcomeProfile);
     } catch (error) {
       if (!(error instanceof ApiError) || error.status !== 403 || error.detail !== "User not found") {
         throw error;
       }
     }
-    await this.post<EnsuredProfile>("profile", undefined, headers);
-    return this.post<basicAPI>("welcome", welcomeProfile, headers);
+    await this.post<EnsuredProfile>("profile");
+    return this.post<basicAPI>("welcome", welcomeProfile);
   }
 
-  static async getAllData(): Promise<ProfileSchema> {
+  async getAllData(): Promise<ProfileSchema> {
     return this.getSingle<ProfileSchema>("user/profile");
   }
 }

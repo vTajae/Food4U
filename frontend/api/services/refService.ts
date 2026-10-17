@@ -10,7 +10,7 @@ interface DietType {
 
 class RefService extends ApiService {
   
-static async getAllDiets(): Promise<Suggestion[]> {
+async getAllDiets(): Promise<Suggestion[]> {
   try {
     const dietsQuery = "diets";
 

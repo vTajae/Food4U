@@ -12,7 +12,7 @@ export interface basicAPI {
 // Define a service for handling profile-related HTTP requests
 class ProfileService extends ApiService {
 
-  static async GeneralSuggestion(
+  async GeneralSuggestion(
     queryKey: QuerySuggest
     ): Promise<basicAPI | void> {
     try {

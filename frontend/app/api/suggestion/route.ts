@@ -1,7 +1,6 @@
 // POST /api/suggestion  (was app/routes/_auth.api.suggestion.tsx)
 import SuggestionService, { type basicAPI } from "~/api/services/suggestionService";
 import { getSession } from "~/lib/session";
-import { applyBackendToken } from "~/lib/auth";
 
 export async function POST(request: Request) {
   try {
@@ -21,7 +20,7 @@ export async function POST(request: Request) {
     if (!session.data.auth) {
       return Response.json({ error: "Please log in." }, { status: 401 });
     }
-    applyBackendToken(session.data);
+    const backend = new SuggestionService(session.data.token);
 
     switch (action) {
       case "meal":
@@ -29,7 +28,7 @@ export async function POST(request: Request) {
       case "diets":
       case "diet":
       case "recipie": {
-        const response = (await SuggestionService.GeneralSuggestion({
+        const response = (await backend.GeneralSuggestion({
           queryKey,
           text,
           action,

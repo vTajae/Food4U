@@ -36,28 +36,15 @@ export class ApiError extends Error {
 }
 
 export class ApiService {
-  // The JWT for the current request. Workers share one isolate across requests,
-  // so callers load it from the session right before each use (lib/auth.ts:
-  // applyBackendToken) and headers are built synchronously below.
-  private static token: string | null = null;
+  // Construct inside the request from its session. Never share authenticated
+  // clients between requests; refreshing creates a new client for that request.
+  constructor(private readonly token: string | null = null) {}
 
-  static defaultHeaders: HeadersInit = {
+  private readonly defaultHeaders: HeadersInit = {
     "Content-Type": "application/json",
   };
 
-  static setToken(token: string): void {
-    this.token = token;
-  }
-
-  static clearToken(): void {
-    this.token = null;
-  }
-
-  static getToken(): string | null {
-    return this.token;
-  }
-
-  protected static getRequestOptions(
+  protected getRequestOptions(
     method: string,
     body?: unknown,
     customHeaders?: HeadersInit
@@ -78,7 +65,7 @@ export class ApiService {
     return options;
   }
 
-  private static addAuthorizationHeader(headers: HeadersInit): HeadersInit {
+  private addAuthorizationHeader(headers: HeadersInit): HeadersInit {
     if (this.token) {
       return { Authorization: `Bearer ${this.token}`, ...headers };
     }
@@ -89,7 +76,7 @@ export class ApiService {
    * Throws ApiError on non-2xx (with the backend's `detail` when it sends one)
    * so callers can tell "no profile yet" (403) from "backend down" (5xx).
    */
-  private static async handleResponse<T>(response: Response): Promise<T> {
+  private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
       let detail: string | undefined;
       try {
@@ -108,19 +95,19 @@ export class ApiService {
   }
 
   /** GET a list. Throws ApiError / network errors; callers decide the fallback. */
-  static async get<T>(url: string): Promise<T[]> {
+  async get<T>(url: string): Promise<T[]> {
     const response = await fetch(backendUrl(url), this.getRequestOptions("GET"));
     return this.handleResponse<T[]>(response);
   }
 
   /** POST JSON. Throws ApiError / network errors. */
-  static async post<T>(url: string, body?: unknown, customHeaders?: HeadersInit): Promise<T> {
+  async post<T>(url: string, body?: unknown, customHeaders?: HeadersInit): Promise<T> {
     const response = await fetch(backendUrl(url), this.getRequestOptions("POST", body, customHeaders));
     return this.handleResponse<T>(response);
   }
 
   /** GET a single item. Throws ApiError / network errors. */
-  static async getSingle<T>(url: string): Promise<T> {
+  async getSingle<T>(url: string): Promise<T> {
     const response = await fetch(backendUrl(url), this.getRequestOptions("GET"));
     return this.handleResponse<T>(response);
   }

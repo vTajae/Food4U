@@ -4,7 +4,6 @@
 import { redirect } from "next/navigation";
 import ProfileService from "~/api/services/profileService";
 import { welcomeFormDataSchema, type WelcomeFormData } from "~/api/schemas/welcome";
-import { applyBackendToken } from "~/lib/auth";
 import { commitSession, getSession } from "~/lib/session";
 
 export type WelcomeResult = { ok: true } | { ok: false; message: string };
@@ -14,7 +13,7 @@ export async function submitWelcome(payload: WelcomeFormData): Promise<WelcomeRe
   if (!session.data.auth) {
     redirect("/login");
   }
-  applyBackendToken(session.data);
+  const backend = new ProfileService(session.data.token);
 
   const parsed = welcomeFormDataSchema.safeParse(payload);
   if (!parsed.success) {
@@ -22,7 +21,7 @@ export async function submitWelcome(payload: WelcomeFormData): Promise<WelcomeRe
   }
 
   try {
-    await ProfileService.submitWelcomeProfile(parsed.data);
+    await backend.submitWelcomeProfile(parsed.data);
   } catch (error) {
     console.error("Welcome submission failed:", error instanceof Error ? error.message : error);
     return { ok: false, message: "Couldn't save your profile. Please try again." };

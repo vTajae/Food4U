@@ -8,7 +8,7 @@ import { profileChips, hasAnswers } from "~/lib/profileChips";
 import type { ProfileSchema } from "~/api/schemas/profile";
 import { AskScreen } from "~/components/ask/ask-screen";
 import { BackendUnavailable } from "~/components/shell/backend-unavailable";
-import { applyBackendToken, requireSession } from "~/lib/auth";
+import { requireSession } from "~/lib/auth";
 import { commitSession, type SessionData } from "~/lib/session";
 
 export const metadata: Metadata = { title: "Ask" };
@@ -25,12 +25,13 @@ type Loaded =
  * - other 4xx/5xx or network -> show the unavailable state (never "no profile")
  */
 async function loadProfile(session: { id: string | null; data: SessionData }): Promise<Loaded> {
+  let backend = new ProfileService(session.data.token);
   let refreshed = false;
   let ensured = false;
 
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      return { kind: "profile", profile: await ProfileService.getAllData() };
+      return { kind: "profile", profile: await backend.getAllData() };
     } catch (error) {
       if (!(error instanceof ApiError)) {
         console.error("Profile request failed:", error);
@@ -41,14 +42,14 @@ async function loadProfile(session: { id: string | null; data: SessionData }): P
         const refresh = await new UserService(env).refreshUser(env, session.data.auth!.id);
         if (!refresh.success || !refresh.token) redirect("/login");
         session.data.token = refresh.token;
-        applyBackendToken(session.data);
+        backend = new ProfileService(refresh.token);
         await commitSession(session);
         continue;
       }
       if (error.status === 403 && error.detail === "User not found" && !ensured) {
         ensured = true;
         try {
-          await ProfileService.ensureProfile();
+          await backend.ensureProfile();
         } catch (ensureError) {
           console.error("Could not create the backend profile:", ensureError);
           return { kind: "unavailable", detail: `HTTP ${(ensureError as ApiError).status ?? "?"}` };
