@@ -24,7 +24,8 @@
     {
       "binding": "cloudflare_db",
       "database_name": "food4u-db",
-      "database_id": "9136a800-4a6e-4775-8881-f251127f2dd4"
+      "database_id": "9136a800-4a6e-4775-8881-f251127f2dd4",
+      "migrations_dir": "database/migrations"
     }
   ]
 }

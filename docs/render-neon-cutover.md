@@ -1,5 +1,11 @@
 # Render -> Neon cutover (owner-operated, 2026-10-13)
 
+For subsequent releases, use the shorter [ordered deployment and post-deploy
+checks runbook](deploy.md). It includes the required D1 migration gate before
+Worker deployment and guarded cleanup of the automated live-check account.
+The historical slice-005 evidence labels below remain historical, not current
+production certification.
+
 **This is a runbook, not a deployment receipt.** Production access, pushes,
 deploys, and cleanup below are **owner-only, not executed** by slice 005.
 The executor used only a disposable Neon child and a loopback backend; that
@@ -203,8 +209,12 @@ was connected to and deleted. This does **not** certify production's current dat
 After step 4 passes, deploy the **Next.js app in `frontend/`**, not the Rust spike
 or the legacy Pages app. Confirm Workers **Free** and the existing Worker
 `food4u-frontend`. Its existing `cloudflare_KV` / `cloudflare_db` bindings and
-secrets stay in place. No new bindings, remote D1 initialization, or migrations
-are needed. In `frontend/wrangler.jsonc`, `API_BASE_URL` stays
+secrets stay in place. No new bindings or remote D1 initialization are needed,
+but **D1 migrations must be checked and any missing migrations applied before
+the Worker deploy**. Run root `npm run check:d1` and follow the
+[migration/reconciliation steps](deploy.md#ordered-deployment), including the
+manually applied `0001_user_public_id.sql` history trap. In
+`frontend/wrangler.jsonc`, `API_BASE_URL` stays
 `https://food4u-qxcn.onrender.com`; do not put a Neon URL in the Worker.
 
 The real `frontend/package.json` deploy script is

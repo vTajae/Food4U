@@ -67,3 +67,6 @@ backend/env
 # cockpit run state (local orchestration ledger)
 .cockpit/
 .neon
+
+# Real-browser post-deploy check screenshots (throwaway test data).
+/live-check-evidence/
