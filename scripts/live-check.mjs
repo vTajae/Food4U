@@ -127,7 +127,7 @@ try {
   proxyServer.on('connect', (_, socket) => socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n'));
   await new Promise((ok, fail) => { proxyServer.once('error', fail); proxyServer.listen(0, '127.0.0.1', ok); });
   const allowed = new Set([new URL(settings.frontend).origin, new URL(settings.backend).origin]);
-  const proxy = { server: `http://127.0.0.1:${proxyServer.address().port}`, bypass: [...new Set([...allowed].map(origin => new URL(origin).hostname))].join(',') };
+  const proxy = { server: `http://127.0.0.1:${proxyServer.address().port}`, bypass: ['<-loopback>', ...new Set([...allowed].map(origin => new URL(origin).hostname))].join(',') };
   const { chromium } = await import('../frontend/node_modules/playwright-core/index.mjs');
   browser = await chromium.launch({ channel: 'chrome', headless: !settings.headed, proxy });
   async function newPage() {

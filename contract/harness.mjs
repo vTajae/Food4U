@@ -18,7 +18,7 @@ export async function createHarness() {
   const denyProxy = createServer((_, response) => { response.writeHead(403); response.end('External connections denied by contract safety proxy'); });
   denyProxy.on('connect', (_, socket) => socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n'));
   await new Promise(ok => denyProxy.listen(0, '127.0.0.1', ok));
-  const proxy = { server: `http://127.0.0.1:${denyProxy.address().port}`, bypass: '127.0.0.1,localhost' };
+  const proxy = { server: `http://127.0.0.1:${denyProxy.address().port}`, bypass: '<-loopback>,127.0.0.1,localhost' };
   const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH ||
     (process.platform === 'win32' ? 'C:/Program Files/Google/Chrome/Application/chrome.exe' : '/usr/bin/chromium'), proxy }).catch(async error => {
       await new Promise(ok => denyProxy.close(ok));
@@ -43,7 +43,7 @@ export async function createHarness() {
         if (req.url === '/redirect') { res.writeHead(302, { location: `${blocked}/landed` }); res.end(); }
         else { res.setHeader('content-type', 'text/html'); res.end('<title>Local safety canary</title>'); }
       });
-      const context = await browser.newContext({ serviceWorkers: 'block', proxy: { ...proxy, bypass: 'localhost' } });
+      const context = await browser.newContext({ serviceWorkers: 'block', proxy: { ...proxy, bypass: '<-loopback>,localhost' } });
       try {
         await listen(source);
         assert.equal((await fetch(blocked)).status, 200, 'local canary destination must be reachable');
