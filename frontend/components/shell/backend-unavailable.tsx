@@ -1,9 +1,10 @@
 import { CloudOff } from "lucide-react";
 import { buttonVariants } from "~/components/ui/button-variants";
+import { BACKEND_WAKING_MESSAGE } from "~/lib/backend-status";
 
 // Shown when the recommendation backend errors or can't be reached. Says what
 // happened and what to do; never pretends the user has no profile.
-export function BackendUnavailable({ detail }: { detail?: string }) {
+export function BackendUnavailable({ detail, waking }: { detail?: string; waking?: boolean }) {
   return (
     <section
       role="alert"
@@ -13,7 +14,7 @@ export function BackendUnavailable({ detail }: { detail?: string }) {
       <div className="flex flex-col gap-1">
         <h1 className="text-heading-sm">The food service isn&apos;t responding</h1>
         <p className="text-body-md text-ink-muted">
-          Your account is fine. The suggestion service may be waking up; this usually takes under a minute.
+          {waking ? BACKEND_WAKING_MESSAGE : "Your account is fine. The suggestion service may be waking up; this usually takes under a minute."}
         </p>
         {detail && <p className="font-data text-data-md text-ink-muted">{detail}</p>}
       </div>

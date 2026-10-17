@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import ProfileService from "~/api/services/profileService";
 import UserService from "~/api/services/userService";
 import { ApiError } from "~/api/services/baseService";
+import { isBackendWaking } from "~/lib/backend-status";
 import { profileChips, hasAnswers } from "~/lib/profileChips";
 import type { ProfileSchema } from "~/api/schemas/profile";
 import { AskScreen } from "~/components/ask/ask-screen";
@@ -15,7 +16,7 @@ export const metadata: Metadata = { title: "Ask" };
 
 type Loaded =
   | { kind: "profile"; profile: ProfileSchema }
-  | { kind: "unavailable"; detail?: string };
+  | { kind: "unavailable"; detail?: string; waking?: boolean };
 
 /**
  * Loads the backend profile for this identity. Each backend answer means
@@ -35,7 +36,7 @@ async function loadProfile(session: { id: string | null; data: SessionData }): P
     } catch (error) {
       if (!(error instanceof ApiError)) {
         console.error("Profile request failed:", error);
-        return { kind: "unavailable" };
+        return { kind: "unavailable", waking: isBackendWaking(error) };
       }
       if (error.status === 403 && error.detail === "Token has expired" && !refreshed) {
         refreshed = true;
@@ -52,12 +53,12 @@ async function loadProfile(session: { id: string | null; data: SessionData }): P
           await backend.ensureProfile();
         } catch (ensureError) {
           console.error("Could not create the backend profile:", ensureError);
-          return { kind: "unavailable", detail: `HTTP ${(ensureError as ApiError).status ?? "?"}` };
+          return { kind: "unavailable", waking: isBackendWaking(ensureError), detail: `HTTP ${(ensureError as ApiError).status ?? "?"}` };
         }
         continue;
       }
       console.error("Profile request failed:", error.message);
-      return { kind: "unavailable", detail: `HTTP ${error.status}` };
+      return { kind: "unavailable", waking: isBackendWaking(error), detail: `HTTP ${error.status}` };
     }
   }
   return { kind: "unavailable" };
@@ -72,7 +73,7 @@ export default async function DashboardPage() {
 
   const loaded = await loadProfile(session);
   if (loaded.kind === "unavailable") {
-    return <BackendUnavailable detail={loaded.detail} />;
+    return <BackendUnavailable detail={loaded.detail} waking={loaded.waking} />;
   }
 
   // A profile with no answers yet means onboarding hasn't been done.

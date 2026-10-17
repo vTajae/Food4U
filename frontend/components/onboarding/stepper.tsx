@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { submitWelcome } from "~/app/(app)/welcome/actions";
+import { submitWelcome, type WelcomeResult } from "~/app/(app)/welcome/actions";
 import type { Suggestion } from "~/api/schemas/refs";
 import type { WelcomeFormData } from "~/api/schemas/welcome";
 import { useFormContext } from "~/components/form/context";
@@ -29,7 +29,7 @@ const questions: Question[] = [
 export function OnboardingStepper() {
   const { state, goToNextStep, goToPreviousStep } = useFormContext();
   const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Extract<WelcomeResult, { ok: false }> | null>(null);
 
   const total = questions.length;
   const step = Math.min(state.currentStep, total); // total == review
@@ -50,7 +50,7 @@ export function OnboardingStepper() {
     startTransition(async () => {
       const result = await submitWelcome(payload);
       if (result && !result.ok) {
-        setError(result.message);
+        setError(result);
         toast.error(result.message);
       } else {
         try {
@@ -109,9 +109,10 @@ export function OnboardingStepper() {
             );
           })}
           {error && (
-            <p role="alert" className="text-body-sm text-avoid">
-              {error}
-            </p>
+            <div role="alert" className="text-body-sm text-avoid">
+              <p>{error.message}</p>
+              {error.waking && <a href="/welcome" className="underline">Reload and try again</a>}
+            </div>
           )}
         </section>
       ) : (

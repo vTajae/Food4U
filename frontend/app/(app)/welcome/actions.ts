@@ -5,8 +5,9 @@ import { redirect } from "next/navigation";
 import ProfileService from "~/api/services/profileService";
 import { welcomeFormDataSchema, type WelcomeFormData } from "~/api/schemas/welcome";
 import { commitSession, getSession } from "~/lib/session";
+import { BACKEND_WAKING_MESSAGE, isBackendWaking } from "~/lib/backend-status";
 
-export type WelcomeResult = { ok: true } | { ok: false; message: string };
+export type WelcomeResult = { ok: true } | { ok: false; message: string; waking?: boolean };
 
 export async function submitWelcome(payload: WelcomeFormData): Promise<WelcomeResult> {
   const session = await getSession();
@@ -24,6 +25,9 @@ export async function submitWelcome(payload: WelcomeFormData): Promise<WelcomeRe
     await backend.submitWelcomeProfile(parsed.data);
   } catch (error) {
     console.error("Welcome submission failed:", error instanceof Error ? error.message : error);
+    if (isBackendWaking(error)) {
+      return { ok: false, message: BACKEND_WAKING_MESSAGE, waking: true };
+    }
     return { ok: false, message: "Couldn't save your profile. Please try again." };
   }
 
