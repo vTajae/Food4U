@@ -19,11 +19,14 @@ def test_user_routes_import_does_not_load_ai_packages():
     result = subprocess.run(
         [sys.executable, "-c", textwrap.dedent("""
             import sys
+            # google-generativeai's wheel preloads only the google namespace
+            # via .pth at interpreter startup; measure what this import loads.
+            preloaded = set(sys.modules)
             import app.api.routers.user_routes
 
             ai_packages = ("google", "llama_index", "qdrant_client", "googleapiclient")
             loaded = [
-                name for name in sys.modules
+                name for name in sys.modules.keys() - preloaded
                 if any(name == root or name.startswith(root + ".") for root in ai_packages)
             ]
             assert not loaded, f"Identity import loaded AI packages: {loaded}"
