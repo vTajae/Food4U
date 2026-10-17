@@ -3,7 +3,7 @@
 Python/FastAPI service: profiles and dietary data (CockroachDB via SQLAlchemy async), food data (USDA FoodData Central, Spoonacular), and suggestions (Gemini + LlamaIndex + Qdrant). Deployed on Render.
 
 - Local URL: http://127.0.0.1:8000 (OpenAPI docs at `/docs`)
-- Deployed URL: https://food4u-nrpy.onrender.com
+- Deployed URL: https://food4u-qxcn.onrender.com
 
 ## Run locally
 

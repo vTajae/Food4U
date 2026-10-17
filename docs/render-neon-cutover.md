@@ -11,6 +11,15 @@ returns the 11 standard diets; the existing Next.js Worker saves onboarding and
 retains diet/allergy chips after a fresh login. Backend first, frontend second.
 No data migration, new bindings, new services, or paid-plan changes are included.
 
+**Production startup / recovery note (slice 009):** Production has no AI
+configuration. With the startup fix, suggestion endpoints return HTTP 503 with
+`AI suggestions are not configured` until AI is configured; non-AI routes remain
+available. A failed Render deploy leaves the previous deploy live. Rebuilding
+the old commit `fdf33ad` no longer succeeds: for this incident use Render's
+**Rollback** of the previous successful deploy, not a rebuild of that commit.
+Reconcile the saved service configuration as described in section 7 before any
+owner-operated rollback. No deployment or rollback was performed by slice 009.
+
 ## 1. Before changing anything — owner-only, not executed
 
 Choose a maintenance window and prevent user writes throughout the cutover.
@@ -142,11 +151,11 @@ successful full Render requirements install/build before accepting the deploy.
 ### Live checks — owner-only, not executed
 
 Use the URL shown in the existing Render service, expected to remain
-`https://food4u-nrpy.onrender.com`. In PowerShell use `curl.exe` (not the legacy
+`https://food4u-qxcn.onrender.com`. In PowerShell use `curl.exe` (not the legacy
 PowerShell alias); in a POSIX shell use `curl`:
 
 ```text
-curl.exe --fail --silent --show-error --max-time 90 "https://food4u-nrpy.onrender.com/refs?queryKey=diets"
+curl.exe --fail --silent --show-error --max-time 90 "https://food4u-qxcn.onrender.com/refs?queryKey=diets"
 ```
 
 No auth header is required. Expect HTTP 200 and an array of exactly 11 rows
@@ -196,7 +205,7 @@ or the legacy Pages app. Confirm Workers **Free** and the existing Worker
 `food4u-frontend`. Its existing `cloudflare_KV` / `cloudflare_db` bindings and
 secrets stay in place. No new bindings, remote D1 initialization, or migrations
 are needed. In `frontend/wrangler.jsonc`, `API_BASE_URL` stays
-`https://food4u-nrpy.onrender.com`; do not put a Neon URL in the Worker.
+`https://food4u-qxcn.onrender.com`; do not put a Neon URL in the Worker.
 
 The real `frontend/package.json` deploy script is
 `vinext-cloudflare deploy --config dist/server/wrangler.json`. From `frontend/`:

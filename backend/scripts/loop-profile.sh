@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Feedback loop: mint a JWT (secret from $JWT_SECRET_KEY) for a user_id and hit the backend.
 # Usage: JWT_SECRET_KEY=... loop-profile.sh <user_id> [path ...]
-B=${B:-https://food4u-nrpy.onrender.com}; uid=$1; shift; paths=${@:-/profile /user/profile}
+B=${B:-https://food4u-qxcn.onrender.com}; uid=$1; shift; paths=${@:-/profile /user/profile}
 E=$(( $(date +%s) + 1800 ))
 T=$(python -I -c "
 import hmac,hashlib,base64,json,os,sys
