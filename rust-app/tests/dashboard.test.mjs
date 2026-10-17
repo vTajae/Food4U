@@ -43,20 +43,20 @@ test('welcome incomplete redirects before any backend request and retains the dr
   assert.equal((await command('report')).observed.length,before.observed.length);
 });
 
-test('profile answers render diets then regex-selected deduplicated chips capped at eight',async()=>{
+test('profile answers render diets then medical history then legacy deduplicated chips capped at eight',async()=>{
   const u=await user({welcome:{isComplete:true,step:'review'}});
   const attributes=[
-    ['unrelated','Invisible unrelated'],['CONDITION','Local diabetes'],['allergen','Local peanut'],
+    ['unrelated','Invisible unrelated'],['cuisine','Italian'],['budget','12.50'],['CONDITION','Local diabetes'],['allergen','Local peanut'],
     ['food restriction','Local sodium'],['ICD10CM','Local E11'],['preconditions','Local arthritis'],
     ['allergy','Local peanut'],['restriction','Local sesame'],['condition','Local ninth'],['condition',''],
   ].map(([attribute_category,attribute_name])=>({attribute_category,attribute_name}));
-  await expect(u,{response:{attributes,diets:[{diet_type:{diet_name:'Local Mediterranean'}},{diet_type:{diet_name:'Local Keto'}},{diet_type:{diet_name:'Local Mediterranean'}},{diet_type:{diet_name:''}}]}});
+  await expect(u,{response:{attributes,medical_history:[{icd_details:{code:'J30.9',description:'Allergic rhinitis, unspecified'}},{icd_details:{code:'J30.9',description:'Allergic rhinitis, unspecified'}},{icd_details:{code:'I10',description:''}},{icd_details:{code:'E11'}},{icd_details:{}},{}],diets:[{diet_type:{diet_name:'Local Mediterranean'}},{diet_type:{diet_name:'Local Keto'}},{diet_type:{diet_name:'Local Mediterranean'}},{diet_type:{diet_name:''}}]}});
   const page=await dashboard(u); ask(page);
   const region=page.html.match(/<p\b[^>]*aria-label="Your profile"[^>]*>([\s\S]*?)<\/p>/)?.[1];
   assert.ok(region,'Profile chips have a named readable region');
   const chipText=[...region.matchAll(/<span\b[^>]*>([^<]*)<\/span>/g)].map(m=>m[1]).filter(v=>v!=='Your profile:');
-  assert.deepEqual(chipText,['Local Mediterranean','Local Keto','Local diabetes','Local peanut','Local sodium','Local E11','Local arthritis','Local sesame']);
-  assert.doesNotMatch(region,/Invisible unrelated|Local ninth/); assert.equal((await session(u.id)).welcome,undefined);
+  assert.deepEqual(chipText,['Local Mediterranean','Local Keto','Allergic rhinitis, unspecified','I10','E11','Local diabetes','Local peanut','Local sodium']);
+  assert.doesNotMatch(region,/Invisible unrelated|Italian|12\.50|Local ninth|Local E11|Local arthritis|Local sesame/); assert.equal((await session(u.id)).welcome,undefined);
 });
 
 test('empty profile persists welcome incomplete and the next request short-circuits upstream',async()=>{
@@ -199,4 +199,13 @@ test('logout while expired response is pending cannot resurrect a session during
     assert.ok(!settled,'Logout completed before the expired-token response arrived');
     await remainsRetired(u,await pending);
   } finally { await pending; }
+});
+
+
+test('medical-only persisted profile renders Ask without returning to welcome',async()=>{
+  const u=await user();
+  await expect(u,{response:{attributes:[],diets:[],medical_history:[{icd_details:{code:'J30.9',description:'Allergic rhinitis, unspecified'}}]}});
+  const page=await dashboard(u); ask(page);
+  assert.match(page.html,/Allergic rhinitis, unspecified/);
+  assert.equal((await session(u.id)).welcome,undefined);
 });

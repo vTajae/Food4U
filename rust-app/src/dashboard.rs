@@ -65,16 +65,18 @@ async fn load_profile(cx: &Cx, session: &mut auth::SessionData) -> Result<Loaded
 }
 
 fn has_answers(profile: &Value) -> bool {
-    ["attributes", "diets"].iter().any(|key| {
-        profile
-            .get(key)
-            .and_then(Value::as_array)
-            .is_some_and(|items| !items.is_empty())
-    })
+    ["attributes", "diets", "medical_history"]
+        .iter()
+        .any(|key| {
+            profile
+                .get(key)
+                .and_then(Value::as_array)
+                .is_some_and(|items| !items.is_empty())
+        })
 }
 
 // The legacy regex is unanchored and case-insensitive only for the category;
-// names remain exact, deduplicated in diet-then-attribute insertion order.
+// names remain exact, deduplicated in diet-medical-attribute insertion order.
 fn profile_chips(profile: &Value) -> Vec<String> {
     let mut chips = Vec::new();
     if let Some(diets) = profile.get("diets").and_then(Value::as_array) {
@@ -85,6 +87,23 @@ fn profile_chips(profile: &Value) -> Vec<String> {
                 .filter(|name| !name.is_empty())
             {
                 chips.push(name.to_owned());
+            }
+        }
+    }
+    if let Some(history) = profile.get("medical_history").and_then(Value::as_array) {
+        for entry in history {
+            let label = entry
+                .pointer("/icd_details/description")
+                .and_then(Value::as_str)
+                .filter(|name| !name.is_empty())
+                .or_else(|| {
+                    entry
+                        .pointer("/icd_details/code")
+                        .and_then(Value::as_str)
+                        .filter(|code| !code.is_empty())
+                });
+            if let Some(label) = label {
+                chips.push(label.to_owned());
             }
         }
     }

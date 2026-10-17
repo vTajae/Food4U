@@ -52,6 +52,7 @@ backend/env
 .env.production.local
 .env.local
 .venv
+.venv311/
 
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
@@ -65,3 +66,4 @@ backend/env
 
 # cockpit run state (local orchestration ledger)
 .cockpit/
+.neon

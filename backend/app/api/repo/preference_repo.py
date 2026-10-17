@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import logging
 from typing import List, Optional
 from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -115,67 +116,17 @@ class PreferenceRepository:
 
         await self.db.commit()
 
-    # Get diets linked to the profile
-    async def get_profile_diets(self, profile_id: int) -> List[str]:
-        query = select(DietType.diet_name).join(ProfileDiet).where(
-            ProfileDiet.profile_id == profile_id
-        )
-        result = await self.db.execute(query)
-        return [row[0] for row in result.fetchall()]
-
-    # Link profile to a diet type
-    async def link_profile_to_diet(self, profile_id: int, diet_name: str):
-        # First, find the diet type by name
-        query = select(DietType).where(DietType.diet_name == diet_name)
-        result = await self.db.execute(query)
-        diet_type = result.scalar_one_or_none()
-
-        if diet_type:
-            # Check if the diet is already linked to the profile
-            query = select(ProfileDiet).where(
-                ProfileDiet.profile_id == profile_id,
-                ProfileDiet.diet_type_id == diet_type.id
-            )
-            result = await self.db.execute(query)
-            profile_diet = result.scalar_one_or_none()
-
-            if not profile_diet:
-                # If the diet is not linked, link it
-                new_profile_diet = ProfileDiet(
-                    profile_id=profile_id,
-                    diet_type_id=diet_type.id
-                )
-                self.db.add(new_profile_diet)
-                await self.db.commit()
-
-    # Unlink a diet from the profile
-    async def unlink_profile_from_diet(self, profile_id: int, diet_name: str):
-        # Find the diet type by name
-        query = select(DietType).where(DietType.diet_name == diet_name)
-        result = await self.db.execute(query)
-        diet_type = result.scalar_one_or_none()
-
-        if diet_type:
-            # Remove the diet linkage from the profile
-            query = select(ProfileDiet).where(
-                ProfileDiet.profile_id == profile_id,
-                ProfileDiet.diet_type_id == diet_type.id
-            )
-            result = await self.db.execute(query)
-            profile_diet = result.scalar_one_or_none()
-
-            if profile_diet:
-                await self.db.delete(profile_diet)
-                await self.db.commit()
-
     # Update user diet preferences by adding or removing diets
     async def updateUserDiet(self, profile_id: int, diet_names: List[str]) -> None:
-        current_diets = await self.get_profile_diets(profile_id)
+        current_diets = [diet.diet_name for diet in await self.get_profile_diets(profile_id)]
 
         # Add new diets that are not currently linked
         for diet_name in diet_names:
             if diet_name not in current_diets:
-                await self.link_profile_to_diet(profile_id, diet_name)
+                try:
+                    await self.link_profile_to_diet(profile_id, diet_name)
+                except ValueError:
+                    logging.warning("Skipping unknown diet name: %s", diet_name)
 
         # Unlink diets that are no longer in the provided list
         for current_diet in current_diets:
@@ -329,14 +280,6 @@ class PreferenceRepository:
         query = select(DietType)
         result = await self.db.execute(query)
         return result.scalars().all()
-
-    async def get_diet_type_by_name(self, diet_name: str) -> Optional[DietType]:
-        """
-        Fetches a diet type by its name.
-        """
-        query = select(DietType).where(DietType.diet_name == diet_name)
-        result = await self.db.execute(query)
-        return result.scalars().first()
 
 
 # Update user cuisine preferences

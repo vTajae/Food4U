@@ -67,10 +67,13 @@ Deploy: `npm run deploy` (builds with vinext and deploys the Worker via `@vinext
 
 ### Backend
 
+First create a short-lived child branch and set `$name` as described in `docs/neon-setup.md`. Never use the production URL; stop the backend and delete the child after testing.
+
 ```bash
 cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
+export DATABASE_URL="$(neon connection-string "$name" --project-id patient-cherry-72346680 --pooled)"
 uvicorn server:app --reload
 ```
 

@@ -1,5 +1,21 @@
-// Base URL should be configured from environment or configuration files
-const API_BASE_URL = "https://food4u-nrpy.onrender.com";
+import { env } from "cloudflare:workers";
+
+// Resolve per call: unrelated routes/builds must not fail at module load.
+function backendUrl(path: string): string {
+  // Deployed binding comes from wrangler.jsonc; .dev.vars can override locally.
+  const API_BASE_URL = env.API_BASE_URL;
+  if (!API_BASE_URL) throw new Error("API_BASE_URL is not configured");
+  let parsed: URL;
+  try {
+    parsed = new URL(API_BASE_URL);
+  } catch {
+    throw new Error("API_BASE_URL is not an absolute http(s) URL");
+  }
+  if (!/^https?:\/\//i.test(API_BASE_URL) || (parsed.protocol !== "http:" && parsed.protocol !== "https:")) {
+    throw new Error("API_BASE_URL is not an absolute http(s) URL");
+  }
+  return `${API_BASE_URL.replace(/\/+$/, "")}/${path}`;
+}
 // The backend sleeps on Render's free tier; a request must fail fast enough
 // for the UI to show its "unavailable" state instead of hanging the page.
 const REQUEST_TIMEOUT_MS = 20_000;
@@ -64,7 +80,7 @@ export class ApiService {
 
   private static addAuthorizationHeader(headers: HeadersInit): HeadersInit {
     if (this.token) {
-      return { ...headers, Authorization: `Bearer ${this.token}` };
+      return { Authorization: `Bearer ${this.token}`, ...headers };
     }
     return headers;
   }
@@ -93,19 +109,19 @@ export class ApiService {
 
   /** GET a list. Throws ApiError / network errors; callers decide the fallback. */
   static async get<T>(url: string): Promise<T[]> {
-    const response = await fetch(`${API_BASE_URL}/${url}`, this.getRequestOptions("GET"));
+    const response = await fetch(backendUrl(url), this.getRequestOptions("GET"));
     return this.handleResponse<T[]>(response);
   }
 
   /** POST JSON. Throws ApiError / network errors. */
-  static async post<T>(url: string, body?: unknown): Promise<T> {
-    const response = await fetch(`${API_BASE_URL}/${url}`, this.getRequestOptions("POST", body));
+  static async post<T>(url: string, body?: unknown, customHeaders?: HeadersInit): Promise<T> {
+    const response = await fetch(backendUrl(url), this.getRequestOptions("POST", body, customHeaders));
     return this.handleResponse<T>(response);
   }
 
   /** GET a single item. Throws ApiError / network errors. */
   static async getSingle<T>(url: string): Promise<T> {
-    const response = await fetch(`${API_BASE_URL}/${url}`, this.getRequestOptions("GET"));
+    const response = await fetch(backendUrl(url), this.getRequestOptions("GET"));
     return this.handleResponse<T>(response);
   }
 }

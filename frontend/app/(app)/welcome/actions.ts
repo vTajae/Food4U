@@ -22,7 +22,7 @@ export async function submitWelcome(payload: WelcomeFormData): Promise<WelcomeRe
   }
 
   try {
-    await ProfileService.createWelcomeProfile(parsed.data);
+    await ProfileService.submitWelcomeProfile(parsed.data);
   } catch (error) {
     console.error("Welcome submission failed:", error instanceof Error ? error.message : error);
     return { ok: false, message: "Couldn't save your profile. Please try again." };

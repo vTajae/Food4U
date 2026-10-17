@@ -6,10 +6,13 @@ Python/FastAPI service: profiles and dietary data (CockroachDB via SQLAlchemy as
 - Deployed URL: https://food4u-nrpy.onrender.com
 
 ## Run locally
+
+First create a short-lived child branch and set `$name` as described in `../docs/neon-setup.md`. Never use the production URL; stop the backend and delete the child after testing.
 ```bash
 python -m venv env
 source env/bin/activate        # Windows: env\Scripts\activate
 pip install -r requirements.txt
+export DATABASE_URL="$(neon connection-string "$name" --project-id patient-cherry-72346680 --pooled)"
 fastapi dev server.py
 ```
 Environment variables (`.env`, gitignored): `DATABASE_URL`, `USER_JWT_SECRET_KEY`, `USER_JWT_ALGORITHM` (HS256), `JWT_ACCESS_TOKEN_EXPIRE_MINUTES`, Gemini/OpenAI/Qdrant/FDC/Spoonacular keys. `USER_JWT_SECRET_KEY` must equal the frontend Worker's `JWT_SECRET_KEY`.

@@ -33,7 +33,7 @@ const plugin = {
   name: 'contract-local-backend-only', apply: 'serve', enforce: 'pre',
   transform(code, id) {
     if (id.split('?')[0].replaceAll('\\\\', '/') !== target) return;
-    const declaration = 'const API_BASE_URL = "https://food4u-nrpy.onrender.com";';
+    const declaration = 'const API_BASE_URL = env.API_BASE_URL;';
     if (code.split(declaration).length !== 2) throw new Error('Expected exactly one backend declaration; refusing unsafe dev');
     let output = code.replace(declaration, 'const API_BASE_URL = "http://127.0.0.1:9";');
     if (output.split('await fetch(').length !== 4) throw new Error('Backend fetch surface changed; refusing unsafe dev');
