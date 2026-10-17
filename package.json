@@ -5,6 +5,10 @@
     "concurrent": "^0.3.2"
   },
   "scripts": {
+    "test": "node --test scripts/tests/*.test.mjs",
+    "check:live": "node scripts/live-check.mjs",
+    "check:d1": "node scripts/check-d1-schema.mjs",
+    "cleanup:live": "node scripts/delete-live-check-account.mjs",
     "build": "npm run build:frontend",
     "build:frontend": "cd frontend && npm run build",
     "build-it-up": "npx concurrently \"npm run setup:frontend\" \"npm run setup:backend\"",
