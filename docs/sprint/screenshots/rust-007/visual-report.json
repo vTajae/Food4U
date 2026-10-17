@@ -1,0 +1,407 @@
+{
+  "kind": "dashboard-visual",
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "redirect navigation denied",
+      "pass": true
+    },
+    {
+      "name": "redirect fetch denied",
+      "pass": true
+    },
+    {
+      "name": "desktop 05-after-login: no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "desktop 06-login-dark: no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "desktop profile Crohn's disease",
+      "pass": true
+    },
+    {
+      "name": "desktop profile No dairy",
+      "pass": true
+    },
+    {
+      "name": "desktop profile Low residue",
+      "pass": true
+    },
+    {
+      "name": "desktop profile Under $12",
+      "pass": true
+    },
+    {
+      "name": "desktop 07-dashboard: no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "desktop 08-account-menu: no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "desktop 09-loading: no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "desktop live Ask does not invent safety strips",
+      "pass": true
+    },
+    {
+      "name": "desktop 09-cards-skeleton-empty: no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "desktop 09-empty: no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "mobile 05-after-login: no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "mobile 06-login-dark: no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "mobile profile Crohn's disease",
+      "pass": true
+    },
+    {
+      "name": "mobile profile No dairy",
+      "pass": true
+    },
+    {
+      "name": "mobile profile Low residue",
+      "pass": true
+    },
+    {
+      "name": "mobile profile Under $12",
+      "pass": true
+    },
+    {
+      "name": "mobile 07-dashboard: no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "mobile 08-account-menu: no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "mobile 09-loading: no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "mobile live Ask does not invent safety strips",
+      "pass": true
+    },
+    {
+      "name": "mobile 09-cards-skeleton-empty: no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "mobile 09-empty: no horizontal overflow",
+      "pass": true
+    }
+  ],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "networkFailures": [],
+  "blockedRequests": [],
+  "expectedHttpErrors": [],
+  "onrender": 0,
+  "browser": "155.0.8059.39",
+  "shots": [
+    {
+      "file": "rust-05-after-login-desktop.png",
+      "name": "05-after-login",
+      "viewport": "desktop",
+      "reference": "05-after-login",
+      "metrics": {
+        "width": 1440,
+        "height": 900,
+        "dpr": 1,
+        "scrollWidth": 1440,
+        "url": "/dashboard"
+      }
+    },
+    {
+      "file": "rust-06-login-dark-desktop.png",
+      "name": "06-login-dark",
+      "viewport": "desktop",
+      "reference": "06-login-dark",
+      "metrics": {
+        "width": 1440,
+        "height": 900,
+        "dpr": 1,
+        "scrollWidth": 1440,
+        "url": "/login"
+      }
+    },
+    {
+      "file": "rust-07-dashboard-desktop.png",
+      "name": "07-dashboard",
+      "viewport": "desktop",
+      "reference": "07-dashboard",
+      "metrics": {
+        "width": 1440,
+        "height": 900,
+        "dpr": 1,
+        "scrollWidth": 1440,
+        "url": "/dashboard"
+      }
+    },
+    {
+      "file": "rust-08-account-menu-desktop.png",
+      "name": "08-account-menu",
+      "viewport": "desktop",
+      "reference": "08-account-menu",
+      "metrics": {
+        "width": 1440,
+        "height": 900,
+        "dpr": 1,
+        "scrollWidth": 1440,
+        "url": "/dashboard"
+      }
+    },
+    {
+      "file": "rust-09-loading-desktop.png",
+      "name": "09-loading",
+      "viewport": "desktop",
+      "reference": "09-cards-skeleton-empty",
+      "metrics": {
+        "width": 1440,
+        "height": 900,
+        "dpr": 1,
+        "scrollWidth": 1440,
+        "url": "/dashboard"
+      }
+    },
+    {
+      "file": "rust-09-cards-skeleton-empty-desktop.png",
+      "name": "09-cards-skeleton-empty",
+      "viewport": "desktop",
+      "reference": "09-cards-skeleton-empty",
+      "metrics": {
+        "width": 1440,
+        "height": 900,
+        "dpr": 1,
+        "scrollWidth": 1440,
+        "url": "/dashboard"
+      }
+    },
+    {
+      "file": "rust-09-empty-desktop.png",
+      "name": "09-empty",
+      "viewport": "desktop",
+      "reference": "09-cards-skeleton-empty",
+      "metrics": {
+        "width": 1440,
+        "height": 900,
+        "dpr": 1,
+        "scrollWidth": 1440,
+        "url": "/dashboard"
+      }
+    },
+    {
+      "file": "rust-05-after-login-mobile.png",
+      "name": "05-after-login",
+      "viewport": "mobile",
+      "reference": "05-after-login",
+      "metrics": {
+        "width": 390,
+        "height": 844,
+        "dpr": 2,
+        "scrollWidth": 390,
+        "url": "/dashboard"
+      }
+    },
+    {
+      "file": "rust-06-login-dark-mobile.png",
+      "name": "06-login-dark",
+      "viewport": "mobile",
+      "reference": "06-login-dark",
+      "metrics": {
+        "width": 390,
+        "height": 844,
+        "dpr": 2,
+        "scrollWidth": 390,
+        "url": "/login"
+      }
+    },
+    {
+      "file": "rust-07-dashboard-mobile.png",
+      "name": "07-dashboard",
+      "viewport": "mobile",
+      "reference": "07-dashboard",
+      "metrics": {
+        "width": 390,
+        "height": 844,
+        "dpr": 2,
+        "scrollWidth": 390,
+        "url": "/dashboard"
+      }
+    },
+    {
+      "file": "rust-08-account-menu-mobile.png",
+      "name": "08-account-menu",
+      "viewport": "mobile",
+      "reference": "08-account-menu",
+      "metrics": {
+        "width": 390,
+        "height": 844,
+        "dpr": 2,
+        "scrollWidth": 390,
+        "url": "/dashboard"
+      }
+    },
+    {
+      "file": "rust-09-loading-mobile.png",
+      "name": "09-loading",
+      "viewport": "mobile",
+      "reference": "09-cards-skeleton-empty",
+      "metrics": {
+        "width": 390,
+        "height": 844,
+        "dpr": 2,
+        "scrollWidth": 390,
+        "url": "/dashboard"
+      }
+    },
+    {
+      "file": "rust-09-cards-skeleton-empty-mobile.png",
+      "name": "09-cards-skeleton-empty",
+      "viewport": "mobile",
+      "reference": "09-cards-skeleton-empty",
+      "metrics": {
+        "width": 390,
+        "height": 844,
+        "dpr": 2,
+        "scrollWidth": 390,
+        "url": "/dashboard"
+      }
+    },
+    {
+      "file": "rust-09-empty-mobile.png",
+      "name": "09-empty",
+      "viewport": "mobile",
+      "reference": "09-cards-skeleton-empty",
+      "metrics": {
+        "width": 390,
+        "height": 844,
+        "dpr": 2,
+        "scrollWidth": 390,
+        "url": "/dashboard"
+      }
+    }
+  ],
+  "comparisons": [
+    {
+      "file": "compare-05-after-login-desktop.png",
+      "baseline": "next-05-after-login-desktop.png",
+      "rust": "rust-05-after-login-desktop.png",
+      "width": 2880,
+      "height": 932
+    },
+    {
+      "file": "compare-06-login-dark-desktop.png",
+      "baseline": "next-06-login-dark-desktop.png",
+      "rust": "rust-06-login-dark-desktop.png",
+      "width": 2880,
+      "height": 932
+    },
+    {
+      "file": "compare-07-dashboard-desktop.png",
+      "baseline": "next-07-dashboard-desktop.png",
+      "rust": "rust-07-dashboard-desktop.png",
+      "width": 2880,
+      "height": 932
+    },
+    {
+      "file": "compare-08-account-menu-desktop.png",
+      "baseline": "next-08-account-menu-desktop.png",
+      "rust": "rust-08-account-menu-desktop.png",
+      "width": 2880,
+      "height": 932
+    },
+    {
+      "file": "compare-09-loading-desktop.png",
+      "baseline": "next-09-cards-skeleton-empty-desktop.png",
+      "rust": "rust-09-loading-desktop.png",
+      "width": 2880,
+      "height": 1629
+    },
+    {
+      "file": "compare-09-cards-skeleton-empty-desktop.png",
+      "baseline": "next-09-cards-skeleton-empty-desktop.png",
+      "rust": "rust-09-cards-skeleton-empty-desktop.png",
+      "width": 2880,
+      "height": 1629
+    },
+    {
+      "file": "compare-09-empty-desktop.png",
+      "baseline": "next-09-cards-skeleton-empty-desktop.png",
+      "rust": "rust-09-empty-desktop.png",
+      "width": 2880,
+      "height": 1629
+    },
+    {
+      "file": "compare-05-after-login-mobile.png",
+      "baseline": "next-05-after-login-mobile.png",
+      "rust": "rust-05-after-login-mobile.png",
+      "width": 1560,
+      "height": 1720
+    },
+    {
+      "file": "compare-06-login-dark-mobile.png",
+      "baseline": "next-06-login-dark-mobile.png",
+      "rust": "rust-06-login-dark-mobile.png",
+      "width": 1560,
+      "height": 1720
+    },
+    {
+      "file": "compare-07-dashboard-mobile.png",
+      "baseline": "next-07-dashboard-mobile.png",
+      "rust": "rust-07-dashboard-mobile.png",
+      "width": 1560,
+      "height": 2068
+    },
+    {
+      "file": "compare-08-account-menu-mobile.png",
+      "baseline": "next-08-account-menu-mobile.png",
+      "rust": "rust-08-account-menu-mobile.png",
+      "width": 1560,
+      "height": 1720
+    },
+    {
+      "file": "compare-09-loading-mobile.png",
+      "baseline": "next-09-cards-skeleton-empty-mobile.png",
+      "rust": "rust-09-loading-mobile.png",
+      "width": 1560,
+      "height": 4720
+    },
+    {
+      "file": "compare-09-cards-skeleton-empty-mobile.png",
+      "baseline": "next-09-cards-skeleton-empty-mobile.png",
+      "rust": "rust-09-cards-skeleton-empty-mobile.png",
+      "width": 1560,
+      "height": 4720
+    },
+    {
+      "file": "compare-09-empty-mobile.png",
+      "baseline": "next-09-cards-skeleton-empty-mobile.png",
+      "rust": "rust-09-empty-mobile.png",
+      "width": 1560,
+      "height": 4720
+    }
+  ],
+  "fixtureDifferences": [
+    "05 desktop baseline is legacy login server failure and mobile is pending login; Rust is actual successful login with local mocked profile, intentionally not the same state.",
+    "07/08 baseline used deleted uncommitted dev-preview with Q avatar; Rust uses genuine local D1 login with random ts- username, thus T avatar and different account label. Chips match visible baseline text and order.",
+    "09 baseline showed simultaneous cards, skeleton and empty components in deleted preview. Rust captures separate actual API-driven states, with cards primary plus separate loading/empty comparisons.",
+    "09 first baseline card has preview-only verdict/reason/check strip. Live legacy AskScreen does not pass those safety props; live Rust likewise does not invent safety metadata. Fixture food text reconstructed from baseline; hidden salmon ingredient/nutrient values are local sample data."
+  ]
+}

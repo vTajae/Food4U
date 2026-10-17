@@ -1,0 +1,37 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, sans-serif;
+  line-height: 1.6;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  max-width: 44rem;
+  margin: 3rem auto;
+  padding: 1.5rem;
+}
+
+.eyebrow {
+  font-size: 0.875rem;
+  letter-spacing: 0.06em;
+}
+
+section {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid GrayText;
+}
+
+button {
+  font: inherit;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+button:focus-visible {
+  outline: 3px solid Highlight;
+  outline-offset: 3px;
+}

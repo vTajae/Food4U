@@ -1,0 +1,42 @@
+.welcome-stepper { display:flex; flex-direction:column; gap:24px; width:100%; max-width:640px; margin:0 auto; }
+.welcome-header { display:flex; flex-direction:column; gap:12px; }
+.welcome-step { color:var(--color-ink-muted); font:600 12px/1.3 var(--font-data); text-transform:uppercase; letter-spacing:.08em; }
+#welcome-progress { height:4px; overflow:hidden; border-radius:9999px; background:var(--color-line); }
+#welcome-progress > div { height:100%; width:0; border-radius:inherit; background:var(--color-primary); transition:width 200ms ease-out; }
+#welcome-heading { font:400 28px/1.15 var(--font-display); letter-spacing:-.005em; }
+.welcome-question,.welcome-review { display:flex; flex-direction:column; gap:16px; border-radius:16px; background:var(--color-surface); padding:24px; }
+.welcome-question h3 { margin:0; font-size:18px; font-weight:700; line-height:1.55; }
+.welcome-review { gap:24px; border:1px solid var(--color-line); }
+.welcome-review > div { display:flex; flex-direction:column; gap:8px; }
+.welcome-review h2 { font-size:18px; font-weight:700; line-height:1.3; }
+.welcome-skipped { color:var(--color-ink-muted); font-size:14px; line-height:1.5; }
+.welcome-answers { display:flex; flex-wrap:wrap; gap:8px; }
+.welcome-answers .constraint-chip { gap:4px; max-width:100%; overflow-wrap:anywhere; }
+.welcome-answers .removable-chip { padding-right:0; }
+.welcome-answers button { display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; flex-shrink:0; margin:-4px 0; padding:0; background:transparent; border:0; border-radius:9999px; color:var(--color-primary); }
+.welcome-answers button:focus-visible { outline-offset:-4px; }
+.welcome-answers button svg { width:16px; height:16px; }
+.welcome-ref { position:relative; }
+.welcome-ref-trigger { width:100%; justify-content:space-between; padding:0 14px; font-weight:400; color:var(--color-ink); }
+.welcome-ref-trigger svg { width:20px; height:20px; color:var(--color-ink-muted); }
+.welcome-placeholder { color:var(--color-ink-muted); }
+.welcome-popover { position:absolute; top:calc(100% + 4px); left:0; z-index:50; width:100%; min-width:min(288px,100%); padding:0; border:1px solid var(--color-line); border-radius:10px; background:var(--color-surface); box-shadow:0 8px 24px rgb(35 32 42 / .12),0 2px 6px rgb(35 32 42 / .08); }
+.welcome-search-wrap { display:flex; align-items:center; gap:8px; padding:0 12px; border-bottom:1px solid var(--color-line); }
+.welcome-search-wrap svg { width:20px; height:20px; flex-shrink:0; color:var(--color-ink-muted); }
+.welcome-search { width:100%; min-width:0; height:48px; border:0; background:transparent; padding:12px 0; font-size:16px; }
+.welcome-options { max-height:300px; overflow:auto; padding:4px; }
+.welcome-option { display:flex; align-items:center; gap:8px; min-height:44px; padding:8px; border-radius:6px; font-size:16px; cursor:pointer; }
+.welcome-option[aria-selected='true'] { background:var(--color-primary-soft); color:var(--color-primary); }
+.welcome-check { width:20px; height:20px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid var(--color-line-strong); border-radius:6px; }
+.welcome-option[data-checked='true'] .welcome-check { background:var(--color-primary); border-color:var(--color-primary); color:var(--color-on-primary); }
+.welcome-ref-status { padding:16px 12px; font-size:14px; color:var(--color-ink-muted); }
+.welcome-price { width:100%; min-width:0; height:48px; border:1px solid var(--color-line-strong); border-radius:10px; background:var(--color-surface); padding:0 14px; }
+.welcome-price::placeholder,.welcome-search::placeholder { color:var(--color-ink-muted); opacity:1; }
+.welcome-error { color:var(--color-avoid); font-size:14px; line-height:1.5; }
+.welcome-actions { position:fixed; left:0; right:0; bottom:calc(64px + env(safe-area-inset-bottom)); z-index:30; display:flex; gap:12px; border-top:1px solid var(--color-line); background:var(--color-surface); padding:12px 16px; }
+.welcome-back { min-height:48px; border:0; border-radius:10px; background:transparent; color:var(--color-primary); font-weight:700; padding:0 20px; }
+.welcome-back:hover { text-decoration:underline; text-underline-offset:4px; }
+#welcome-next { margin-left:auto; width:auto; }
+.welcome-mobile-spacer { height:64px; }
+@media(min-width:768px) { .welcome-actions { position:static; border:0; background:transparent; padding:0; } .welcome-mobile-spacer { display:none; } }
+@media(prefers-reduced-motion:reduce) { #welcome-progress > div { transition:none; } }

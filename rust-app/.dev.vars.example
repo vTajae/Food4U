@@ -1,0 +1,6 @@
+# Obviously fake local-only keys. Never use these outside the compatibility spike.
+USER_SESSION_SECRET="food4u-rust-spike-fake-session-secret-32bytes"
+JWT_SECRET_KEY="food4u-rust-spike-fake-jwt-secret-32bytes"
+SPIKE_DEBUG="1"
+API_BASE_URL="http://127.0.0.1:9"
+CLINICAL_TABLES_BASE_URL="http://127.0.0.1:9"
