@@ -1,9 +1,11 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from app.api.routers import user_routes, fdc_routes, spoon_routes, suggestion_routes
 from app.config.database import async_database_session
 from app.config.diet_seed import seed_diet_types
 from app.api.dependencies.user_dep import get_user_service
+from app.api.services.user_service import RATE_LIMIT_WINDOW
 
 
 
@@ -35,15 +37,17 @@ app.add_middleware(
 
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
-    # Use the session correctly via async_database_session.get_session()
     async with async_database_session.get_session() as db:
-        user_service = await get_user_service(db)  # Inject the db session into UserService
-        await user_service.rate_limiter(request)  # Call the rate limiter logic
-
-        # Call the next middleware or route
-        response = await call_next(request)
-
-    return response
+        user_service = await get_user_service(db)
+        allowed = await user_service.rate_limiter(request)
+    # Release the limiter session before the route acquires its request session.
+    if not allowed:
+        return JSONResponse(
+            status_code=429,
+            content={"detail": "Too many requests"},
+            headers={"Retry-After": str(RATE_LIMIT_WINDOW)},
+        )
+    return await call_next(request)
 
 
 # Registering all routes
