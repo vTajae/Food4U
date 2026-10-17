@@ -31,14 +31,14 @@ export async function launchProof(kind) {
   const deny = createServer((req, res) => { res.writeHead(403); res.end('External access denied'); });
   deny.on('connect', (_, socket) => socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n'));
   await listen(deny);
-  const proxy = { server: `http://127.0.0.1:${deny.address().port}`, bypass: '127.0.0.1,localhost' };
+  const proxy = { server: `http://127.0.0.1:${deny.address().port}`, bypass: '<-loopback>,127.0.0.1,localhost' };
   const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true, proxy });
   report.browser = await browser.version();
   // Canary proves redirects cannot escape the proxy, independently of route hooks.
   let hits = 0;
   const target = createServer((_, res) => { hits++; res.end('canary'); }); await listen(target);
   const source = createServer((req, res) => { if (req.url === '/redirect') res.writeHead(302, { location: `http://127.0.0.1:${target.address().port}/landed` }); res.end('<title>Safety canary</title>'); }); await listen(source);
-  const canary = await browser.newContext({ proxy: { ...proxy, bypass: 'localhost' }, serviceWorkers: 'block' });
+  const canary = await browser.newContext({ proxy: { ...proxy, bypass: '<-loopback>,localhost' }, serviceWorkers: 'block' });
   try {
     await fetch(`http://127.0.0.1:${target.address().port}`); hits = 0;
     const page = await canary.newPage(); const origin = `http://localhost:${source.address().port}`;

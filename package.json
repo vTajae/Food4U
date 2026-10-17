@@ -5,6 +5,7 @@
     "concurrent": "^0.3.2"
   },
   "scripts": {
+    "e2e": "npm --prefix frontend run e2e --",
     "test": "node --test scripts/tests/*.test.mjs",
     "check:live": "node scripts/live-check.mjs",
     "check:d1": "node scripts/check-d1-schema.mjs",

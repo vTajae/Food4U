@@ -15,3 +15,6 @@ wrangler.toml
 .dev.vars
 wrangler.jsonc.local
 .vinext/
+/e2e/.artifacts/
+/playwright-report/
+/test-results/

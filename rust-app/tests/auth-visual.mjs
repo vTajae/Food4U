@@ -29,7 +29,7 @@ const close = server => server.listening ? new Promise(ok => server.close(ok)) :
 const denyProxy = createServer((_, res) => { res.writeHead(403); res.end('Visual proof denies external connections'); });
 denyProxy.on('connect', (_, socket) => socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n'));
 await listen(denyProxy);
-const proxy = { server: `http://127.0.0.1:${denyProxy.address().port}`, bypass: '127.0.0.1,localhost' };
+const proxy = { server: `http://127.0.0.1:${denyProxy.address().port}`, bypass: '<-loopback>,127.0.0.1,localhost' };
 let browser;
 let unsafe;
 const onrender = value => {
@@ -53,7 +53,7 @@ async function proveRedirectDenial() {
     await listen(source);
     assert.equal((await fetch(blocked)).status, 200);
     hits = 0;
-    context = await browser.newContext({ serviceWorkers: 'block', proxy: { ...proxy, bypass: 'localhost' } });
+    context = await browser.newContext({ serviceWorkers: 'block', proxy: { ...proxy, bypass: '<-loopback>,localhost' } });
     const page = await context.newPage();
     const origin = `http://localhost:${source.address().port}`;
     await page.goto(origin);
