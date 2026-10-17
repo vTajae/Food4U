@@ -90,13 +90,17 @@ async function login() {
 }
 async function choose(heading, query, label) {
   await page.getByRole('combobox', { name: heading, exact: true }).click();
-  await page.getByPlaceholder('Type to search', { exact: true }).fill(query);
-  const option = page.getByRole('option').filter({ hasText: label }).first();
+  await page.getByRole('dialog').getByRole('searchbox').fill(query);
+  const option = page.getByRole('checkbox', { name: label, exact: true }).first();
   await option.waitFor();
-  const text = (await option.innerText()).trim();
-  if (heading === 'Do you have a medical condition?') check(text.includes('J30.9'), 'expected J30.9 option');
+  const text = await option.getAttribute('aria-label');
+  if (heading === 'Do you have a medical condition?') check(text === 'Seasonal allergies (hay fever)', 'expected plain-label J30.9 search result');
   await option.click();
   await page.keyboard.press('Escape');
+  if (heading === 'Do you have a medical condition?') {
+    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('formState')));
+    check(saved.answers.find(answer => answer.questionId === 1)?.answers.some(answer => answer.code === 'J30.9' && answer.name === 'Allergic rhinitis, unspecified'), 'expected official J30.9 payload metadata');
+  }
 }
 async function chips() {
   await page.waitForURL(url => url.pathname === '/dashboard');
@@ -104,8 +108,9 @@ async function chips() {
   const region = page.locator('p').filter({ hasText: 'Your profile:' });
   await region.waitFor();
   const labels = await region.locator('span').allTextContents();
-  check(['Vegetarian', 'Allergic rhinitis, unspecified'].every(label => labels.includes(label)), 'required persisted chips missing');
-  return { chips: ['Vegetarian', 'Allergic rhinitis, unspecified'] };
+  check(['Vegetarian', 'Seasonal allergies (hay fever)'].every(label => labels.includes(label)), 'required persisted chips missing');
+  check(!labels.some(label => /\b[A-Z]\d\d(?:\.\w+)?\b/.test(label)), 'ICD metadata must not be displayed');
+  return { chips: ['Vegetarian', 'Seasonal allergies (hay fever)'] };
 }
 const stamp = `${Date.now()}-${randomUUID().slice(0, 8)}`;
 const password = `Lc!9-${randomBytes(24).toString('base64url')}`; // Memory only; never serialized.
@@ -156,7 +161,7 @@ try {
     await page.getByRole('button', { name: 'Continue', exact: true }).click();
     await choose('Do you follow a particular diet?', 'Vegetarian', /^\s*Vegetarian\s*$/);
     await page.getByRole('button', { name: 'Continue', exact: true }).click();
-    await choose('Do you have a medical condition?', 'allergy', 'Allergic rhinitis, unspecified');
+    await choose('Do you have a medical condition?', 'allergy', 'Seasonal allergies (hay fever)');
     await page.getByRole('button', { name: 'Continue', exact: true }).click();
     await page.getByRole('button', { name: 'Continue', exact: true }).click();
     await page.getByPlaceholder('Enter price', { exact: true }).fill('12.50');

@@ -64,12 +64,16 @@ export async function runPagesAndApi(t, harness) {
     });
   });
 
-  await t.test('anonymous refs checks missing query/type before authentication', async () => {
+  await t.test('anonymous refs allows missing type but requires auth for browsing and searching a known type', async () => {
     await withContext(async ({ context }) => {
-      for (const suffix of ['', '?query=asthma', '?type=conditions', '?query=&type=conditions']) {
+      for (const suffix of ['', '?query=asthma']) {
         await json(await context.request.get(`${base}/api/refs${suffix}`, { maxRedirects: 0 }), 200, { suggestions: [] });
       }
-      await json(await context.request.get(`${base}/api/refs?query=asthma&type=conditions`, { maxRedirects: 0 }), 401, { suggestions: [], message: 'Please log in.' });
+      for (const type of ['conditions', 'icd10cm', 'cuisines', 'diets']) {
+        for (const query of ['', '&query=', '&query=asthma']) {
+          await json(await context.request.get(`${base}/api/refs?type=${type}${query}`, { maxRedirects: 0 }), 401, { suggestions: [], message: 'Please log in.' });
+        }
+      }
     });
   });
 

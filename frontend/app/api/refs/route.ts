@@ -4,13 +4,14 @@ import RefService from "~/api/services/refService";
 import type { Suggestion } from "~/api/schemas/refs";
 import AutoCompleteData from "~/lib/refs/allergies.json";
 import { getSession } from "~/lib/session";
+import { commonConditions, commonFoodAllergies } from "~/lib/refs/conditions";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const query = url.searchParams.get("query");
+  const query = (url.searchParams.get("query") ?? "").trim();
   const type = url.searchParams.get("type");
 
-  if (!query || !type) {
+  if (!type) {
     return Response.json({ suggestions: [] });
   }
 
@@ -18,9 +19,11 @@ export async function GET(request: Request) {
   if (!session.data.auth) {
     return Response.json({ suggestions: [], message: "Please log in." }, { status: 401 });
   }
-  const backend = new RefService(session.data.token);
-
   if (type === "icd10cm" || type === "conditions") {
+    if (!query) {
+      const common = type === "icd10cm" ? commonConditions : commonFoodAllergies;
+      return Response.json({ suggestions: common.map(({ code, officialName }) => ({ name: officialName, code })) });
+    }
     try {
       const suggestions = await ClinicalService.autocompleter(query, 10, "conditions");
       return Response.json({ suggestions: suggestions ?? [] });
@@ -33,19 +36,13 @@ export async function GET(request: Request) {
     }
   }
 
-  // Other types: bundled autocomplete data plus the backend's diet list.
+  // Only diets depend on the backend. Bundled lists can be browsed even while it sleeps.
   const autocompleteData = AutoCompleteData.autocomplete as Record<string, (Suggestion | string)[]>;
-  const diets = await backend.getAllDiets();
-
-  const allSuggestions: Record<string, Suggestion[]> = {};
-  for (const [key, values] of Object.entries(autocompleteData)) {
-    allSuggestions[key] = values.map((value) => ({
+  const suggestions: Suggestion[] = type === "diets"
+    ? await new RefService(session.data.token).getAllDiets()
+    : (autocompleteData[type] ?? []).map((value) => ({
       name: typeof value === "string" ? value : value.name,
     }));
-  }
-  allSuggestions["diets"] = diets;
-
-  const suggestions = allSuggestions[type] || [];
   const filteredSuggestions = suggestions.filter(
     (s) => s.name && s.name.toLowerCase().includes(query.toLowerCase())
   );

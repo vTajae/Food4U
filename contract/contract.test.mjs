@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createHarness } from './harness.mjs';
 import { runPagesAndApi } from './pages-api.mjs';
+import { runOnboardingPickers } from './onboarding-pickers.mjs';
 
 test('Food4U observable web contract', async t => {
   const harness = await createHarness();
@@ -133,6 +134,7 @@ test('Food4U observable web contract', async t => {
       await page.getByRole('alert').getByText('The server is waking up. This can take up to a minute on first visit. Please try again shortly.', { exact: true }).waitFor();
       assert.equal(new URL(page.url()).pathname, '/welcome');
     }));
+    await runOnboardingPickers(t, harness);
     await runPagesAndApi(t, harness);
   } finally { await harness.close(); }
 });

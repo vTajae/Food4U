@@ -9,6 +9,7 @@ import { useFormContext } from "~/components/form/context";
 import QuestionComponent from "~/components/form/questionBase";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import { plainLabel } from "~/lib/refs/conditions";
 
 interface Question {
   questionId: number;
@@ -100,7 +101,7 @@ export function OnboardingStepper() {
                   <ul className="flex flex-wrap gap-2">
                     {answers.map((a, i) => (
                       <li key={i}>
-                        <Badge>{a.name ?? a.value ?? ""}{a.code ? ` (${a.code})` : ""}</Badge>
+                        <Badge>{plainLabel(a.code, a.name ?? a.value)}</Badge>
                       </li>
                     ))}
                   </ul>
