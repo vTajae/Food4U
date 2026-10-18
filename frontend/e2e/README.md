@@ -125,12 +125,15 @@ also retain the annotations. Counts are observations, not a retry allowance.
   no `next-router-prefetch` header (even an empty header disqualifies); exact
   `failure().errorText === 'net::ERR_ABORTED'`; an **earlier observed exact-URL**
   response with status 200 and content-type starting with `text/x-component`;
-  and the page URL pathname equals the failed request pathname at the **first
-  gate check after failure**, or teardown if no check intervenes. Pathname is
-  evaluated at that check, not failure time. A match permanently settles the
+  and the main frame was on, or later committed to, the failed request's
+  pathname before the **first gate check after failure** (or teardown if no
+  check intervenes). Commits are observed through `framenavigated`, which also
+  fires for same-document history updates. A match permanently settles the
   candidate as tolerated; it is never re-evaluated after later navigation.
-  A mismatch at that first check is permanently fatal. Closed/blank pages
-  cannot skip settlement of an outstanding candidate at teardown.
+  No commit by that first check is permanently fatal, as is a target visited
+  only before the abort. Closed/blank pages cannot skip settlement of an
+  outstanding candidate at teardown (019b correction: a journey may legitimately
+  leave the committed page before its next gate check).
   Each tolerated event gets one `tolerated-rsc-abort` annotation containing
   URL, response/failure/first-matching-gate timestamps. Everything else remains
   fatal. Real-Chrome RED-style controls reject missing prior 200, prefetch,

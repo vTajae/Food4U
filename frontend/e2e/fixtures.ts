@@ -10,7 +10,14 @@ export function observe(page: Page, origin: string, expected: { fault?: string; 
   let expectedFaultSource: string | undefined;
   const handledResponses = new Map<string, Set<number>>();
   const componentResponses = new Map<string, number>();
-  const rscAborts: { url: string; responseAt: string; failedAt: string; settled: boolean }[] = [];
+  const rscAborts: { url: string; responseAt: string; failedAt: string; reached: boolean; settled: boolean }[] = [];
+  // Main-frame commits, including same-document history updates (Playwright emits
+  // framenavigated for both), show whether an aborted RSC target actually rendered.
+  page.on('framenavigated', frame => {
+    if (frame !== page.mainFrame()) return;
+    const pathname = new URL(frame.url()).pathname;
+    for (const abort of rscAborts) if (!abort.settled && new URL(abort.url).pathname === pathname) abort.reached = true;
+  });
   page.on('response', response => {
     const url = new URL(response.url());
     if (url.origin === origin && response.status() === 200 && response.headers()['content-type']?.startsWith('text/x-component')) {
@@ -63,7 +70,8 @@ export function observe(page: Page, origin: string, expected: { fault?: string; 
     // exact-URL successful component response may wait for the committed URL.
     if (request.method() === 'GET' && headers.rsc === '1' && !Object.hasOwn(headers, 'next-router-prefetch') &&
       request.failure()?.errorText === 'net::ERR_ABORTED' && responseAt !== undefined) {
-      rscAborts.push({ url: request.url(), responseAt: new Date(responseAt).toISOString(), failedAt: new Date().toISOString(), settled: false });
+      rscAborts.push({ url: request.url(), responseAt: new Date(responseAt).toISOString(), failedAt: new Date().toISOString(),
+        reached: new URL(page.url()).pathname === url.pathname, settled: false });
       return;
     }
     errors.push(`same-origin requestfailed: ${request.method()} ${request.url()} ${request.failure()?.errorText}`);
@@ -74,13 +82,14 @@ export function observe(page: Page, origin: string, expected: { fault?: string; 
   return {
     errors,
     checkRequests(info?: TestInfo) {
-      // Addendum 2: settle at the FIRST check after failure (teardown if no
-      // check intervenes). Later navigation cannot resurrect a settled abort.
+      // 019b: tolerated only if the main frame was on, or later committed to, the
+      // aborted pathname before this check (or teardown). Each abort settles once;
+      // later navigation can neither excuse nor resurrect it.
       for (const abort of rscAborts) {
         if (abort.settled) continue;
         abort.settled = true;
-        if (new URL(page.url()).pathname !== new URL(abort.url).pathname) {
-          errors.push(`same-origin requestfailed: GET ${abort.url} net::ERR_ABORTED; committed pathname differs at gate: ${page.url()}`);
+        if (!abort.reached && new URL(page.url()).pathname !== new URL(abort.url).pathname) {
+          errors.push(`same-origin requestfailed: GET ${abort.url} net::ERR_ABORTED; the page never committed that pathname before the gate (now ${page.url()})`);
         } else if (info) {
           info.annotations.push({ type: 'tolerated-rsc-abort', description: JSON.stringify({ url: abort.url, responseAt: abort.responseAt, failedAt: abort.failedAt, checkedAt: new Date().toISOString() }) });
         }

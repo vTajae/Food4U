@@ -86,7 +86,8 @@ test('clean labeled local page passes the same guard', async ({ page, baseURL, g
 // Real Chrome response/requestfailed events exercise the exported observer and
 // gate, not a parallel classifier. These routes belong only to raw guard pages.
 const rscSpecimens: { name: string; prior?: boolean; headers?: Record<string, string>; committed?: string;
-  abort?: 'failed'; method?: string; contentType?: string; status?: number; priorQuery?: string; positive?: boolean; navigateAway?: boolean }[] = [
+  abort?: 'failed'; method?: string; contentType?: string; status?: number; priorQuery?: string; positive?: boolean; navigateAway?: boolean;
+  leaveBeforeCheck?: boolean; visitedBefore?: boolean }[] = [
   { name: 'no prior 200', prior: false },
   { name: 'aborted prefetch', headers: { rsc: '1', 'next-router-prefetch': '' } },
   { name: 'different committed pathname', committed: '/__harness__/rsc-other' },
@@ -98,6 +99,10 @@ const rscSpecimens: { name: string; prior?: boolean; headers?: Record<string, st
   { name: 'different exact response URL', priorQuery: 'another-response' },
   { name: 'positive control', positive: true },
   { name: 'settled abort survives later navigation', positive: true, navigateAway: true },
+  // 019b (g): login commits /welcome, then a journey leaves before any gate runs.
+  { name: 'target committed then left before any check', positive: true, leaveBeforeCheck: true },
+  // 019b (h): visiting the target only BEFORE the abort proves nothing.
+  { name: 'target visited only before the abort', visitedBefore: true },
 ];
 for (const specimen of rscSpecimens) {
   test(`RSC guard ${specimen.name}`, async ({ browser, baseURL, proxy }, info) => {
@@ -118,6 +123,7 @@ for (const specimen of rscSpecimens) {
       // The positive abort happens BEFORE the matching navigation commits.
       // A failure-time pathname test would wrongly reject this control.
       await page.goto(`${origin}${specimen.positive ? '/__harness__/rsc-before-commit' : specimen.committed ?? pathname}`);
+      if (specimen.visitedBefore) await page.goto(`${origin}/__harness__/rsc-other`);
       if (specimen.prior !== false) {
         await page.evaluate(async ({ url, headers }) => { await (await fetch(url, { headers })).text(); }, {
           url: specimen.priorQuery ? `${origin}${pathname}?_rsc=${specimen.priorQuery}` : failedURL, headers,
@@ -133,6 +139,7 @@ for (const specimen of rscSpecimens) {
       if (specimen.positive) {
         expect(new URL(page.url()).pathname).toBe('/__harness__/rsc-before-commit');
         await page.evaluate(path => history.replaceState(null, '', path), pathname);
+        if (specimen.leaveBeforeCheck) await page.goto(`${origin}/__harness__/rsc-left`);
         await checkPage(page, errors, false, info);
         expect(info.annotations.filter(item => item.type === 'tolerated-rsc-abort')).toHaveLength(1);
         if (specimen.navigateAway) {

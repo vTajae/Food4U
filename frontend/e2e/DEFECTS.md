@@ -1,5 +1,31 @@
 # Slice 018 exploratory audit
 
+## D019-02: intake draft stops saving after choosing a diet
+
+**High severity; slice 019 regression; no new fixme.** The strict answer schema
+rejected the real diet `{name, description}` payload. Writes silently left the
+last valid cuisine-only draft behind; reloading lost the diet and later answers.
+OMC production evidence at repository root:
+`.cockpit/20261013-neon/evidence/019-live-debug.log` (`OMC_DEBUG_ENTRIES`) and
+`019-omc-draft-diag-2.log`. Saving the in-memory profile was not the failing seam.
+
+The hotfix strips unknown answer fields and keeps bounded optional strings:
+name 512, value 128, code 64, description 8192 characters. At least one known,
+defined field must remain; the serialized sanitized envelope validates. Version,
+identity, question IDs/uniqueness/count and step guards remain intact. If a
+state is still invalid or storage fails, the current identity's old key is
+removed (best effort if storage itself blocks removal). This avoids reviving
+stale or partially omitted health answers; other accounts are untouched.
+
+Closure commit: the commit containing this entry on `fix/draft-diet-description`,
+subject `fix: keep onboarding drafts saving after a diet is chosen`; full SHA
+and final gate status: `.cockpit/20261013-neon/plans/019b-executor.md`.
+Node RED proves the production-shaped round trip and stale-key failures;
+real-Chrome RED fails after diet reload at both widths. Active D019-02 checks
+reload after diet and again at review, restoring all five answers and the step.
+Local evidence: `.cockpit/20261013-neon/evidence/019b-*`. Live revalidation and
+deployment remain OMC-owned; this is not a new production-certification claim.
+
 Local built Worker, deterministic fake backend, real system Chrome; desktop
 1440×900 and touch/mobile 390×844. **Not a production, real-backend, Neon,
 recommendation-safety or real-iPhone certification.** Google Fonts are excluded
@@ -212,10 +238,15 @@ supersedes the original rule 4).
 Only GET + `rsc: 1` + **absent** `next-router-prefetch`, exact `net::ERR_ABORTED`,
 and an earlier **exact-URL** 200 response with content-type starting with
 `text/x-component` can be candidates. At the **first check after failure**
-(teardown if no check intervenes), a matching committed pathname permanently
-settles the candidate as tolerated; it is annotated once and never re-evaluated
-after later navigation. A mismatch at that first check is fatal. Pathname is
-not checked at failure time. Every tolerated event is annotated `tolerated-rsc-abort` with URL and
+(teardown if no check intervenes), the candidate is tolerated only if the main
+frame was on, or committed to, its pathname at or after the failure (observed via
+`framenavigated`, including same-document history updates); it is annotated once
+and never re-evaluated after later navigation. Otherwise it is fatal. 019b
+correction: the identity-switch journey commits `/welcome` during login and then
+opens a private page before any gate check, which the earlier "pathname at the
+first check" rule wrongly failed. Controls (g) "target committed then left before
+any check" (RED before the fix) and (h) "target visited only before the abort"
+(stays fatal) cover it. Every tolerated event is annotated `tolerated-rsc-abort` with URL and
 timestamps, and counted in `e2e/.artifacts/019-rsc-aborts.json` (guard controls
 and application events separately). All other errors remain fatal. Real-browser
 negative/positive controls and renewed full-suite results are recorded under

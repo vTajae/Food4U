@@ -2,6 +2,9 @@ import { test, expect } from './fixtures';
 import { email, login, register, onboard, choose } from './journeys';
 
 test('all five steps, review, back, save and persisted dashboard chips', async ({ page, gate }) => {
+  // Long journey (every step plus 5-10 axe scans): 9-11 s on an idle machine, over the
+  // 45 s budget under unrelated CPU load. A slow budget, not weaker assertions (019b).
+  test.slow();
   const user = email(); await register(page, user); await login(page, user);
   await onboard(page, gate);
   await page.getByRole('button', { name: 'Back', exact: true }).click();
@@ -16,6 +19,40 @@ test('all five steps, review, back, save and persisted dashboard chips', async (
   await gate.check('saved-dashboard');
   await page.reload();
   await expect(page.getByText('Peanut allergy', { exact: true })).toBeVisible();
+});
+
+test('D019-02 diet and every later answer survive reload after diet and at review', async ({ page, gate }) => {
+  // Long journey (every step plus 5-10 axe scans): 9-11 s on an idle machine, over the
+  // 45 s budget under unrelated CPU load. A slow budget, not weaker assertions (019b).
+  test.slow();
+  const user = email(); await register(page, user); await login(page, user);
+  await choose(page, 'What cuisines do you enjoy?', 'Italian');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await choose(page, 'Do you follow a particular diet?', 'Vegetarian');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(page.getByText('Step 3 of 5', { exact: true })).toBeVisible();
+  await page.reload({ waitUntil: 'networkidle' });
+  await expect(page.getByText('Step 3 of 5', { exact: true })).toBeVisible();
+  await gate.check('019b-after-diet-reload');
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Remove Vegetarian', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Remove Italian', exact: true })).toBeVisible();
+  for (let step = 0; step < 2; step++) await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await choose(page, 'Do you have a medical condition?', 'Seasonal allergies (hay fever)');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await choose(page, 'Any allergies or foods you avoid?', 'Peanut allergy');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('textbox', { name: 'What do you usually spend per meal?' }).fill('12.50');
+  await page.getByRole('button', { name: 'Review', exact: true }).click();
+  await expect(page.getByRole('heading', { name: "Here's what we'll check against" })).toBeVisible();
+  await page.reload({ waitUntil: 'networkidle' });
+  await expect(page.getByRole('heading', { name: "Here's what we'll check against" })).toBeVisible();
+  await expect(page.getByRole('progressbar', { name: 'Onboarding progress' })).toHaveAttribute('aria-valuenow', '100');
+  for (const answer of ['Italian', 'Vegetarian', 'Seasonal allergies (hay fever)', 'Peanut allergy', '12.50']) {
+    await expect(page.getByText(answer, { exact: true })).toBeVisible();
+  }
+  await gate.check('019b-review-reload');
 });
 
 test('D018-02 price review has an explicit currency', async ({ page, gate }) => {
@@ -82,6 +119,9 @@ test('D018-09 nonnumeric meal price cannot reach review', async ({ page, gate })
 });
 
 test('save while waking keeps review answers and offers retry', async ({ page, gate }, info) => {
+  // Long journey (every step plus 5-10 axe scans): 9-11 s on an idle machine, over the
+  // 45 s budget under unrelated CPU load. A slow budget, not weaker assertions (019b).
+  test.slow();
   await login(page, `save-waking-${info.project.name}@food4u.test`);
   await onboard(page, gate);
   await page.getByRole('button', { name: 'Save profile', exact: true }).click();

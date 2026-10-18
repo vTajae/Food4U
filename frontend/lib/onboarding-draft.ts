@@ -4,8 +4,9 @@ import type { FormState } from "~/api/schemas/refs";
 type DraftStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 const uuid = z.string().uuid();
 const answer = z.object({
-  name: z.string().optional(), value: z.string().optional(), code: z.string().optional(),
-}).strict().refine(value => Object.keys(value).length > 0);
+  name: z.string().max(512).optional(), value: z.string().max(128).optional(),
+  code: z.string().max(64).optional(), description: z.string().max(8192).optional(),
+}).strip().refine(value => Object.values(value).some(field => field !== undefined));
 const stateSchema = z.object({
   currentStep: z.number().int().min(0).max(5),
   answers: z.array(z.object({
@@ -49,8 +50,10 @@ export function writeDraft(storage: DraftStorage | undefined, identity: string |
   const key = draftKey(identity);
   if (!key) return;
   const parsed = envelope.safeParse({ version: 1, identity, state });
-  if (!parsed.success) return;
-  try { storage?.setItem(key, JSON.stringify(parsed.data)); } catch { /* Quota/privacy mode is nonfatal. */ }
+  // A partial snapshot could silently omit health answers. If validation or
+  // storage fails, discard this identity's old snapshot instead of reviving it.
+  if (!parsed.success) { remove(storage, key); return; }
+  try { storage?.setItem(key, JSON.stringify(parsed.data)); } catch { remove(storage, key); }
 }
 
 export function clearDraft(storage: DraftStorage | undefined, identity: string | undefined) {
