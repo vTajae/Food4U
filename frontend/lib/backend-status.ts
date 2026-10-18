@@ -1,7 +1,6 @@
 import { ApiError } from "~/api/services/baseService";
 
-export const BACKEND_WAKING_MESSAGE =
-  "The server is waking up. This can take up to a minute on first visit. Please try again shortly.";
+export { BACKEND_WAKING_MESSAGE } from "./backend-messages";
 
 // Called only at backend request boundaries. Workerd can report a plain Error
 // for a lost connection; configuration and unrelated application errors stay generic.

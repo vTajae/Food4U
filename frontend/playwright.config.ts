@@ -12,7 +12,7 @@ export default defineConfig({
   expect: { timeout: 7_000 },
   outputDir: './test-results',
   reporter: [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }],
-    ['json', { outputFile: 'e2e/.artifacts/018-results.json' }]],
+    ['json', { outputFile: 'e2e/.artifacts/018-results.json' }], ['./e2e/rsc-abort-reporter.ts']],
   use: {
     browserName: 'chromium', channel: 'chrome', headless: true,
     baseURL: production ? 'https://food4u-frontend.qias-webdev.workers.dev' : undefined,

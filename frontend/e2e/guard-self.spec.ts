@@ -66,8 +66,8 @@ for (const specimen of [
     await page.route('**/__harness__/specimen', route => route.fulfill({ contentType: 'text/html', body: document(specimen.html) }));
     try {
       await page.goto(baseURL + '/__harness__/specimen');
-      if (specimen.name === 'pageerror') await expect.poll(() => errors.length).toBeGreaterThan(0);
-      if (specimen.name === 'failed same-origin request') await expect.poll(() => errors.some(error => error.includes('same-origin requestfailed'))).toBe(true);
+      if (specimen.name === 'pageerror') await expect.poll(() => errors.errors.length).toBeGreaterThan(0);
+      if (specimen.name === 'failed same-origin request') await expect.poll(() => errors.errors.some(error => error.includes('same-origin requestfailed'))).toBe(true);
       if (process.env.E2E_GUARD_RED === '1') {
         await checkPage(page, errors, specimen.medical);
       } else {
@@ -82,3 +82,66 @@ test('clean labeled local page passes the same guard', async ({ page, baseURL, g
   await page.goto(baseURL + '/__harness__/clean');
   await gate.check('guard-clean');
 });
+
+// Real Chrome response/requestfailed events exercise the exported observer and
+// gate, not a parallel classifier. These routes belong only to raw guard pages.
+const rscSpecimens: { name: string; prior?: boolean; headers?: Record<string, string>; committed?: string;
+  abort?: 'failed'; method?: string; contentType?: string; status?: number; priorQuery?: string; positive?: boolean }[] = [
+  { name: 'no prior 200', prior: false },
+  { name: 'aborted prefetch', headers: { rsc: '1', 'next-router-prefetch': '' } },
+  { name: 'different committed pathname', committed: '/__harness__/rsc-other' },
+  { name: 'non-RSC abort', headers: {} },
+  { name: 'different errorText', abort: 'failed' },
+  { name: 'POST abort', method: 'POST' },
+  { name: 'non-component response', contentType: 'text/plain' },
+  { name: 'non-200 response', status: 201 },
+  { name: 'different exact response URL', priorQuery: 'another-response' },
+  { name: 'positive control', positive: true },
+];
+for (const specimen of rscSpecimens) {
+  test(`RSC guard ${specimen.name}`, async ({ browser, baseURL, proxy }, info) => {
+    const context = await browser.newContext({ proxy });
+    const page = await context.newPage();
+    const origin = new URL(baseURL!).origin;
+    const errors = observe(page, origin);
+    const pathname = '/__harness__/rsc-committed';
+    const failedURL = `${origin}${pathname}?_rsc=guard-019`;
+    const headers: Record<string, string> = specimen.headers ?? { rsc: '1' };
+    let responding = true;
+    await page.route('**/__harness__/rsc-*', route => {
+      if (route.request().isNavigationRequest()) return route.fulfill({ contentType: 'text/html', body: document('<p>Committed guard page</p>') });
+      if (responding) return route.fulfill({ status: specimen.status ?? 200, contentType: specimen.contentType ?? 'text/x-component; charset=utf-8', body: 'guard response' });
+      return route.abort(specimen.abort ?? 'aborted');
+    });
+    try {
+      // The positive abort happens BEFORE the matching navigation commits.
+      // A failure-time pathname test would wrongly reject this control.
+      await page.goto(`${origin}${specimen.positive ? '/__harness__/rsc-before-commit' : specimen.committed ?? pathname}`);
+      if (specimen.prior !== false) {
+        await page.evaluate(async ({ url, headers }) => { await (await fetch(url, { headers })).text(); }, {
+          url: specimen.priorQuery ? `${origin}${pathname}?_rsc=${specimen.priorQuery}` : failedURL, headers,
+        });
+      }
+      responding = false;
+      const failed = page.waitForEvent('requestfailed', request => request.url() === failedURL);
+      await page.evaluate(async ({ url, headers, method }) => { await fetch(url, { headers, method }).catch(() => {}); }, {
+        url: failedURL, headers, method: specimen.method ?? 'GET',
+      });
+      const request = await failed;
+      expect(request.failure()?.errorText).toBe(specimen.abort ? 'net::ERR_FAILED' : 'net::ERR_ABORTED');
+      if (specimen.positive) {
+        expect(new URL(page.url()).pathname).toBe('/__harness__/rsc-before-commit');
+        await page.evaluate(path => history.replaceState(null, '', path), pathname);
+        await checkPage(page, errors, false, info);
+        expect(info.annotations.filter(item => item.type === 'tolerated-rsc-abort')).toHaveLength(1);
+        // Recheck retained candidates: a later divergent URL must fail too.
+        await page.evaluate(() => history.replaceState(null, '', '/__harness__/rsc-left'));
+        await expect(checkPage(page, errors, false)).rejects.toThrow(/No console errors/);
+      } else if (process.env.E2E_GUARD_RED === '1') {
+        await checkPage(page, errors, false);
+      } else {
+        await expect(checkPage(page, errors, false)).rejects.toThrow(/No console errors/);
+      }
+    } finally { await context.close(); }
+  });
+}

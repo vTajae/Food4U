@@ -1,7 +1,7 @@
 import { test, expect } from './fixtures';
 import { login } from './journeys';
 
-test('profile chips and ask validation', async ({ page, gate }, info) => {
+test('profile chips and ask validation', { annotation: { type: 'expected-http-error', description: '/api/suggestion:503' } }, async ({ page, gate }, info) => {
   await login(page, `dashboard-${info.project.name}@food4u.test`);
   await expect(page.getByRole('heading', { name: 'What should I eat?' })).toBeVisible();
   await expect(page.getByText('Vegetarian', { exact: true })).toBeVisible();
@@ -23,7 +23,7 @@ test('profile chips and ask validation', async ({ page, gate }, info) => {
   await gate.check('suggestion-outage-observed-D018-04');
 });
 
-test('D018-11 loading suggestion strip remains keyboard scrollable', async ({ page, gate }, info) => {
+test('D018-11 loading suggestion strip remains keyboard scrollable', { annotation: { type: 'expected-http-error', description: '/api/suggestion:503' } }, async ({ page, gate }, info) => {
   test.fixme(info.project.name === 'mobile' && process.env.E2E_AUDIT !== '1', 'D018-11: serious scrollable-region-focusable during loading; see DEFECTS.md');
   await login(page, `dashboard-${info.project.name}@food4u.test`);
   await page.getByRole('textbox', { name: 'Ask about food' }).fill('A vegetarian lunch');
@@ -35,8 +35,7 @@ test('D018-11 loading suggestion strip remains keyboard scrollable', async ({ pa
   await expect(page.getByRole('button', { name: 'Ask', exact: true })).toBeEnabled();
 });
 
-test('D018-04 suggestion outage is unavailable, not no matches', async ({ page, gate }, info) => {
-  test.fixme(process.env.E2E_AUDIT !== '1', 'D018-04: backend 503 swallowed as no matches; see DEFECTS.md');
+test('D018-04 suggestion outage is unavailable, not no matches', { annotation: { type: 'expected-http-error', description: '/api/suggestion:503' } }, async ({ page, gate }, info) => {
   await login(page, `dashboard-${info.project.name}@food4u.test`);
   await page.getByRole('textbox', { name: 'Ask about food' }).fill('A simple vegetarian lunch');
   await page.getByRole('button', { name: 'Ask', exact: true }).click();
@@ -53,6 +52,43 @@ test('D018-07 Profile opens saved editable profile, not empty intake', async ({ 
   await page.waitForURL(url => ['/welcome', '/profile'].includes(url.pathname));
   await gate.check('profile-empty-wizard-D018-07');
   await expect(page).toHaveURL(/\/profile$/);
+});
+
+test('019 not-configured suggestions explain setup without a retry or empty-results lie', { annotation: { type: 'expected-http-error', description: '/api/suggestion:503' } }, async ({ page, gate }, info) => {
+  await login(page, `dashboard-${info.project.name}@food4u.test`);
+  await page.getByRole('textbox', { name: 'Ask about food' }).fill('019 not configured');
+  let requests = 0; page.on('request', request => { if (new URL(request.url()).pathname === '/api/suggestion') requests++; });
+  await page.getByRole('button', { name: 'Ask', exact: true }).click();
+  await expect(page.getByRole('alert').filter({ hasText: "Meal ideas aren't available yet. We're setting this up." }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Retry', exact: true })).toBeHidden();
+  await expect(page.getByText('No matches for that', { exact: true })).toBeHidden();
+  await expect(page.getByText(/Check your connection/i)).toBeHidden();
+  await gate.check('019-not-configured');
+  expect(requests).toBe(1);
+});
+
+test('019 waking Retry replays the request; only real empty results say no matches', { annotation: { type: 'expected-http-error', description: '/api/suggestion:503' } }, async ({ page, gate }, info) => {
+  await login(page, `dashboard-${info.project.name}@food4u.test`);
+  await page.getByRole('textbox', { name: 'Ask about food' }).fill('019 retry');
+  await page.getByRole('button', { name: 'Ask', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Retry', exact: true })).toBeVisible();
+  await expect(page.getByRole('alert').filter({ hasText: 'The server is waking up.' }).first()).toBeVisible();
+  await gate.check('019-waking-retry');
+  await page.getByRole('textbox', { name: 'Ask about food' }).fill('019 not configured');
+  await page.getByRole('button', { name: 'Retry', exact: true }).click();
+  await expect(page.getByText('No matches for that', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Retry', exact: true })).toBeHidden();
+  await gate.check('019-real-empty');
+});
+
+test('019 busy suggestions say to wait and offer Retry', { annotation: { type: 'expected-http-error', description: '/api/suggestion:429' } }, async ({ page, gate }, info) => {
+  await login(page, `dashboard-${info.project.name}@food4u.test`);
+  await page.getByRole('textbox', { name: 'Ask about food' }).fill('019 busy');
+  await page.getByRole('button', { name: 'Ask', exact: true }).click();
+  await expect(page.getByRole('alert').filter({ hasText: 'Too many requests, try again in a moment' }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Retry', exact: true })).toBeVisible();
+  await expect(page.getByText('No matches for that', { exact: true })).toBeHidden();
+  await gate.check('019-busy');
 });
 
 test('waking dashboard keeps account and exposes retry', async ({ page, gate }, info) => {

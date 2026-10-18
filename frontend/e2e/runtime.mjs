@@ -31,7 +31,7 @@ async function ownerHashes() {
   return result;
 }
 const before = await ownerHashes();
-const outbound = [], backendCalls = [], profiles = new Map();
+const outbound = [], backendCalls = [], profiles = new Map(), suggestionAttempts = new Map();
 let worker, backend, proxy, backendOrigin, redirectHits = 0, deniedProxy = 0, onrender = 0;
 const emptyProfile = () => ({ id: 18, attributes: [], diets: [], medical_history: [] });
 const savedProfile = () => ({ ...emptyProfile(), diets: [{ diet_type: { diet_name: 'Vegetarian' } }],
@@ -67,7 +67,15 @@ try {
       return send(200, ['Vegetarian', 'Vegan', 'Mediterranean'].map(diet_name => ({ diet_name, description: 'Synthetic E2E diet' })));
     }
     if (url.pathname === '/api/suggestion') {
+      let raw = ''; for await (const part of req) raw += part;
+      const { text } = JSON.parse(raw);
+      const attemptKey = `${user}:${text}`;
+      const attempts = (suggestionAttempts.get(attemptKey) ?? 0) + 1;
+      suggestionAttempts.set(attemptKey, attempts);
       await new Promise(ok => setTimeout(ok, 2000)); // deterministic visible loading state
+      if (text === '019 not configured') return send(503, { detail: 'AI suggestions are not configured' });
+      if (text === '019 busy') return send(429, { detail: 'Synthetic rate limit' });
+      if (text === '019 empty' || (text === '019 retry' && attempts > 1)) return send(200, { status: true, result: [] });
       return send(503, { detail: 'Synthetic service unavailable' });
     }
     if (url.pathname === '/user/profile') {

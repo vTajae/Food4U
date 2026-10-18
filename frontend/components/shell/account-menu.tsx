@@ -11,8 +11,9 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { ThemeMenuItems } from "~/components/shell/theme-toggle";
+import { browserDraftStorage, clearDraft } from "~/lib/onboarding-draft";
 
-export function AccountMenu({ username }: { username: string }) {
+export function AccountMenu({ username, draftIdentity }: { username: string; draftIdentity?: string }) {
   // The initial letter as a quiet avatar; email addresses stay in the menu label.
   const initial = username.trim().charAt(0).toUpperCase() || "?";
 
@@ -37,7 +38,7 @@ export function AccountMenu({ username }: { username: string }) {
         <ThemeMenuItems />
         <DropdownMenuSeparator />
         {/* A real form so sign-out works before hydration too. */}
-        <form action="/api/auth/logout" method="post">
+        <form action="/api/auth/logout" method="post" onSubmit={() => clearDraft(browserDraftStorage(), draftIdentity)}>
           <DropdownMenuItem asChild destructive>
             <button type="submit" className="w-full">
               <LogOut aria-hidden="true" />

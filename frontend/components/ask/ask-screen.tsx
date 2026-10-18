@@ -8,6 +8,8 @@ import { AskBox } from "~/components/ask/ask-box";
 import { RecommendationCard } from "~/components/results/recommendation-card";
 import { EmptyResults, ResultsSkeleton } from "~/components/results/states";
 import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
+import { BACKEND_WAKING_MESSAGE } from "~/lib/backend-messages";
 import { cn } from "~/lib/utils";
 
 type Suggestion = { label: string; action: string; queryKey: string; text: string };
@@ -19,36 +21,45 @@ const suggestions: Suggestion[] = [
   { label: "Which diets fit me?", action: "diet", queryKey: "dietSuggest", text: "What diets support my eating habits?" },
 ];
 
-type Status = "idle" | "loading" | "done";
+type Status = "idle" | "loading" | "done" | "error";
+type Query = { action: string; queryKey: string; text: string };
 
 export function AskScreen({ profileChips }: { profileChips: string[] }) {
   const [status, setStatus] = useState<Status>("idle");
   const [results, setResults] = useState<SearchResultFood[]>([]);
 
-  async function run(body: { action: string; queryKey: string; text: string }) {
+  const [failure, setFailure] = useState<{ message: string; retryable: boolean } | null>(null);
+  const [lastQuery, setLastQuery] = useState<Query | null>(null);
+
+  function showFailure(message: string, retryable: boolean) {
+    setFailure({ message, retryable });
+    setStatus("error");
+    toast.error(message);
+  }
+
+  async function run(body: Query) {
     setStatus("loading");
+    setFailure(null);
+    setLastQuery(body);
     try {
       const fd = new FormData();
       fd.set("action", body.action);
       fd.set("queryKey", body.queryKey);
       fd.set("query", body.text);
       const res = await fetch("/api/suggestion", { method: "POST", body: fd });
-      const data = (await res.json()) as { meal?: SearchResultFood[]; error?: string; message?: string };
+      const data = (await res.json()) as { meal?: SearchResultFood[]; error?: string; retryable?: boolean };
       if (!res.ok) {
-        toast.error(data.error ?? "Couldn't get suggestions.", {
-          description: "Check your connection and try again.",
-        });
-        setStatus(results.length ? "done" : "idle");
+        showFailure(data?.error ?? "Couldn't get meal ideas. Please try again.", res.status !== 401 && data?.retryable !== false);
         return;
       }
-      setResults(Array.isArray(data.meal) ? data.meal : []);
+      if (!Array.isArray(data?.meal)) {
+        showFailure("Couldn't get meal ideas. Please try again.", true);
+        return;
+      }
+      setResults(data.meal);
       setStatus("done");
-    } catch (err) {
-      console.error(err);
-      toast.error("Couldn't reach the food database.", {
-        description: "Check your connection and try again.",
-      });
-      setStatus(results.length ? "done" : "idle");
+    } catch (error) {
+      showFailure(error instanceof TypeError ? BACKEND_WAKING_MESSAGE : "Couldn't get meal ideas. Please try again.", true);
     }
   }
 
@@ -97,6 +108,14 @@ export function AskScreen({ profileChips }: { profileChips: string[] }) {
       <section aria-live="polite" className="flex flex-col gap-4">
         {status === "loading" && <ResultsSkeleton />}
         {status === "idle" && <EmptyResults />}
+        {status === "error" && failure && (
+          <div role="alert" className="mx-auto flex w-full max-w-reading-max flex-col items-start gap-4 rounded-lg border border-care bg-care-tint p-6 text-ink">
+            <p className="text-body-md">{failure.message}</p>
+            {failure.retryable && lastQuery && (
+              <Button variant="secondary" onClick={() => run(lastQuery)}>Retry</Button>
+            )}
+          </div>
+        )}
         {status === "done" && results.length === 0 && (
           <div className="rounded-lg border border-line bg-surface px-6 py-10 text-center">
             <p className="text-heading-sm text-ink">No matches for that</p>
