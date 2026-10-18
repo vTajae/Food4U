@@ -157,6 +157,57 @@ none; exhausting the allowance suspends all free web services until next month.
 Review both services' usage before approving any keep-warm schedule.
 [Render instance-hour allowance](https://render.com/docs/free#free-instance-hours).
 
+## Sessions in Neon
+
+Login sessions live in Neon (schema `web_session`, table `session`) instead of
+Workers KV, whose free tier allows about 1,000 writes a day. Session ids are
+stored only as SHA-256 hashes; the raw id exists only in the signed cookie.
+The Worker picks the store from its settings:
+
+| Settings | Store |
+|---|---|
+| `SESSION_DATABASE_URL` secret set (production) | Neon |
+| `SESSION_STORE=kv` | KV: the switch back after leaving the Cloudflare free tier |
+| Neither (local `npm run dev`, the legacy contract suite) | KV, as before |
+
+`SESSION_STORE=neon` without the URL fails fast, and no error message includes
+connection details. Requests without a session cookie never query Neon, so
+anonymous traffic never wakes the database. Neon Free gives each project 100
+CU-hours a month and suspends compute when they run out; signed-in pages already
+wake the same compute through the backend, so sessions add little. If usage
+climbs, the follow-up is a short-lived signed snapshot cookie that cuts per-page
+reads. Expired rows are purged at sign-in (up to 100 at a time; no cron).
+
+### One-time setup
+
+Run as the database owner and never print a connection string or password:
+
+1. Apply `frontend/database/neon/0001_web_session.sql`.
+2. Create the Worker's role **with SQL**, not the Neon console or CLI (roles made
+   there join `neon_superuser`, which can read every table):
+   `CREATE ROLE food4u_web WITH LOGIN PASSWORD '<random, at least 24 bytes>'`.
+3. Apply `frontend/database/neon/0002_web_session_grants.sql` (USAGE on the
+   schema, SELECT/INSERT/UPDATE/DELETE on the one table).
+4. Verify as `food4u_web`: a session round-trips, while
+   `SELECT 1 FROM public.profile` and `CREATE TABLE web_session.x (...)` are denied.
+5. From `frontend/`, pipe the role's connection string (same host and database as
+   the owner's) into `npx wrangler secret put SESSION_DATABASE_URL`.
+
+Setting the secret publishes a new Worker version. Code that predates the session
+store ignores it, and newer code without it stays on KV, so either order is safe.
+`npm run cleanup:live` also deletes the throwaway account's session rows.
+
+To test the store against real Neon, create a throwaway branch, export its owner
+connection string as `NEON_SESSION_TEST_URL`, run
+`npx tsx --import ./tests/worker-env.mjs --test tests/session-store.neon.test.mts`
+from `frontend/`, then delete the branch.
+
+### Rollback
+
+Set `SESSION_STORE=kv` and redeploy, or roll back to the previous Worker version.
+Sessions do not move between stores, so everyone signs in once more. The Neon
+schema and role can stay; they hold no data the backend depends on.
+
 ## Failure and rollback
 
 Stop at a failed gate; do not publish a Worker requiring an unapplied migration.
