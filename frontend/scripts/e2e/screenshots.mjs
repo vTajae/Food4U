@@ -3,6 +3,7 @@
 // cards/skeleton/empty, at mobile and desktop; plus keyboard/a11y checks.
 import { chromium } from "playwright-core";
 import { mkdirSync, writeFileSync } from "node:fs";
+import { scopedIntakeDraft } from "../../../scripts/post-deploy-common.mjs";
 
 const [base, outDir] = process.argv.slice(2);
 mkdirSync(outDir, { recursive: true });
@@ -129,8 +130,16 @@ for (const [vp, opts] of Object.entries(viewports)) {
   const strips = await page.locator("text=Checked against").count();
   check(`${vp}: Check strip only on the card with data`, strips === 1, String(strips));
 
-  await go(page, `${base}/dev-preview?view=welcome`);
-  await page.evaluate(() => localStorage.setItem("formState", JSON.stringify({ currentStep: 3, answers: [{ questionId: 11, answers: [{ name: "Lactose intolerance", code: "E73.9" }, { name: "Peanut allergy" }] }] })));
+  // The real signed-in intake supplies the identity; anonymous preview providers
+  // cannot read an account-scoped draft. Never invent an id or use formState.
+  await go(page, `${base}/welcome`);
+  await settle(page);
+  await page.waitForFunction(() => Object.keys(localStorage).some(key => key.startsWith("food4u:intake:v1:")));
+  const draft = scopedIntakeDraft(await page.evaluate(() => Object.entries(localStorage)));
+  if (!draft) throw new Error("Expected exactly one current-account intake draft and no legacy key");
+  await page.evaluate(({ key, envelope, state }) => localStorage.setItem(key, JSON.stringify({ ...envelope, state })), {
+    ...draft, state: { currentStep: 3, answers: [{ questionId: 11, answers: [{ name: "Lactose intolerance", code: "E73.9" }, { name: "Peanut allergy" }] }] },
+  });
   await page.reload();
   await shot(page, "10-welcome-step", vp);
   const pb = await page.getByRole("progressbar").getAttribute("aria-valuenow");
