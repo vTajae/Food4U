@@ -145,6 +145,13 @@ also retain the annotations. Counts are observations, not a retry allowance.
   not weakened gates or product fixes. The account-menu capture is audit-only;
   its failing accessibility check is separately retained as D018-03. The outage
   capture is not acceptance of its copy; D018-04 asserts the intended behavior.
+- Sessions (slice 020) use the Neon store through the real
+  `@neondatabase/serverless` driver. Its HTTP queries go to `/sql` on the same
+  owned fake origin (so egress stays exact-origin), answered by PGlite, a
+  real Postgres in WebAssembly, with the real `database/neon` migrations
+  applied (`e2e/fake-neon.mjs`). `sessions.spec.ts` reads and expires rows
+  through `/__harness__/sessions` and `/__harness__/expire-sessions`, which the
+  test process calls directly via `E2E_HARNESS_URL`; the app never does.
 - Fake profiles are keyed by synthetic JWT identity. Normal users exercise
   missing-profile ensure, all five steps, save and reload persistence. Seeded
   `dashboard-*`, `waking-*` and `save-waking-*` identities provide deterministic
