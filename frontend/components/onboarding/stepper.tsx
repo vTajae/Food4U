@@ -28,7 +28,7 @@ const questions: Question[] = [
 
 // Onboarding stepper (takeaway T6): one question per screen, progress, review.
 export function OnboardingStepper() {
-  const { state, goToNextStep, goToPreviousStep } = useFormContext();
+  const { state, goToNextStep, goToPreviousStep, clearCurrentDraft } = useFormContext();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<Extract<WelcomeResult, { ok: false }> | null>(null);
 
@@ -54,11 +54,7 @@ export function OnboardingStepper() {
         setError(result);
         toast.error(result.message);
       } else {
-        try {
-          localStorage.removeItem("formState");
-        } catch {
-          /* ignore */
-        }
+        clearCurrentDraft();
       }
     });
   };

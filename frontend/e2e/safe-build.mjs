@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdir, readdir, readFile, writeFile, symlink } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile, symlink, access } from 'node:fs/promises';
 import { resolve, relative, join } from 'node:path';
 const temp = process.argv[2];
 const frontend = process.cwd();
@@ -28,6 +28,43 @@ async function copySources(source, target) {
   }
 }
 await copySources(frontend, project);
+// Fault injection exists ONLY in this private test build. Product source bytes
+// remain unchanged; no environment switch or crash route ships to production.
+const faultPath = 'app/e2e-error-019/page.tsx';
+await assert.rejects(access(resolve(frontend, faultPath)), { code: 'ENOENT' });
+const faultSource = `"use client";
+import { useState } from "react";
+export default function TestFaultPage() {
+  const [attempt, setAttempt] = useState(0);
+  if (typeof window !== "undefined" && sessionStorage.getItem("e2e-error-019") === "fail") {
+    throw new Error("E2E_ERROR_019_EXPECTED");
+  }
+  return <main><h1>Error boundary test ready</h1><button onClick={() => {
+    sessionStorage.setItem("e2e-error-019", "fail"); setAttempt(attempt + 1);
+  }}>Trigger test fault</button></main>;
+}
+`;
+await mkdir(resolve(project, 'app/e2e-error-019'));
+await writeFile(resolve(project, faultPath), faultSource);
+const switchPath = 'app/e2e-draft-019/page.tsx';
+await assert.rejects(access(resolve(frontend, switchPath)), { code: 'ENOENT' });
+const switchSource = `"use client";
+import { useLayoutEffect, useState } from "react";
+import { FormProvider } from "~/components/form/context";
+import { OnboardingStepper } from "~/components/onboarding/stepper";
+export default function IdentitySwitchPage() {
+  const [identity, setIdentity] = useState("11111111-1111-4111-8111-111111111111");
+  const [observed, setObserved] = useState("initial");
+  useLayoutEffect(() => {
+    if (identity.startsWith("2222")) setObserved(document.querySelector("[data-intake]").textContent.includes("Italian") ? "leaked" : "clean");
+  }, [identity]);
+  return <main><button onClick={() => setIdentity("22222222-2222-4222-8222-222222222222")}>Switch synthetic account</button>
+    <output aria-label="Identity switch privacy">{observed}</output>
+    <div data-intake><FormProvider identity={identity}><OnboardingStepper /></FormProvider></div></main>;
+}
+`;
+await mkdir(resolve(project, 'app/e2e-draft-019'));
+await writeFile(resolve(project, switchPath), switchSource);
 await symlink(resolve(frontend, 'node_modules'), resolve(project, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir');
 // Public JSONC currently uses line comments only; fail closed if its syntax changes.
 const config = JSON.parse((await readFile(resolve(frontend, 'wrangler.jsonc'), 'utf8')).replace(/^\s*\/\/.*$/gm, ''));
@@ -51,5 +88,7 @@ for (const [path, expected] of Object.entries(sourceHashes)) {
   for (const base of [project, frontend]) assert.equal(createHash('sha256').update(await readFile(resolve(base, path))).digest('hex'), expected, `stable unmodified source: ${path}`);
 }
 await writeFile(resolve(frontend, 'e2e/.artifacts/018-source-build.json'), JSON.stringify({ fresh_build: true, source_hashes: sourceHashes, source_files: Object.keys(sourceHashes).length,
+  test_only_injection: { path: faultPath, sha256: createHash('sha256').update(faultSource).digest('hex'), absent_from_checkout: true },
+  test_only_identity_switch: { path: switchPath, sha256: createHash('sha256').update(switchSource).digest('hex'), absent_from_checkout: true },
   worker_sha256: createHash('sha256').update(await readFile(resolve(project, 'dist/server/index.js'))).digest('hex'),
   private_build_and_deploy_pointer: true }, null, 2));

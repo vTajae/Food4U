@@ -1,5 +1,46 @@
 # Real-Chrome end-to-end gate
 
+## Slice 019 status
+
+**Current Addendum 2 gate:** 73 passed, 11 existing fixmes, zero failures or
+retries, one full invocation. Five tolerated RSC annotations: one application
+event and four deliberate controls. All 38 guard self-tests pass at both widths;
+control (f) had genuine RED at both widths before the settlement correction.
+No product source changes or contract rerun; owner hashes remain unchanged.
+
+Trust fixes and active D018-04/05/06 regressions are implemented. OMC Addenda 1–2
+supersede the earlier BLOCKED receipt: instrumented evidence identifies
+the GC-sensitive vinext stream cancellation as framework issue D019-01. Only
+the exact self-tested rule below is tolerated; no blanket cancellation ignore,
+new fixme, dependency upgrade or retry masking is added. Six other defect IDs
+remain fixmes (11 viewport instances). The current gate/commit receipt is
+`.cockpit/20261013-neon/plans/019-executor.md` at the repository root.
+
+Historical Addendum 1 executor gate: **71 passed, 11 existing fixmes, zero failures or retries**,
+one authorized full invocation. Four tolerated annotations: **two application
+events and two deliberate controls**. Frontend tests 129/129, root tests 9/9
+and build pass; the original single passing contract was not rerun. D018-04,
+D018-05 and D018-06 close in the slice 019 commit named in DEFECTS.md.
+OMC's subsequent independent run found the old every-gate rule re-flagged
+settled aborts after sign-out, plus a private-page hydration race. Addendum 2
+settles each abort once at its first subsequent check and waits for networkidle
+before the identity-switch test interacts; its first-committed-DOM assertions
+are unchanged. The renewed Addendum 2 result is in the current receipt.
+
+The isolated build also injects private-only error-boundary and identity-switch
+pages. They are absent from product sources and normal builds, with separate
+source hashes. The identity switch records the first committed DOM before
+passive effects, so a transient stale-child-state leak cannot pass.
+
+Expected native HTTP console statuses are opt-in per test and paired with an
+observed exact response URL/status. The intentional private error test permits
+only its exact fault marker, then one same-script React component-stack
+companion; unrelated errors remain fatal. Error reset and session-aware 404
+links are exercised at both widths. See the full receipt/blocker in
+`.cockpit/20261013-neon/plans/019-executor.md`.
+
+## Historical slice 018 acceptance
+
 **Addendum 2 verified:** `<-loopback>` comes **first** in every proxy bypass
 list, before explicit hosts. The renewed legacy contract passes unchanged;
 both viewport regressions load the allowed source (200), reject redirected
@@ -29,7 +70,7 @@ npm run e2e -- --project mobile
 npx playwright show-report
 npx playwright show-trace test-results/<failed-test>/trace.zip
 
-# Deliberate RED: nonzero exit, five specific guard failures, one clean control.
+# Deliberate RED: five original + nine RSC negatives fail; clean controls pass.
 $env:E2E_GUARD_RED='1'; npm run e2e -- guard-self --project desktop
 Remove-Item Env:E2E_GUARD_RED
 
@@ -47,6 +88,10 @@ Both default projects use installed Chrome: desktop 1440×900 and touch/mobile
 successful screenshots form a tour. The HTML/JSON reports, tour, source/build
 receipt, runtime log, egress/owner-hash receipt and cleanup receipt are ignored
 under `playwright-report`, `test-results` and `e2e/.artifacts`.
+`e2e/.artifacts/019-rsc-aborts.json` counts all `tolerated-rsc-abort` annotations,
+separating deliberate guard controls from application events, with per-event
+URL/timestamps, project, test, status and retry number. JSON/HTML test reports
+also retain the annotations. Counts are observations, not a retry allowance.
 
 ## Safety and gate semantics
 
@@ -75,10 +120,24 @@ under `playwright-report`, `test-results` and `e2e/.artifacts`.
   for the exact intentional `/this-page-does-not-exist-018` document URL. That
   journey separately asserts HTTP 404. No other console or accessibility
   messages are allow-listed.
-- Same-origin request failures, including canceled RSC streams, remain fatal.
-  An observed intermittent `/welcome?_rsc=...` cancellation is recorded in the
-  handoff; HTTP 200 headers alone do not prove a successful replacement stream.
-  No cancellation exception or blanket `ERR_ABORTED` ignore is installed.
+- Same-origin request failures remain fatal **except D019-01**, authorized by
+  OMC slice 019 Addenda 1–2. ALL conditions must hold: GET; request `rsc: 1`;
+  no `next-router-prefetch` header (even an empty header disqualifies); exact
+  `failure().errorText === 'net::ERR_ABORTED'`; an **earlier observed exact-URL**
+  response with status 200 and content-type starting with `text/x-component`;
+  and the page URL pathname equals the failed request pathname at the **first
+  gate check after failure**, or teardown if no check intervenes. Pathname is
+  evaluated at that check, not failure time. A match permanently settles the
+  candidate as tolerated; it is never re-evaluated after later navigation.
+  A mismatch at that first check is permanently fatal. Closed/blank pages
+  cannot skip settlement of an outstanding candidate at teardown.
+  Each tolerated event gets one `tolerated-rsc-abort` annotation containing
+  URL, response/failure/first-matching-gate timestamps. Everything else remains
+  fatal. Real-Chrome RED-style controls reject missing prior 200, prefetch,
+  different pathname, non-RSC, different error, POST, wrong type/status or
+  different exact URL. The positive controls commit after failure and prove
+  that a settled abort stays tolerated after navigation to a different page,
+  with exactly one annotation. See [D019-01](DEFECTS.md#d019-01-framework-rsc-stream-cancellation).
 - Known defects are `test.fixme` annotations with IDs in [DEFECTS.md](DEFECTS.md),
   not weakened gates or product fixes. The account-menu capture is audit-only;
   its failing accessibility check is separately retained as D018-03. The outage

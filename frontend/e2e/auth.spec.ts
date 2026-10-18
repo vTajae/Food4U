@@ -39,13 +39,23 @@ test('D018-03 account menu has no serious accessibility violations', async ({ pa
 });
 
 test('D018-05 a second account cannot see the first account intake', async ({ page, gate }) => {
-  test.fixme(process.env.E2E_AUDIT !== '1', 'D018-05: shared-device formState leak; see DEFECTS.md');
   const first = email(), second = email();
   await register(page, first); await login(page, first);
   await choose(page, 'What cuisines do you enjoy?', 'Italian');
+  await expect.poll(() => page.evaluate(() => Object.entries(localStorage).some(([key, value]) => key.startsWith('food4u:intake:v1:') && value.includes('Italian')))).toBe(true);
+  const firstKey = await page.evaluate(() => Object.keys(localStorage).find(key => key.startsWith('food4u:intake:v1:'))!);
+  expect(firstKey).toMatch(/^food4u:intake:v1:[0-9a-f-]{36}$/i);
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Remove Italian', exact: true })).toBeVisible();
+  const unrelatedKey = 'food4u:intake:v1:22222222-2222-4222-8222-222222222222';
+  await page.evaluate(key => localStorage.setItem(key, 'unrelated-account-sentinel'), unrelatedKey);
   await page.getByRole('button', { name: 'Account menu' }).click();
+  const logout = page.waitForResponse(response => new URL(response.url()).pathname === '/api/auth/logout');
   await page.getByRole('menuitem', { name: 'Sign out' }).click();
+  expect((await logout).status()).toBe(303);
   await expect(page).toHaveURL(/\/login$/);
+  expect(await page.evaluate(key => localStorage.getItem(key), firstKey)).toBeNull();
+  expect(await page.evaluate(key => localStorage.getItem(key), unrelatedKey)).toBe('unrelated-account-sentinel');
   await page.waitForLoadState('networkidle');
   await register(page, second); await login(page, second);
   await page.screenshot({ path: test.info().outputPath('018-second-account-leak-D018-05.png'), fullPage: true, animations: 'disabled' });

@@ -6,6 +6,22 @@ const codePattern = /\b[A-Z]\d\d(?:\.\w+)?\b/;
 const evidence = resolve(process.env.PICKER_EVIDENCE || 'contract/.evidence');
 const prefix = process.env.PICKER_PREFIX || '017';
 
+// Slice 019 deliberately discards ownerless formState. Inspect/seed only this
+// real login's versioned draft; the official-payload assertions below remain.
+async function ownDraft(page) {
+  await page.waitForFunction(() => Object.keys(localStorage).some(key => key.startsWith('food4u:intake:v1:')));
+  const draft = await page.evaluate(() => {
+    const keys = Object.keys(localStorage).filter(key => key.startsWith('food4u:intake:v1:'));
+    if (keys.length !== 1) throw new Error('Expected exactly one current-login draft');
+    return { key: keys[0], envelope: JSON.parse(localStorage.getItem(keys[0])), legacy: localStorage.getItem('formState') };
+  });
+  assert.match(draft.key, /^food4u:intake:v1:[0-9a-f-]{36}$/i);
+  assert.equal(draft.envelope.version, 1);
+  assert.equal(draft.key, `food4u:intake:v1:${draft.envelope.identity}`);
+  assert.equal(draft.legacy, null, 'ownerless legacy draft must not remain');
+  return draft;
+}
+
 export async function runOnboardingPickers(t, harness) {
   const { base, register, login, email } = harness;
   await mkdir(evidence, { recursive: true });
@@ -114,7 +130,7 @@ export async function runOnboardingPickers(t, harness) {
         assert.match(await trigger.innerText(), /Peanut allergy/);
         await page.keyboard.press('Escape');
         assert.match(await page.getByRole('list', { name: 'Your answers' }).innerText(), /Peanut allergy/);
-        const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('formState')));
+        const stored = (await ownDraft(page)).envelope.state;
         assert.deepEqual(stored.answers.find(q => q.questionId === 11).answers, [{ name: 'Allergy to peanuts', code: 'Z91.010' }]);
 
         // Fixture only at the public remote-search response boundary. Curated
@@ -182,7 +198,7 @@ export async function runOnboardingPickers(t, harness) {
     await diabetes.click();
     await page.keyboard.press('Escape');
     await page.getByRole('button', { name: 'Remove Type 2 diabetes', exact: true }).waitFor();
-    const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('formState')));
+    const stored = (await ownDraft(page)).envelope.state;
     assert.deepEqual(stored.answers.find(q => q.questionId === 1).answers, [{ name: 'Type 2 diabetes mellitus without complications', code: 'E11.9' }]);
   }));
 
@@ -216,7 +232,8 @@ export async function runOnboardingPickers(t, harness) {
   await t.test('onboarding previously saved official medical answers render plain labels without changing metadata', () => withContext(async ({ page }) => {
     await welcome(page);
     const saved = { currentStep: 2, answers: [{ questionId: 1, answers: [{ name: 'Allergic rhinitis, unspecified', code: 'J30.9' }] }] };
-    await page.evaluate(value => localStorage.setItem('formState', JSON.stringify(value)), saved);
+    const draft = await ownDraft(page);
+    await page.evaluate(({ key, envelope, state }) => localStorage.setItem(key, JSON.stringify({ ...envelope, state })), { ...draft, state: saved });
     await page.reload({ waitUntil: 'networkidle' });
     const trigger = page.getByRole('combobox', { name: 'Do you have a medical condition?', exact: true });
     assert.match(await trigger.innerText(), /Seasonal allergies \(hay fever\)/);
@@ -225,7 +242,7 @@ export async function runOnboardingPickers(t, harness) {
     await page.getByRole('button', { name: 'Review', exact: true }).click();
     await page.getByText('Seasonal allergies (hay fever)', { exact: true }).waitFor();
     await noCodes(page);
-    const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('formState')));
+    const stored = (await ownDraft(page)).envelope.state;
     assert.deepEqual(stored.answers, saved.answers);
   }));
 }

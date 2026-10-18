@@ -11,22 +11,22 @@ contain the named image; the full evidence/archive is under repository-root
 `.cockpit/20261013-neon/evidence/018-*`. Run the README's `E2E_AUDIT=1` command to
 execute the known-defect regressions instead of their default `test.fixme` state.
 
-## Reproduced defects and default fixmes
+## Reproduced defects and current status
 
 Every row blocks **Phase 1** (trustworthy identity, intake and recommendations)
 of the owner's Upgrade Plan, Strategic Maturation Roadmap:129, and PRD
 `cleanup.txt.txt`:1110–1142. Track references use OMC's
-`hidden-humming-bunny.md`. The nine IDs below are the complete fixme list;
-the first eight are fixmes for both projects, and D018-11 is mobile-only
-(17 skipped instances; its desktop counterpart remains active).
+`hidden-humming-bunny.md`. Six IDs remain fixmes after slice 019: D018-02, D018-03, D018-07, D018-09, D018-10 and D018-11. The 018 observations below are retained; closed IDs reference the slice 019 commit below. In 018,
+the first eight were fixmes for both projects, and D018-11 was mobile-only
+(17 skipped instances then). Now five IDs remain fixmes at both widths, plus D018-11 mobile-only: **11 skipped instances**, zero new fixmes; its desktop counterpart remains active.
 
 | ID | Journey / viewport | Severity | Observed → expected | Screenshot in `.artifacts/tour/{desktop,mobile}/` | Suspected source |
 |---|---|---|---|---|---|
 | D018-02 | Intake price / both | medium | Review displays bare `12.50` → explicit currency such as `$12.50`. Seeded OMC observation reproduced. A5. | `018-currency-D018-02.png` | `components/form/questionBase.tsx:99–104`; `components/onboarding/stepper.tsx:104` |
 | D018-03 | Account menu / both | high | Open menu produces axe **serious `aria-hidden-focus`** on focusable shell/header content → background content must not remain keyboard-focusable while hidden to accessibility APIs. New audit finding, related A6. | `018-account-menu.png` | `components/shell/account-menu.tsx:15–61`; `components/ui/dropdown-menu.tsx:13–30` (Radix modal/focus integration; root cause not patched) |
-| D018-04 | Dashboard Ask / both | high | Deterministic backend 503 becomes successful empty results: “No matches for that” → honest unavailable/waking state with retry. B1. | `018-suggestion-outage-D018-04.png` | `api/services/suggestionService.ts:18–23`; `app/api/suggestion/route.ts:37–38`; `components/ask/ask-screen.tsx:100–103` |
-| D018-05 | Sign out → second account intake / both | **blocker** | Account B sees account A's Italian intake selection → drafts must be scoped to identity and cleared on sign out. The same unscoped draft structure also holds health answers; the proof uses synthetic cuisine data only. A1. | `018-second-account-leak-D018-05.png` | `components/form/context.tsx:52–61`; `app/api/auth/logout/route.ts:5–7` |
-| D018-06 | Intake with corrupt saved browser state / both | high | Malformed `formState` causes a renderer exception and loses the usable intake screen → discard invalid draft/recover and show branded actionable fallback if needed. A1/A2. | `018-corrupt-storage-D018-06.png` | `components/form/context.tsx:52–56`; missing `app/error.tsx` / `app/global-error.tsx` |
+| D018-04 **closed, slice 019 commit below** | Dashboard Ask / both | high | Deterministic backend 503 becomes successful empty results: “No matches for that” → honest unavailable/waking state with retry. B1. | `018-suggestion-outage-D018-04.png` | `api/services/suggestionService.ts:18–23`; `app/api/suggestion/route.ts:37–38`; `components/ask/ask-screen.tsx:100–103` |
+| D018-05 **closed, slice 019 commit below** | Sign out → second account intake / both | **blocker** | Account B sees account A's Italian intake selection → drafts must be scoped to identity and cleared on sign out. The same unscoped draft structure also holds health answers; the proof uses synthetic cuisine data only. A1. | `018-second-account-leak-D018-05.png` | `components/form/context.tsx:52–61`; `app/api/auth/logout/route.ts:5–7` |
+| D018-06 **closed, slice 019 commit below** | Intake with corrupt saved browser state / both | high | Malformed `formState` causes a renderer exception and loses the usable intake screen → discard invalid draft/recover and show branded actionable fallback if needed. A1/A2. | `018-corrupt-storage-D018-06.png` | `components/form/context.tsx:52–56`; missing `app/error.tsx` / `app/global-error.tsx` |
 | D018-07 | Profile navigation / both | high | Saved profile's Profile link opens an empty `/welcome` wizard → load saved editable profile at `/profile`. A3. | `018-profile-empty-wizard-D018-07.png` | `components/shell/nav-links.tsx:11`; `components/ask/ask-screen.tsx:90–92`; `app/(app)/welcome/page.tsx:9–20` |
 | D018-09 | Intake price validation / both | medium | `not money` reaches review as a price answer → numeric currency input, range 1–100 and at most two decimals; invalid values remain at the step with useful validation. A5. | `018-invalid-price-D018-09.png` | `components/form/questionBase.tsx:52–60,72–80`; `api/schemas/welcome.ts:32–41` |
 | D018-10 | Signup continuation / both | medium | Successful signup leaves the visitor at the login form → authenticated intake/dashboard continuation. A4. | `018-signup-second-login-D018-10.png` | `app/(auth)/login/actions.ts:36–44`; `components/login/auth-tabs.tsx:33–35` |
@@ -91,7 +91,8 @@ observed during login-to-intake (including the waking-save tour). The trace
 contains HTTP 200 headers, but successful supersession/body completion has not
 been established. It remains **fatal**, not a blanket cancellation exception or
 a manufactured product fixme. The executor handoff identifies the final strict
-run's actual result separately from the earlier discovery runs.
+run's actual result separately from the earlier discovery runs. This historical
+blocker is superseded by slice 019 Addendum 1 and D019-01 below.
 
 ### Addendum 1 update
 
@@ -131,3 +132,93 @@ still reports five existing errors in `api/repo/userRepository.ts`,
 `api/services/clinicalService.ts` and `lib/clinicTables.ts`; typecheck still
 reports the existing undefined `AutocompleteResult` in `lib/clinicTables.ts`.
 Those product files are unchanged; all new harness files pass targeted lint.
+
+## Slice 019 closure commit
+
+D018-04, D018-05 and D018-06 are closed by the commit containing this document,
+on `fix/trust-basics`, with the exact subject
+`fix: isolate onboarding drafts per account, add error pages, explain unavailable meal ideas`.
+The full SHA is recorded in `.cockpit/20261013-neon/plans/019-executor.md`.
+Product closure commit: `8a58fb16658c20fb4190d23ee197ec66d49fd589`.
+Addendum 2's test-only follow-up has subject
+`test: settle tolerated RSC aborts at the first gate; wait for hydration in identity-switch test`;
+its SHA and renewed gate result are recorded in that same receipt.
+
+Historical Addendum 1 executor full E2E: **71 passed, 11 existing fixmes, zero failures or
+retries**, one full invocation. All 22 trust/error/identity cases pass at both
+widths. Four tolerated RSC annotations: **two application events, two guard
+controls**; all other failures stay fatal. Frontend tests 129/129, root tests
+9/9 and build pass. The original single passing contract invocation stands;
+it was **not rerun**. Owner hashes remain unchanged, only `production` exists
+in Neon (metadata only), no push/deploy. D019-01 remains tracked, not fixed.
+Full artifacts: `.cockpit/20261013-neon/evidence/019-a1-*`.
+OMC's independent validation then found two teardown false positives from
+the original rule and one identity-switch hydration timeout (68 passed,
+3 failed, 11 fixmes; `019-omc-e2e.log`). Addendum 2 corrects only the observer
+settlement policy and test hydration readiness; product sources and identity
+privacy assertions are unchanged. See `019-a2-*` evidence and the current receipt.
+Renewed Addendum 2 full suite: **73 passed, 11 existing fixmes, zero failures or
+retries**, exactly one invocation. Five tolerated events: **one application,
+four controls**. All 38 guard tests pass; control (f) failed at both widths
+before the correction. Product source hashes match the prior passing build,
+owner hashes are unchanged, only `production` exists in Neon (metadata only),
+and the original contract invocation was not rerun. No push or deployment.
+
+## Slice 019 implementation — initial acceptance blocker (superseded)
+
+D018-04, D018-05 and D018-06 have implemented fixes and active regressions, but are **not receipt-closed or committed**. The planned single local commit is
+`fix: isolate onboarding drafts per account, add error pages, explain unavailable meal ideas`
+on `fix/trust-basics`. No commit was made because the mandatory strict E2E gate still fails on the pre-existing `/welcome?_rsc=...` `net::ERR_ABORTED`. Fresh evidence and the blocker handoff are in
+`.cockpit/20261013-neon/plans/019-executor.md`.
+
+- **D018-05 / A1:** versioned opaque-identity draft keys and owner envelopes;
+  another identity never hydrates the draft, legacy `formState` is discarded,
+  and the client sign-out action clears only the current draft. Logout uses 303.
+- **D018-06 / A1:** guarded JSON and runtime shape/version validation discard
+  corrupt/old state. The provider renders the safe first step on first paint.
+- **A2:** branded app/global error recovery, reset plus home escape, and 404
+  links selected from the session. The fault route exists only in a private
+  test build, never in the production source/build.
+- **D018-04 / B1:** unavailable configuration, waking, rate limits and generic
+  failures are distinct from actual empty results. Only retryable errors have
+  Retry; an expired backend token is refreshed once without cross-request state.
+
+The original observations/screenshots above remain historical RED evidence,
+not claims that the fixed behavior is still broken. Six other IDs remain open
+and out of scope. Tests use a deterministic local backend and private D1/KV;
+this is not production, real Neon, provider or medical-safety certification.
+The RSC cancellation remains fatal and is not a new fixme or an allowed error.
+Two fresh full-suite runs reproduced it. HTTP 200 headers and a separate
+successful prefetch do not prove completion of the aborted live navigation.
+OMC must scope the next diagnosis before acceptance/commit. **Historical stop:**
+OMC subsequently provided that diagnosis and renewed authority in slice 019
+Addendum 1; the exact rule below supersedes the fatal-only RSC policy.
+
+## D019-01: framework RSC stream cancellation
+
+**Low severity; framework; vinext 1.1.0–1.2.1; not user-visible.** No new fixme.
+OMC's instrumented desktop register/login captures record no JavaScript abort,
+stream cancel or reader cancel. The live `/welcome?_rsc=...` navigation receives
+200 component headers, fails with `net::ERR_ABORTED`, and commits `/welcome`
+with the correct intake page. Forced GC increases incidence; delaying prefetch
+does not fix it. The 018 base has the same signature. Navigation code in vinext
+1.2.1 is byte-identical, so no upgrade is claimed or performed.
+
+Evidence at repository root: `.cockpit/20261013-neon/evidence/019-omc-abort-{diag,diag2,gc,delay}.{jsonl,log}`;
+instrumentation: `.cockpit/20261013-neon/tools/019-omc-abort-diag.spec.ts`;
+authority: `.cockpit/20261013-neon/plans/019-brief.md`, Addenda 1–2 (Addendum 2
+supersedes the original rule 4).
+
+Only GET + `rsc: 1` + **absent** `next-router-prefetch`, exact `net::ERR_ABORTED`,
+and an earlier **exact-URL** 200 response with content-type starting with
+`text/x-component` can be candidates. At the **first check after failure**
+(teardown if no check intervenes), a matching committed pathname permanently
+settles the candidate as tolerated; it is annotated once and never re-evaluated
+after later navigation. A mismatch at that first check is fatal. Pathname is
+not checked at failure time. Every tolerated event is annotated `tolerated-rsc-abort` with URL and
+timestamps, and counted in `e2e/.artifacts/019-rsc-aborts.json` (guard controls
+and application events separately). All other errors remain fatal. Real-browser
+negative/positive controls and renewed full-suite results are recorded under
+`.cockpit/20261013-neon/evidence/019-a{1,2}-*` and the executor receipt. Addendum 2
+control (f) proves a settled abort survives a later navigation/check; the
+first-check mismatch negative (c) and all other fatal negatives remain active.

@@ -134,7 +134,7 @@ for (const route of ["refs", "suggestion"]) test(`${route} uses its request bear
     const entered = deferred<void>(), paused = deferred<Response>();
     install(call => {
       if (call.owner === "A") { entered.resolve(); return paused.promise; }
-      return Response.json(route === "refs" ? [] : { status: true, result: {} });
+      return Response.json(route === "refs" ? [] : { status: true, result: [] });
     });
     const invoke = () => {
       if (route === "refs") return refs(new Request("http://local/api/refs?query=v&type=diets"));
@@ -145,7 +145,7 @@ for (const route of ["refs", "suggestion"]) test(`${route} uses its request bear
     const a = asRequest("A", "A", invoke);
     await entered.promise;
     assert.equal((await asRequest("B", "B", invoke)).status, 200);
-    paused.resolve(Response.json(route === "refs" ? [] : { status: true, result: {} }));
+    paused.resolve(Response.json(route === "refs" ? [] : { status: true, result: [] }));
     assert.equal((await a).status, 200);
     assert.equal(calls.length, 2);
     assertBearers(calls, { A: "Bearer A", B: "Bearer B" });

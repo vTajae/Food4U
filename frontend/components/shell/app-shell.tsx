@@ -6,9 +6,11 @@ import { TabBar, TopNavLinks } from "~/components/shell/nav-links";
 // DESIGN.md › App shell: 64px top bar, content, disclaimer footer; tab bar on phones.
 export function AppShell({
   username,
+  draftIdentity,
   children,
 }: {
   username: string;
+  draftIdentity?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -18,7 +20,7 @@ export function AppShell({
           <Brand href="/dashboard" />
           <TopNavLinks />
           <div className="ml-auto">
-            <AccountMenu username={username} />
+            <AccountMenu username={username} draftIdentity={draftIdentity} />
           </div>
         </div>
       </header>

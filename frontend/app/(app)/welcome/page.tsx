@@ -14,7 +14,7 @@ export default async function WelcomePage() {
   }
 
   return (
-    <FormProvider>
+    <FormProvider identity={session.data.auth!.publicId || session.id || undefined}>
       <OnboardingStepper />
     </FormProvider>
   );
