@@ -59,7 +59,7 @@ test('019 scoped corrupt and old intake drafts recover; legacy answers never mig
 
 test('019 identity switch never paints the previous account answers', async ({ page, gate }) => {
   const user = email(); await register(page, user); await login(page, user);
-  await page.goto('/e2e-draft-019');
+  await page.goto('/e2e-draft-019', { waitUntil: 'networkidle' });
   await choose(page, 'What cuisines do you enjoy?', 'Italian');
   await expect(page.getByRole('button', { name: 'Remove Italian', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Switch synthetic account' }).click();

@@ -139,8 +139,12 @@ D018-04, D018-05 and D018-06 are closed by the commit containing this document,
 on `fix/trust-basics`, with the exact subject
 `fix: isolate onboarding drafts per account, add error pages, explain unavailable meal ideas`.
 The full SHA is recorded in `.cockpit/20261013-neon/plans/019-executor.md`.
+Product closure commit: `8a58fb16658c20fb4190d23ee197ec66d49fd589`.
+Addendum 2's test-only follow-up has subject
+`test: settle tolerated RSC aborts at the first gate; wait for hydration in identity-switch test`;
+its SHA and renewed gate result are recorded in that same receipt.
 
-Renewed Addendum 1 full E2E: **71 passed, 11 existing fixmes, zero failures or
+Historical Addendum 1 executor full E2E: **71 passed, 11 existing fixmes, zero failures or
 retries**, one full invocation. All 22 trust/error/identity cases pass at both
 widths. Four tolerated RSC annotations: **two application events, two guard
 controls**; all other failures stay fatal. Frontend tests 129/129, root tests
@@ -148,6 +152,17 @@ controls**; all other failures stay fatal. Frontend tests 129/129, root tests
 it was **not rerun**. Owner hashes remain unchanged, only `production` exists
 in Neon (metadata only), no push/deploy. D019-01 remains tracked, not fixed.
 Full artifacts: `.cockpit/20261013-neon/evidence/019-a1-*`.
+OMC's independent validation then found two teardown false positives from
+the original rule and one identity-switch hydration timeout (68 passed,
+3 failed, 11 fixmes; `019-omc-e2e.log`). Addendum 2 corrects only the observer
+settlement policy and test hydration readiness; product sources and identity
+privacy assertions are unchanged. See `019-a2-*` evidence and the current receipt.
+Renewed Addendum 2 full suite: **73 passed, 11 existing fixmes, zero failures or
+retries**, exactly one invocation. Five tolerated events: **one application,
+four controls**. All 38 guard tests pass; control (f) failed at both widths
+before the correction. Product source hashes match the prior passing build,
+owner hashes are unchanged, only `production` exists in Neon (metadata only),
+and the original contract invocation was not rerun. No push or deployment.
 
 ## Slice 019 implementation — initial acceptance blocker (superseded)
 
@@ -191,14 +206,19 @@ does not fix it. The 018 base has the same signature. Navigation code in vinext
 
 Evidence at repository root: `.cockpit/20261013-neon/evidence/019-omc-abort-{diag,diag2,gc,delay}.{jsonl,log}`;
 instrumentation: `.cockpit/20261013-neon/tools/019-omc-abort-diag.spec.ts`;
-authority: `.cockpit/20261013-neon/plans/019-brief.md`, Addendum 1.
+authority: `.cockpit/20261013-neon/plans/019-brief.md`, Addenda 1–2 (Addendum 2
+supersedes the original rule 4).
 
 Only GET + `rsc: 1` + **absent** `next-router-prefetch`, exact `net::ERR_ABORTED`,
 and an earlier **exact-URL** 200 response with content-type starting with
-`text/x-component` can be candidates. The committed page pathname must match
-at **every later gate and teardown**, not at failure time; later divergence
-is fatal. Every tolerated event is annotated `tolerated-rsc-abort` with URL and
+`text/x-component` can be candidates. At the **first check after failure**
+(teardown if no check intervenes), a matching committed pathname permanently
+settles the candidate as tolerated; it is annotated once and never re-evaluated
+after later navigation. A mismatch at that first check is fatal. Pathname is
+not checked at failure time. Every tolerated event is annotated `tolerated-rsc-abort` with URL and
 timestamps, and counted in `e2e/.artifacts/019-rsc-aborts.json` (guard controls
 and application events separately). All other errors remain fatal. Real-browser
 negative/positive controls and renewed full-suite results are recorded under
-`.cockpit/20261013-neon/evidence/019-a1-*` and the executor receipt.
+`.cockpit/20261013-neon/evidence/019-a{1,2}-*` and the executor receipt. Addendum 2
+control (f) proves a settled abort survives a later navigation/check; the
+first-check mismatch negative (c) and all other fatal negatives remain active.

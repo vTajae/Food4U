@@ -10,7 +10,7 @@ export function observe(page: Page, origin: string, expected: { fault?: string; 
   let expectedFaultSource: string | undefined;
   const handledResponses = new Map<string, Set<number>>();
   const componentResponses = new Map<string, number>();
-  const rscAborts: { url: string; responseAt: string; failedAt: string; annotated: boolean; rejected: boolean }[] = [];
+  const rscAborts: { url: string; responseAt: string; failedAt: string; settled: boolean }[] = [];
   page.on('response', response => {
     const url = new URL(response.url());
     if (url.origin === origin && response.status() === 200 && response.headers()['content-type']?.startsWith('text/x-component')) {
@@ -63,7 +63,7 @@ export function observe(page: Page, origin: string, expected: { fault?: string; 
     // exact-URL successful component response may wait for the committed URL.
     if (request.method() === 'GET' && headers.rsc === '1' && !Object.hasOwn(headers, 'next-router-prefetch') &&
       request.failure()?.errorText === 'net::ERR_ABORTED' && responseAt !== undefined) {
-      rscAborts.push({ url: request.url(), responseAt: new Date(responseAt).toISOString(), failedAt: new Date().toISOString(), annotated: false, rejected: false });
+      rscAborts.push({ url: request.url(), responseAt: new Date(responseAt).toISOString(), failedAt: new Date().toISOString(), settled: false });
       return;
     }
     errors.push(`same-origin requestfailed: ${request.method()} ${request.url()} ${request.failure()?.errorText}`);
@@ -74,15 +74,15 @@ export function observe(page: Page, origin: string, expected: { fault?: string; 
   return {
     errors,
     checkRequests(info?: TestInfo) {
-      // Retain every candidate for ALL later checks, including teardown. A
-      // successful earlier check never excuses a later divergent pathname.
+      // Addendum 2: settle at the FIRST check after failure (teardown if no
+      // check intervenes). Later navigation cannot resurrect a settled abort.
       for (const abort of rscAborts) {
+        if (abort.settled) continue;
+        abort.settled = true;
         if (new URL(page.url()).pathname !== new URL(abort.url).pathname) {
-          if (!abort.rejected) errors.push(`same-origin requestfailed: GET ${abort.url} net::ERR_ABORTED; committed pathname differs at gate: ${page.url()}`);
-          abort.rejected = true;
-        } else if (!abort.rejected && !abort.annotated && info) {
+          errors.push(`same-origin requestfailed: GET ${abort.url} net::ERR_ABORTED; committed pathname differs at gate: ${page.url()}`);
+        } else if (info) {
           info.annotations.push({ type: 'tolerated-rsc-abort', description: JSON.stringify({ url: abort.url, responseAt: abort.responseAt, failedAt: abort.failedAt, checkedAt: new Date().toISOString() }) });
-          abort.annotated = true;
         }
       }
       expect(errors, 'No console errors, page errors, failed same-origin or Render requests').toEqual([]);

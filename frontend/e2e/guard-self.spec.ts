@@ -86,7 +86,7 @@ test('clean labeled local page passes the same guard', async ({ page, baseURL, g
 // Real Chrome response/requestfailed events exercise the exported observer and
 // gate, not a parallel classifier. These routes belong only to raw guard pages.
 const rscSpecimens: { name: string; prior?: boolean; headers?: Record<string, string>; committed?: string;
-  abort?: 'failed'; method?: string; contentType?: string; status?: number; priorQuery?: string; positive?: boolean }[] = [
+  abort?: 'failed'; method?: string; contentType?: string; status?: number; priorQuery?: string; positive?: boolean; navigateAway?: boolean }[] = [
   { name: 'no prior 200', prior: false },
   { name: 'aborted prefetch', headers: { rsc: '1', 'next-router-prefetch': '' } },
   { name: 'different committed pathname', committed: '/__harness__/rsc-other' },
@@ -97,6 +97,7 @@ const rscSpecimens: { name: string; prior?: boolean; headers?: Record<string, st
   { name: 'non-200 response', status: 201 },
   { name: 'different exact response URL', priorQuery: 'another-response' },
   { name: 'positive control', positive: true },
+  { name: 'settled abort survives later navigation', positive: true, navigateAway: true },
 ];
 for (const specimen of rscSpecimens) {
   test(`RSC guard ${specimen.name}`, async ({ browser, baseURL, proxy }, info) => {
@@ -134,9 +135,13 @@ for (const specimen of rscSpecimens) {
         await page.evaluate(path => history.replaceState(null, '', path), pathname);
         await checkPage(page, errors, false, info);
         expect(info.annotations.filter(item => item.type === 'tolerated-rsc-abort')).toHaveLength(1);
-        // Recheck retained candidates: a later divergent URL must fail too.
-        await page.evaluate(() => history.replaceState(null, '', '/__harness__/rsc-left'));
-        await expect(checkPage(page, errors, false)).rejects.toThrow(/No console errors/);
+        if (specimen.navigateAway) {
+          // Addendum 2 control (f): first matching check permanently settles
+          // the abort. A legitimate later navigation must not resurrect it.
+          await page.goto(`${origin}/__harness__/rsc-left`);
+          await checkPage(page, errors, false, info);
+          expect(info.annotations.filter(item => item.type === 'tolerated-rsc-abort')).toHaveLength(1);
+        }
       } else if (process.env.E2E_GUARD_RED === '1') {
         await checkPage(page, errors, false);
       } else {

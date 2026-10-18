@@ -2,19 +2,30 @@
 
 ## Slice 019 status
 
-Trust fixes and active D018-04/05/06 regressions are implemented. OMC Addendum 1
-supersedes the earlier BLOCKED receipt: its instrumented evidence identifies
+**Current Addendum 2 gate:** 73 passed, 11 existing fixmes, zero failures or
+retries, one full invocation. Five tolerated RSC annotations: one application
+event and four deliberate controls. All 38 guard self-tests pass at both widths;
+control (f) had genuine RED at both widths before the settlement correction.
+No product source changes or contract rerun; owner hashes remain unchanged.
+
+Trust fixes and active D018-04/05/06 regressions are implemented. OMC Addenda 1–2
+supersede the earlier BLOCKED receipt: instrumented evidence identifies
 the GC-sensitive vinext stream cancellation as framework issue D019-01. Only
 the exact self-tested rule below is tolerated; no blanket cancellation ignore,
 new fixme, dependency upgrade or retry masking is added. Six other defect IDs
 remain fixmes (11 viewport instances). The current gate/commit receipt is
 `.cockpit/20261013-neon/plans/019-executor.md` at the repository root.
 
-Renewed full gate: **71 passed, 11 existing fixmes, zero failures or retries**,
+Historical Addendum 1 executor gate: **71 passed, 11 existing fixmes, zero failures or retries**,
 one authorized full invocation. Four tolerated annotations: **two application
 events and two deliberate controls**. Frontend tests 129/129, root tests 9/9
 and build pass; the original single passing contract was not rerun. D018-04,
 D018-05 and D018-06 close in the slice 019 commit named in DEFECTS.md.
+OMC's subsequent independent run found the old every-gate rule re-flagged
+settled aborts after sign-out, plus a private-page hydration race. Addendum 2
+settles each abort once at its first subsequent check and waits for networkidle
+before the identity-switch test interacts; its first-committed-DOM assertions
+are unchanged. The renewed Addendum 2 result is in the current receipt.
 
 The isolated build also injects private-only error-boundary and identity-switch
 pages. They are absent from product sources and normal builds, with separate
@@ -110,20 +121,23 @@ also retain the annotations. Counts are observations, not a retry allowance.
   journey separately asserts HTTP 404. No other console or accessibility
   messages are allow-listed.
 - Same-origin request failures remain fatal **except D019-01**, authorized by
-  OMC slice 019 Addendum 1. ALL conditions must hold: GET; request `rsc: 1`;
+  OMC slice 019 Addenda 1–2. ALL conditions must hold: GET; request `rsc: 1`;
   no `next-router-prefetch` header (even an empty header disqualifies); exact
   `failure().errorText === 'net::ERR_ABORTED'`; an **earlier observed exact-URL**
   response with status 200 and content-type starting with `text/x-component`;
-  and the page URL pathname equals the failed request pathname at **every
-  later gate check and teardown**. Pathname is evaluated at the gate, not
-  failure time. Candidates are retained, so later divergence is fatal even
-  after an earlier matching gate; closed/blank pages cannot skip this check.
+  and the page URL pathname equals the failed request pathname at the **first
+  gate check after failure**, or teardown if no check intervenes. Pathname is
+  evaluated at that check, not failure time. A match permanently settles the
+  candidate as tolerated; it is never re-evaluated after later navigation.
+  A mismatch at that first check is permanently fatal. Closed/blank pages
+  cannot skip settlement of an outstanding candidate at teardown.
   Each tolerated event gets one `tolerated-rsc-abort` annotation containing
   URL, response/failure/first-matching-gate timestamps. Everything else remains
   fatal. Real-Chrome RED-style controls reject missing prior 200, prefetch,
   different pathname, non-RSC, different error, POST, wrong type/status or
-  different exact URL; the positive control commits after the failure and
-  proves later pathname divergence is still rejected. See [D019-01](DEFECTS.md#d019-01-framework-rsc-stream-cancellation).
+  different exact URL. The positive controls commit after failure and prove
+  that a settled abort stays tolerated after navigation to a different page,
+  with exactly one annotation. See [D019-01](DEFECTS.md#d019-01-framework-rsc-stream-cancellation).
 - Known defects are `test.fixme` annotations with IDs in [DEFECTS.md](DEFECTS.md),
   not weakened gates or product fixes. The account-menu capture is audit-only;
   its failing accessibility check is separately retained as D018-03. The outage
