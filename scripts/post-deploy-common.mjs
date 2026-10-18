@@ -5,6 +5,26 @@ import { resolve } from 'node:path';
 export const root = fileURLToPath(new URL('../', import.meta.url));
 export const frontend = resolve(root, 'frontend');
 
+// Pure inspection of an Object.entries(localStorage) snapshot. Never choose an
+// arbitrary account or accept an ownerless legacy draft in a fresh check context.
+export function scopedIntakeDraft(entries) {
+  const pattern = /^food4u:intake:v1:([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$/;
+  const drafts = entries.filter(([key]) => pattern.test(key));
+  if (drafts.length !== 1 || entries.some(([key]) => key === 'formState')) return null;
+  const [key, raw] = drafts[0];
+  try {
+    const envelope = JSON.parse(raw);
+    if (!envelope || envelope.version !== 1 || envelope.identity !== pattern.exec(key)[1] || !Array.isArray(envelope.state?.answers)) return null;
+    return { key, envelope };
+  } catch { return null; }
+}
+
+export function hasOfficialRhinitisDraft(entries) {
+  const draft = scopedIntakeDraft(entries);
+  return draft !== null && draft.envelope.state.answers.some(question => question?.questionId === 1 &&
+    Array.isArray(question.answers) && question.answers.some(answer => answer?.code === 'J30.9' && answer.name === 'Allergic rhinitis, unspecified'));
+}
+
 // Capture privately: upstream errors can contain credentials or connection URLs.
 export function runCommand(command, args, { cwd = root, input, env = process.env } = {}) {
   return new Promise((ok, fail) => {

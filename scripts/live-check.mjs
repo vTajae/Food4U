@@ -4,6 +4,7 @@ import { mkdir } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
+import { hasOfficialRhinitisDraft } from './post-deploy-common.mjs';
 
 const diets = ['Gluten Free', 'Ketogenic', 'Vegetarian', 'Lacto-Vegetarian', 'Ovo-Vegetarian', 'Vegan', 'Pescetarian', 'Paleo', 'Primal', 'Low FODMAP', 'Whole30'];
 const result = {
@@ -98,8 +99,8 @@ async function choose(heading, query, label) {
   await option.click();
   await page.keyboard.press('Escape');
   if (heading === 'Do you have a medical condition?') {
-    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('formState')));
-    check(saved.answers.find(answer => answer.questionId === 1)?.answers.some(answer => answer.code === 'J30.9' && answer.name === 'Allergic rhinitis, unspecified'), 'expected official J30.9 payload metadata');
+    const saved = await page.evaluate(() => Object.entries(localStorage));
+    check(hasOfficialRhinitisDraft(saved), 'expected one owner-scoped draft with official J30.9 metadata and no legacy key');
   }
 }
 async function chips() {
