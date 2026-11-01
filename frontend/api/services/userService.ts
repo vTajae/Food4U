@@ -1,0 +1,155 @@
+// src/services/UserService.ts
+
+import Auth from "../../lib/auth-service";
+import {  userLogin, userRegister } from "../schemas/user";
+import UserRepository from "../repo/userRepository";
+
+class UserService {
+  private userRepository: UserRepository;
+
+  // The repository is injectable so the identity rules can be unit tested without D1.
+  constructor(env: Env, userRepository: UserRepository = new UserRepository(env)) {
+    this.userRepository = userRepository;
+  }
+
+
+
+  async registerUser(userData: userRegister) {
+    try {
+      // Check if user already exists
+      const existingUser = await this.userRepository.findUserByUsername(userData.username);
+  
+      if (existingUser) {
+        return { success: false, message: "User already exists." };
+      }
+  
+      // Use Auth class to hash the user's password before saving to the database
+      userData.password = await Auth.hashPassword(userData.password);
+  
+      // Add the new user to the database
+      const userId = await this.userRepository.addBasicUser(userData);
+  
+      console.log(userId, "userId");
+  
+      if (userId) {
+        return {
+          success: true,
+          userId,
+          message: "User registered successfully.",
+        };
+      } else {
+        return { success: false, message: "Failed to register user." };
+      }
+    } catch (error) {
+      console.error("Error during user registration:", error);
+      return { success: false, message: "An error occurred during registration. Please try again." };
+    }
+  }
+  
+
+
+  async loginUser(userData: userLogin, env: Env) {
+    try {
+      const user = await this.userRepository.findUserByUsername(
+        userData.username
+      );
+
+      if (!user) {
+        return { success: false, message: "User does not exist." };
+      }
+
+      const passwordMatch = await Auth.verifyPassword(
+        userData.password,
+        user.user_password
+      );
+
+      if (!passwordMatch) {
+        return { success: false, message: "Incorrect password." };
+      }
+
+      // Ensure all required properties are present
+      if (
+        passwordMatch &&
+        user.username &&
+        typeof user.user_id === "number" &&
+        user.createdAt &&
+        user.updatedAt &&
+        user.user_role
+      ) {
+        const loginCookieData = {
+          username: user.username,
+          id: user.user_id,
+          publicId: user.public_id,
+          role: user.user_role,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        };
+
+        // The backend identifies users by this public id (its profile.public_id),
+        // never by the D1 integer, which differs per environment.
+        const token = await Auth.generateToken(
+          {
+            user_id: user.public_id,
+            username: user.username,
+            role: user.user_role,
+          },
+          env.JWT_SECRET_KEY,
+          { expiresIn: env.JWT_ACCESS_TOKEN_EXPIRE_MINUTES }
+        );
+
+        // Login depends only on D1. The backend profile is ensured lazily by the
+        // dashboard (ProfileService.ensureProfile), so a sleeping backend can't block login.
+        return {
+          success: true,
+          user: loginCookieData,
+          token, // stored in the KV session for request-local backend clients
+          message: "User logged in successfully.",
+        };
+      } else {
+        return { success: false, message: "User data incomplete." };
+      }
+    } catch (error) {
+      console.error("Error during login:", error);
+      return {
+        success: false,
+        message: "Login process failed due to a server error.",
+      };
+    }
+  }
+
+
+
+  async refreshUser(env: Env, id: number) {
+    try {
+      // Assuming the user is already authenticated and the user data is accessible
+      const user = await this.userRepository.findUserById(id);
+
+      if (!user) {
+        return { success: false, message: "No authenticated user found." };
+      }
+
+      // Generate a new token based on the user details
+      const newToken = await Auth.generateToken(
+        {
+          user_id: user.public_id,
+          username: user.username,
+          role: user.user_role,
+        },
+        env.JWT_SECRET_KEY, // JWT secret key
+        { expiresIn: env.JWT_ACCESS_TOKEN_EXPIRE_MINUTES } // Token expiration
+      );
+
+      return { success: true, token: newToken, message: "Token refreshed successfully." };
+    } catch (error) {
+      console.error("Error during token refresh:", error);
+      return { success: false, message: "Failed to refresh token." };
+    }
+  }
+
+
+
+
+
+}
+
+export default UserService;

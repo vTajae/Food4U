@@ -1,0 +1,7 @@
+# Local development secrets for `npm run dev` (Workers). Copy to .dev.vars (gitignored).
+# Every value here is a DEV-ONLY placeholder. In production set them with
+# `wrangler secret put <NAME>` (or the Cloudflare dashboard), never in wrangler.jsonc.
+USER_SESSION_SECRET=dev-only-session-secret
+USER_COOKIE_SECRET=dev-only-cookie-secret
+# Must match the FastAPI backend's JWT secret for login / profile calls to succeed.
+JWT_SECRET_KEY=dev-only-jwt-secret
