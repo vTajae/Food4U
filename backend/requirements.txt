@@ -1,0 +1,22 @@
+# Direct runtime imports; transitive dependencies are resolved by pip.
+asyncpg==0.29.0
+fastapi==0.112.2
+httpx==0.27.2
+pydantic==2.8.2
+PyJWT==2.9.0
+python-dotenv==1.0.1
+SQLAlchemy==2.0.32
+typing_extensions==4.12.2
+uvicorn==0.30.6
+# fastapi-cli provides the `fastapi dev` launcher for local runs.
+fastapi-cli==0.0.5
+
+# Lazily loaded Gemini / Google Drive / Qdrant suggestion path (no local models).
+google-api-python-client==2.147.0
+google-auth==2.35.0
+google-generativeai==0.5.4
+llama-cloud==0.0.15
+llama-index-core==0.11.4
+llama-index-embeddings-gemini==0.2.0
+llama-index-vector-stores-qdrant==0.3.0
+qdrant-client==1.11.3

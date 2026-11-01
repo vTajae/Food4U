@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+.venv*/
+env/
+
+# Build output and caches
+dist/
+build/
+.next/
+.vinext/
+.wrangler/
+.cloudflare/
+*.tsbuildinfo
+.eslintcache
+.npm
+__pycache__/
+*.pyc
+*.tgz
+
+# Local secrets and environment
+.env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.neon
+**/.postgresql
+
+# Logs and local evidence
+logs/
+*.log
+/live-check-evidence/
+
+# Editor state
+.vscode/
+.idea/
+
+# Never published
+internal/
+rust-app/

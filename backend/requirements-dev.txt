@@ -1,0 +1,5 @@
+-r requirements.txt
+
+# Test runner and RSA credentials fixture in test_optional_ai_startup.py.
+pytest==8.3.3
+cryptography==43.0.1

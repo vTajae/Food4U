@@ -1,0 +1,20 @@
+node_modules
+
+/.cache
+/build
+.env
+.dev.vars
+
+.wrangler
+wrangler.toml
+
+# Next.js / vinext / Cloudflare
+/.next/
+/dist/
+/.cloudflare/
+.dev.vars
+wrangler.jsonc.local
+.vinext/
+/e2e/.artifacts/
+/playwright-report/
+/test-results/
